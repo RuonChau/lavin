@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  
+  /* Brand Colors */
+  --color-primary: #8B5E3C;
+  --color-primary-deep: #5B3A29;
+  --color-primary-soft: #D8B894;
+  
+  /* Secondary / Accents */
+  --color-aqua: #0FA7A0;
+  --color-mint: #21B57D;
+  --color-caramel: #C9822B;
+  --color-berry: #D95F76;
+  
+  /* Text */
+  --color-text-primary: #2A1E17;
+  --color-text-secondary: #6F5A4A;
+  --color-text-muted: #9A8677;
+  
+  /* Backgrounds */
+  --color-bg-base: #F6F1EA;
+  --color-bg-soft: #FBF7F2;
+  --color-bg-muted: #EFE7DD;
+  
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 32px;
+}
+
+@layer base {
+  body {
+    @apply min-h-screen text-text-primary bg-bg-base antialiased font-sans;
+    background:
+      radial-gradient(circle at top left, rgba(216, 184, 148, 0.32), transparent 34%),
+      radial-gradient(circle at top right, rgba(15, 167, 160, 0.12), transparent 30%),
+      radial-gradient(circle at bottom left, rgba(201, 130, 43, 0.12), transparent 36%),
+      linear-gradient(135deg, #F6F1EA 0%, #FBF7F2 45%, #EFE7DD 100%);
+    background-attachment: fixed;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.28;
+    background-image: radial-gradient(rgba(91, 58, 41, 0.12) 1px, transparent 1px);
+    background-size: 18px 18px;
+    z-index: 100;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    background: rgba(255, 250, 244, 0.72);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    box-shadow: 0 20px 60px rgba(91, 58, 41, 0.12);
+  }
+
+  .glass-card {
+    background: rgba(255, 250, 244, 0.66);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid rgba(255, 255, 255, 0.54);
+    box-shadow: 
+      0 12px 32px rgba(91, 58, 41, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+
+  .glass-control {
+    background: rgba(255, 250, 244, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(216, 184, 148, 0.32);
+  }
+
+  .text-glow-coffee {
+    text-shadow: 0 0 12px rgba(139, 94, 60, 0.2);
+  }
+}

@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// NHÓM 1: QUẢN TRỊ HỆ THỐNG & CHI NHÁNH
+// ==========================================
+
+model Branch {
+  id          String   @id @db.Char(26) // ULID
+  name        String   @db.VarChar(100)
+  address     String?
+  phone       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+  products    Product[]
+  orders      Order[]
+  inventory   InventoryStock[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  permissions Json?    // Lưu trữ quyền dạng JSON
+  users       User[]
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  name        String
+  roleId      String
+  branchId    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  role        Role     @relation(fields: [roleId], references: [id])
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+}
+
+model Media {
+  id          String   @id @default(uuid())
+  url         String
+  type        String   // image, video
+  alt         String?
+  createdAt   DateTime @default(now())
+}
+
+// ==========================================
+// NHÓM 3: SẢN PHẨM & ĐỊNH MỨC (MENU)
+// ==========================================
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  products    Product[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  categoryId  String
+  branchId    String?  // Sản phẩm có thể riêng cho từng chi nhánh hoặc dùng chung
+  basePrice   Decimal  @db.Decimal(10, 2)
+  image       String?
+  isActive    Boolean  @default(true)
+
+  category    Category @relation(fields: [categoryId], references: [id])
+  branch      Branch?  @relation(fields: [branchId], references: [id])
+  variants    ProductVariant[]
+}
+
+model ProductVariant {
+  id          String   @id @default(uuid())
+  productId   String
+  name        String   // S, M, L
+  price       Decimal  @db.Decimal(10, 2)
+  sku         String?  @unique
+
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+// ==========================================
+// NHÓM 4: BÁN HÀNG & KHÁCH HÀNG (POS)
+// ==========================================
+
+model Order {
+  id          String   @id @db.Char(26) // ULID
+  branchId    String
+  customerId  String?
+  totalAmount Decimal  @db.Decimal(10, 2)
+  status      String   // PENDING, COMPLETED, CANCELLED
+  createdAt   DateTime @default(now())
+
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  details     OrderDetail[]
+}
+
+model OrderDetail {
+  id          String   @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  subTotal    Decimal  @db.Decimal(10, 2)
+
+  order       Order    @relation(fields: [orderId], references: [id])
+}
+
+// ==========================================
+// NHÓM 5: KHO VẬN (INVENTORY)
+// ==========================================
+
+model InventoryStock {
+  id          String   @id @default(uuid())
+  branchId    String
+  ingredientId String
+  quantity     Decimal @db.Decimal(10, 2)
+
+  branch      Branch   @relation(fields: [branchId], references: [id])
+}

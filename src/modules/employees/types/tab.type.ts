@@ -1,0 +1,1 @@
+export type TabType = 'LIST' | 'SHIFTS' | 'SCHEDULING' | 'ATTENDANCE';

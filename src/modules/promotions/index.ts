@@ -1,0 +1,1 @@
+export { default as PromotionsPageClient } from './presentation/components/PromotionsPageClient';
