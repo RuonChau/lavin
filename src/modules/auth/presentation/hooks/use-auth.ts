@@ -49,10 +49,7 @@ export const useAuth = () => {
 
   const getMeQuery = useQuery({
     queryKey: ['auth', 'me'],
-    queryFn: () => {
-      const userId = typeof window !== 'undefined' ? localStorage.getItem('user_id') || '' : '';
-      return authService.getMe(userId);
-    },
+    queryFn: () => authService.getMe(),
     enabled: !!(typeof window !== 'undefined' && browserAuthSession.getAccessToken()),
     retry: false,
   });

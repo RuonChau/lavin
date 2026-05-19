@@ -1,8 +1,11 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productService } from '../../infrastructure/services/product.service';
 import { categoryService } from '../../infrastructure/services/category.service';
+import type { ProductFormInput } from '../../infrastructure/services/product.service';
 
 export const useProducts = () => {
+  const queryClient = useQueryClient();
+
   const productsQuery = useQuery({
     queryKey: ['products'],
     queryFn: () => productService.getProducts(),
@@ -13,11 +16,46 @@ export const useProducts = () => {
     queryFn: () => categoryService.getCategories(),
   });
 
+  const createProductMutation = useMutation({
+    mutationFn: (data: ProductFormInput) =>
+      productService.createProduct(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: ProductFormInput;
+    }) => productService.updateProduct(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: string) => productService.deleteProduct(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+
   return {
     products: productsQuery.data || [],
     isLoadingProducts: productsQuery.isLoading,
     categories: categoriesQuery.data || [],
     isLoadingCategories: categoriesQuery.isLoading,
-    refreshProducts: productsQuery.refetch
+    refreshProducts: productsQuery.refetch,
+    createProduct: createProductMutation.mutateAsync,
+    updateProduct: updateProductMutation.mutateAsync,
+    deleteProduct: deleteProductMutation.mutateAsync,
+    isMutatingProduct:
+      createProductMutation.isPending ||
+      updateProductMutation.isPending ||
+      deleteProductMutation.isPending,
   };
 };

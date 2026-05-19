@@ -7,13 +7,16 @@ export const productSchema = z.object({
 
   categoryId: z.string().min(1, 'Vui lòng chọn danh mục'),
 
-  basePrice: z.number().min(0, 'Giá không được âm'),
+  base_price: z.number().min(0, 'Giá không được âm'),
 
-  baseCurrency: z.string().min(1, 'Vui lòng chọn đơn vị'),
+  currency: z.object({
+    currency: z.string().min(1, 'Vui lòng chọn đơn vị'),
+    locale: z.string().min(1, 'Vui lòng chọn vị trí'),
+  }),
 
   description: z.string().optional(),
 
-  isActive: z.boolean(),
+  is_active: z.boolean(),
 
   sizes: z.array(z.string()),
 

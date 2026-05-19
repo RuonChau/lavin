@@ -1,6 +1,7 @@
 import { api } from '@/shared/lib/axios';
 import { LoginDto, RegisterDto, ResetPasswordDto } from '../../application/dto/login.dto';
 import { User, UserRole } from '../../domain/types/user.type';
+import { unwrapData } from '@/shared/lib/api-response';
 
 export interface AuthResponse {
   user: User;
@@ -8,58 +9,81 @@ export interface AuthResponse {
   refresh_token: string;
 }
 
+// Shape the server actually returns inside the `data` envelope
+interface ServerAuthData {
+  user?: ServerUser;
+  accessToken?: string;
+  access_token?: string;
+  refreshToken?: string;
+  refresh_token?: string;
+}
+
+interface ServerUser {
+  id?: string;
+  _id?: string;
+  username?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  created_at?: string;
+  createdAt?: string;
+  updated_at?: string;
+  updatedAt?: string;
+}
+
+/** Map the server's user shape to our domain User */
+function mapServerUser(u: ServerUser): User {
+  return {
+    id: u.id ?? u._id ?? '',
+    name: u.name ?? u.username ?? '',
+    email: u.email ?? '',
+    role: (u.role as UserRole) ?? UserRole.STAFF,
+    createdAt: u.createdAt ? new Date(u.createdAt) : u.created_at ? new Date(u.created_at) : new Date(),
+    updatedAt: u.updatedAt ? new Date(u.updatedAt) : u.updated_at ? new Date(u.updated_at) : new Date(),
+  };
+}
+
 export const authService = {
   login: async (data: LoginDto): Promise<AuthResponse> => {
-    // Mocking login for testing
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          user: {
-            id: 'mock-id-123',
-            name: data.username,
-            email: `${data.username}@example.com`,
-            role: UserRole.ADMIN,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          access_token: 'mock-access-token',
-          refresh_token: 'mock-refresh-token'
-        });
-      }, 500);
-    });
+    const res = await api.post<{ success: boolean; data: ServerAuthData }>('/login', data);
+    const payload = unwrapData(res.data) as ServerAuthData;
+    return {
+      user: mapServerUser(payload.user ?? {}),
+      access_token: payload.accessToken ?? payload.access_token ?? '',
+      refresh_token: payload.refreshToken ?? payload.refresh_token ?? '',
+    };
   },
-  
+
   register: async (data: RegisterDto): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/register', data);
-    return response.data;
+    const res = await api.post<{ success: boolean; data: ServerAuthData }>('/register', data);
+    const payload = unwrapData(res.data) as ServerAuthData;
+    return {
+      user: mapServerUser(payload.user ?? {}),
+      access_token: payload.accessToken ?? payload.access_token ?? '',
+      refresh_token: payload.refreshToken ?? payload.refresh_token ?? '',
+    };
   },
-  
-  getMe: async (userId: string): Promise<User> => {
-    // Mocking getMe for testing
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: userId || 'mock-id-123',
-          name: 'Manager User',
-          email: 'manager@example.com',
-          role: UserRole.MANAGER,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-      }, 300);
-    });
+
+  getMe: async (): Promise<User> => {
+    const res = await api.get<{ success: boolean; data: ServerUser }>('/me');
+    const payload = unwrapData(res.data) as ServerUser;
+    return mapServerUser(payload ?? {});
   },
-  
+
   refreshToken: async (refreshToken: string): Promise<{ access_token: string }> => {
-    const response = await api.post<{ access_token: string }>('/refresh-token', { refreshToken });
-    return response.data;
+    const res = await api.post<{ success: boolean; data: { accessToken?: string; access_token?: string } }>(
+      '/refresh-token',
+      { refresh_token: refreshToken }
+    );
+    const payload = unwrapData(res.data);
+    return { access_token: payload?.accessToken ?? payload?.access_token ?? '' };
   },
-  
+
   sendOtp: async (email: string): Promise<void> => {
     await api.post('/send-otp', { email });
   },
-  
+
   resetPassword: async (data: ResetPasswordDto): Promise<void> => {
     await api.post('/reset-password', data);
-  }
+  },
 };

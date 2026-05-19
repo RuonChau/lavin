@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { GlassCard } from '@/shared/components/GlassCard';
 import { useProducts } from '@/modules/products/presentation/hooks/use-products';
@@ -25,12 +25,24 @@ import { CategoryManagementModal } from '@/modules/products/presentation/compone
 import { useCategories } from '@/modules/products/presentation/hooks/use-categories';
 import { toast } from 'react-toastify';
 import { Product } from '@/modules/products/domain/entities/product.entity';
+import type { ProductFormData } from '@/modules/products/validations/add-product.schema';
+import type { EditProductFormData } from '@/modules/products/validations/edit-product.schema';
+import { productVariantService } from '@/modules/products/infrastructure/services/product-variant.service';
+import type { AddProductSubmitOptions } from '@/modules/products/types/product-modal-props.type';
 
 export default function ProductsPage() {
-  const { products, isLoadingProducts, refreshProducts } = useProducts();
+  const {
+    products,
+    isLoadingProducts,
+    refreshProducts,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    isMutatingProduct,
+  } = useProducts();
+
   const { 
     categories, 
-    isLoading: isLoadingCategories, 
     createCategory, 
     updateCategory, 
     deleteCategory, 
@@ -49,10 +61,11 @@ export default function ProductsPage() {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = isSubmitting || isMutatingProduct;
 
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.categoryId === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -72,10 +85,86 @@ export default function ProductsPage() {
     setCurrentPage(1);
   };
 
-  const handleAddProduct = async (data: any) => {
+  const getVariantPrice = (data: ProductFormData) => {
+    const firstConfiguredPrice = data.sizes
+      .map((size) => data.sizeConfigs?.[size]?.price)
+      .find((price): price is number => typeof price === 'number' && Number.isFinite(price) && price > 0);
+
+    return firstConfiguredPrice ?? data.base_price;
+  };
+
+
+  // dạng File để gửi lên server. Nếu backend yêu cầu file dạng multipart/form-data thì vẫn phải gửi file gốc, không thể gửi base64. Trong trường hợp này, có thể giữ cả 2: một trường để lưu file gốc (để gửi lên server) và một trường để lưu base64 (để hiển thị preview).
+  const getVariantImagesBySize = (
+    sizes: string[],
+    options: AddProductSubmitOptions
+  ): Record<string, File[]> => {
+    return sizes.reduce<Record<string, File[]>>((acc, size) => {
+      acc[size] = (options.size_images[size] ?? [])
+        .map((image) => image.file)
+        .filter((file): file is File => file instanceof File);
+
+      return acc;
+    }, {});
+  };
+
+  const handleAddProduct = async (data: ProductFormData, options: AddProductSubmitOptions) => {
     setIsSubmitting(true);
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const createdProduct = await createProduct({
+      name: data.name,
+      categoryId: data.categoryId,
+      description: data.description,
+      base_price: data.base_price,
+      currency: data.currency,
+      is_active: data.is_active,
+      is_featured: false,
+      is_draft: options.is_draft,
+    }).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Không thể tạo sản phẩm';
+      toast.error(message);
+      return null;
+    });
+    if (!createdProduct) {
+      setIsSubmitting(false);
+      return;
+    }
+    if (!createdProduct.id) {
+      toast.error('Thông tin sản phẩm đang có vân đề!');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (data.sizes.length > 0) {
+      const imagesBySize = getVariantImagesBySize(data.sizes, options);
+      console.log('variantImages: ', imagesBySize );
+
+      if (!imagesBySize || Object.keys(imagesBySize).length === 0) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      const createdVariant = await productVariantService.createVariant({
+        product_id: createdProduct.id,
+        variant_name: data.name,
+        size: data.sizes,
+        imagesBySize,
+        price: getVariantPrice(data),
+        discounted_price: 0,
+        quantity: 0,
+        stock_status: 'IN_STOCK',
+        is_active: data.is_active,
+      }).catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Không thể tạo biến thể sản phẩm';
+        toast.error(message);
+        return null;
+      });
+
+      if (!createdVariant) {
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     toast.success('Thêm sản phẩm thành công!');
     setIsSubmitting(false);
     setIsAddModalOpen(false);
@@ -92,10 +181,28 @@ export default function ProductsPage() {
     setIsEditModalOpen(true);
   };
 
-  const handleUpdateProduct = async (data: any) => {
+  const handleUpdateProduct = async (data: EditProductFormData) => {
+    if (!selectedProduct) return;
     setIsSubmitting(true);
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const updatedProduct = await updateProduct({
+      id: selectedProduct.id,
+      data: {
+        name: data.name,
+        categoryId: data.categoryId,
+        description: data.description,
+        base_price: data.base_price,
+        currency: data.currency,
+        is_active: data.is_active,
+      },
+    }).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Không thể cập nhật sản phẩm';
+      toast.error(message);
+      return null;
+    });
+    if (!updatedProduct) {
+      setIsSubmitting(false);
+      return;
+    }
     toast.success('Cập nhật sản phẩm thành công!');
     setIsSubmitting(false);
     setIsEditModalOpen(false);
@@ -110,8 +217,17 @@ export default function ProductsPage() {
   const handleConfirmDelete = async () => {
     if (!selectedProduct) return;
     setIsSubmitting(true);
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const deletedProduct = await deleteProduct(selectedProduct.id)
+      .then(() => true)
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Không thể xóa sản phẩm';
+        toast.error(message);
+        return false;
+      });
+    if (!deletedProduct) {
+      setIsSubmitting(false);
+      return;
+    }
     toast.success('Đã xóa sản phẩm thành công!');
     setIsSubmitting(false);
     setIsDeleteModalOpen(false);
@@ -123,25 +239,25 @@ export default function ProductsPage() {
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[28px] font-bold text-[#2A1E17] tracking-tight">Menu Sản phẩm</h1>
-          <p className="text-[#6F5A4A]">Quản lý danh sách thức uống, bánh ngọt và định giá toàn hệ thống.</p>
+          <h1 className="text-[28px] font-bold text-text-primary tracking-tight">Menu sản phẩm</h1>
+          <p className="text-text-secondary">Quản lý danh sách thức uống, bánh ngọt và định giá toàn hệ thống.</p>
         </div>
         
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsCategoryModalOpen(true)}
-            className="flex items-center gap-2 rounded-[16px] bg-white/60 border border-[#D8B894]/30 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-white/80"
+            className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-white/80"
           >
             <FolderEdit size={18} />
             Danh mục
           </button>
-          <button className="flex items-center gap-2 rounded-[16px] bg-white/60 border border-[#D8B894]/30 px-4 py-2.5 text-sm font-semibold text-[#6F5A4A] transition hover:bg-white/80">
+          <button className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-white/80">
             <FileDown size={18} />
             Xuất Excel
           </button>
           <button 
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 rounded-[16px] bg-[#8B5E3C] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(139,94,60,0.28)] transition hover:bg-[#5B3A29] active:scale-[0.98]"
+            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(139,94,60,0.28)] transition hover:bg-primary-deep active:scale-[0.98]"
           >
             <Plus size={18} />
             Thêm sản phẩm
@@ -155,7 +271,7 @@ export default function ProductsPage() {
         onClose={() => setIsAddModalOpen(false)}
         categories={categories}
         onSubmit={handleAddProduct}
-        isSubmitting={isSubmitting}
+        isSubmitting={submitting}
       />
 
       <ProductDetailsModal 
@@ -171,7 +287,7 @@ export default function ProductsPage() {
         product={selectedProduct}
         categories={categories}
         onSubmit={handleUpdateProduct}
-        isSubmitting={isSubmitting}
+        isSubmitting={submitting}
       />
 
       <DeleteProductModal 
@@ -179,7 +295,7 @@ export default function ProductsPage() {
         onClose={() => setIsDeleteModalOpen(false)}
         product={selectedProduct}
         onConfirm={handleConfirmDelete}
-        isDeleting={isSubmitting}
+        isDeleting={submitting}
       />
 
       <CategoryManagementModal 
@@ -197,35 +313,33 @@ export default function ProductsPage() {
       <GlassCard className="p-4" radius="2xl">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D8B894]" size={18} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-soft" size={18} />
             <input 
               type="text" 
               placeholder="Tìm tên sản phẩm, SKU..." 
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full glass-control rounded-xl py-2.5 px-11 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-[#2A1E17] placeholder:text-[#9A8677]/60"
+              className="w-full glass-control rounded-xl py-2.5 px-11 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/60"
             />
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-[#9A8677] uppercase tracking-widest whitespace-nowrap">Danh mục:</span>
+              <span className="text-xs font-bold text-text-muted uppercase tracking-widest whitespace-nowrap">Danh mục:</span>
               <select 
                 value={selectedCategory}
                 onChange={handleCategoryChange}
-                className="glass-control rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-[#2A1E17] bg-white/40"
+                className="glass-control rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary bg-white/40"
               >
-旋                <option value="all">Tất cả</option>
+                <option value="all">Tất cả</option>
                 {categories
-                  .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                  .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
                   .map(cat => {
-                    const depth = categories.filter(c => c.id === cat.parentId).length > 0 ? 1 : 0; // Simple check for depth
-                    // More accurate depth calculation
                     let currentDepth = 0;
-                    let parent = categories.find(c => c.id === cat.parentId);
+                    let parent = categories.find(c => c.id === cat.parent_id);
                     while (parent) {
                       currentDepth++;
-                      const nextParentId = parent.parentId;
+                      const nextParentId = parent.parent_id;
                       parent = nextParentId ? categories.find(c => c.id === nextParentId) : undefined;
                     }
                     return (
@@ -238,7 +352,7 @@ export default function ProductsPage() {
               </select>
             </div>
             
-            <button className="flex items-center gap-2 glass-control rounded-xl py-2.5 px-4 text-sm font-semibold text-[#6F5A4A] hover:bg-white/60 transition-all">
+            <button className="flex items-center gap-2 glass-control rounded-xl py-2.5 px-4 text-sm font-semibold text-text-secondary hover:bg-white/60 transition-all">
               <Filter size={18} />
               Bộ lọc khác
             </button>
@@ -247,11 +361,11 @@ export default function ProductsPage() {
       </GlassCard>
 
       {/* Product List Table */}
-      <div className="table-glass-wrapper overflow-hidden bg-[#FFFAF4]/70 backdrop-blur-[24px] rounded-[24px] border border-[#D8B894]/20 shadow-[0_12px_32px_rgba(91,58,41,0.08)]">
+      <div className="table-glass-wrapper overflow-hidden bg-[#FFFAF4]/70 backdrop-blur-xl rounded-3xl border border-primary-soft/20 shadow-[0_12px_32px_rgba(91,58,41,0.08)]">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-[#FFFAF4]/90 border-b border-[#D8B894]/20 text-[#9A8677] text-xs font-bold uppercase tracking-widest">
+              <tr className="bg-[#FFFAF4]/90 border-b border-primary-soft/20 text-text-muted text-xs font-bold uppercase tracking-widest">
                 <th className="py-5 px-6">Sản phẩm</th>
                 <th className="py-5 px-6">Danh mục</th>
                 <th className="py-5 px-6">Giá cơ bản</th>
@@ -260,19 +374,19 @@ export default function ProductsPage() {
                 <th className="py-5 px-6 text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="text-[#6F5A4A] text-sm">
+            <tbody className="text-text-primary text-sm">
               {isLoadingProducts ? (
                 <tr>
                   <td colSpan={6} className="py-20 text-center">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-[#9A8677] font-medium animate-pulse">Đang tải menu...</p>
+                      <p className="text-text-muted font-medium animate-pulse">Đang tải menu...</p>
                     </div>
                   </td>
                 </tr>
               ) : paginatedProducts.length > 0 ? (
                 paginatedProducts.map((product) => (
-                  <tr key={product.id} className="border-b border-[#D8B894]/10 hover:bg-white/40 transition-colors group">
+                  <tr key={product.id} className="border-b border-primary-soft/10 hover:bg-white/40 transition-colors group">
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-4">
                         <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-sm border border-white/60">
@@ -285,52 +399,52 @@ export default function ProductsPage() {
                           )}
                         </div>
                         <div>
-                          <p className="font-bold text-[#2A1E17] group-hover:text-primary transition-colors">{product.name}</p>
-                          <p className="text-[11px] font-mono text-[#9A8677] uppercase">SKU: PROD-{product.id.split('-')[1] || '001'}</p>
+                          <p className="font-bold text-text-primary group-hover:text-primary transition-colors">{product.name}</p>
+                          <p className="text-[11px] font-mono text-text-muted uppercase">SKU: {product.sku}</p>
                         </div>
                       </div>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/60 border border-[#D8B894]/20">
-                        {categories.find(c => c.id === product.categoryId)?.name || 'Chưa phân loại'}
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white/60 border border-primary-soft/20">
+                        {categories.find(c => c.id === product.category_id)?.name || 'Chưa phân loại'}
                       </span>
                     </td>
-                    <td className="py-4 px-6 font-bold text-[#2A1E17]">
-                      ₫{product.basePrice.toLocaleString('vi-VN')}
+                    <td className="py-4 px-6 font-bold text-text-primary">
+                      {product.base_price.toLocaleString(product.currency?.locale || 'vi-VN', { style: 'currency', currency: product.currency?.currency || 'VND' })}
                     </td>
                     <td className="py-4 px-6">
                       <div className={cn(
                         "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold",
-                        product.isActive 
-                          ? "bg-[#21B57D]/10 text-[#21B57D]" 
+                        product.is_active 
+                          ? "bg-mint/10 text-mint" 
                           : "bg-[#F56B7A]/10 text-[#F56B7A]"
                       )}>
-                        {product.isActive ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-                        {product.isActive ? 'Đang bán' : 'Ngừng bán'}
+                        {product.is_active ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                        {product.is_active ? 'Đang bán' : 'Ngưng bán'}
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-xs text-[#9A8677]">
-                      {new Date(product.createdAt).toLocaleDateString('vi-VN')}
+                    <td className="py-4 px-6 text-xs text-text-muted">
+                      {new Date(product.created_at).toLocaleDateString('vi-VN')}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleViewProduct(product)}
-                          className="p-2 text-[#9A8677] hover:text-[#0FA7A0] hover:bg-[#0FA7A0]/10 rounded-xl transition-all" 
-                          title="Xem chi tiết"
+                          className="p-2 text-text-muted hover:text-aqua hover:bg-aqua/10 rounded-xl transition-all" 
+                          title="Xem chi tiáº¿t"
                         >
                           <Eye size={18} />
                         </button>
                         <button 
                           onClick={() => handleEditProduct(product)}
-                          className="p-2 text-[#9A8677] hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
-                          title="Chỉnh sửa"
+                          className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-all" 
+                          title="Chá»‰nh sá»­a"
                         >
                           <Edit2 size={18} />
                         </button>
                         <button 
                           onClick={() => handleDeleteProduct(product)}
-                          className="p-2 text-[#9A8677] hover:text-[#D95F76] hover:bg-[#D95F76]/10 rounded-xl transition-all" 
+                          className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-xl transition-all" 
                           title="Xóa"
                         >
                           <Trash2 size={18} />
@@ -341,7 +455,7 @@ export default function ProductsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center text-[#9A8677]">
+                  <td colSpan={6} className="py-20 text-center text-text-muted">
                     Không tìm thấy sản phẩm nào phù hợp.
                   </td>
                 </tr>
@@ -351,15 +465,16 @@ export default function ProductsPage() {
         </div>
         
         {/* Pagination Footer */}
-        <div className="px-6 py-4 flex items-center justify-between border-t border-[#D8B894]/20 bg-[#FFFAF4]/40">
-          <p className="text-xs text-[#6F5A4A] font-medium">
-            Hiển thị <span className="font-bold">{filteredProducts.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)}</span> trên <span className="font-bold">{filteredProducts.length}</span> sản phẩm
+        <div className="px-6 py-4 flex items-center justify-between border-t border-primary-soft/20 bg-[#FFFAF4]/40">
+          <p className="text-xs text-text-secondary font-medium">
+            Hiển thị <span className="font-bold">{filteredProducts.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0}-{Math.min(filteredProducts.length, currentPage * ITEMS_PER_PAGE)}
+              </span> trên <span className="font-bold">{filteredProducts.length}</span> sản phẩm
           </p>
           <div className="flex items-center gap-2">
             <button 
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              className="px-3 py-1.5 rounded-xl border border-[#D8B894]/20 text-[#6F5A4A] text-xs font-bold disabled:opacity-40 hover:bg-white/60 transition-all"
+              className="px-3 py-1.5 rounded-xl border border-primary-soft/20 text-text-secondary text-xs font-bold disabled:opacity-40 hover:bg-white/60 transition-all"
             >
               Trước
             </button>
@@ -372,7 +487,7 @@ export default function ProductsPage() {
                   "w-8 h-8 rounded-xl text-xs font-bold transition-all",
                   currentPage === page 
                     ? "bg-primary text-white shadow-sm" 
-                    : "border border-[#D8B894]/20 text-[#6F5A4A] hover:bg-white/60"
+                    : "border border-primary-soft/20 text-text-secondary hover:bg-white/60"
                 )}
               >
                 {page}
@@ -382,7 +497,7 @@ export default function ProductsPage() {
             <button 
               disabled={currentPage === totalPages || totalPages === 0}
               onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              className="px-3 py-1.5 rounded-xl border border-[#D8B894]/20 text-[#6F5A4A] text-xs font-bold disabled:opacity-40 hover:bg-white/60 transition-all"
+              className="px-3 py-1.5 rounded-xl border border-primary-soft/20 text-text-secondary text-xs font-bold disabled:opacity-40 hover:bg-white/60 transition-all"
             >
               Sau
             </button>

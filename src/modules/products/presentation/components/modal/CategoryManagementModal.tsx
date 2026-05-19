@@ -35,6 +35,10 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CategoryManagementModalProps } from '@/modules/products/types/category-management-modal-props.type';
 import { SortableCategoryItem } from './SortableCategoryItem';
 
+type CategoryNode = Category & {
+  children: CategoryNode[];
+};
+
 
 
 
@@ -75,21 +79,21 @@ export function CategoryManagementModal({
 
   // Build tree structure
   const hierarchicalCategories = useMemo(() => {
-    const map = new Map<string, Category & { children: any[] }>();
+    const map = new Map<string, CategoryNode>();
     categories.forEach(cat => map.set(cat.id, { ...cat, children: [] }));
     
-    const roots: any[] = [];
+    const roots: CategoryNode[] = [];
     map.forEach(cat => {
-      if (cat.parentId && map.has(cat.parentId)) {
-        map.get(cat.parentId)!.children.push(cat);
+      if (cat.parent_id && map.has(cat.parent_id)) {
+        map.get(cat.parent_id)!.children.push(cat);
       } else {
         roots.push(cat);
       }
     });
 
-    // Sort by displayOrder
-    const sortTree = (nodes: any[]) => {
-      nodes.sort((a, b) => a.displayOrder - b.displayOrder);
+    // Sort by display_order
+    const sortTree = (nodes: CategoryNode[]) => {
+      nodes.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
       nodes.forEach(node => {
         if (node.children.length > 0) sortTree(node.children);
       });
@@ -103,7 +107,7 @@ export function CategoryManagementModal({
   const visibleItems = useMemo(() => {
     const flattened: { id: string; depth: number; category: Category }[] = [];
     
-    const process = (nodes: any[], depth = 0) => {
+    const process = (nodes: CategoryNode[], depth = 0) => {
       nodes.forEach(node => {
         flattened.push({ id: node.id, depth, category: node });
         if (expandedIds.has(node.id) && node.children.length > 0) {
@@ -125,12 +129,6 @@ export function CategoryManagementModal({
     setActiveId(null);
 
     if (over && active.id !== over.id) {
-      const oldIndex = visibleItems.findIndex(item => item.id === active.id);
-      const newIndex = visibleItems.findIndex(item => item.id === over.id);
-
-      const activeItem = visibleItems[oldIndex];
-      const overItem = visibleItems[newIndex];
-
       // Simple implementation: reorder at same level
       // In a real hierarchical dnd, this is much more complex
       const newArr = arrayMove(categories, 
@@ -141,7 +139,7 @@ export function CategoryManagementModal({
       // Update display orders based on new array within respective parent
       const updatedArr = newArr.map((cat, idx) => ({
         ...cat,
-        displayOrder: idx
+        display_order: idx
       }));
 
       await onReorder(updatedArr);
@@ -155,9 +153,10 @@ export function CategoryManagementModal({
       await onUpdate(editingCategory.id, { name: newCategoryName });
     } else {
       await onCreate({ 
-        name: newCategoryName, 
-        parentId: parentForNew,
-        displayOrder: categories.filter(c => c.parentId === parentForNew).length 
+        name: newCategoryName,
+        is_active: true,
+        parent_id: parentForNew,
+        display_order: categories.filter(c => c.parent_id === parentForNew).length,
       });
     }
 
@@ -206,10 +205,10 @@ export function CategoryManagementModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
+            className="fixed inset-0 z-100 bg-black/20 backdrop-blur-sm"
           />
 
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
+          <div className="fixed inset-0 z-101 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -218,33 +217,33 @@ export function CategoryManagementModal({
             >
               <GlassCard className="flex flex-col max-h-[85vh] shadow-[0_32px_64px_rgba(91,58,41,0.15)]" radius="4xl">
                 {/* Header */}
-                <div className="p-6 border-b border-[#D8B894]/20 bg-white/40 flex items-center justify-between shrink-0">
+                <div className="p-6 border-b border-primary-soft/20 bg-white/40 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                       <Folder size={20} />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-[#2A1E17]">Quản lý Danh mục</h2>
-                      <p className="text-xs text-[#9A8677]">Kéo thả để sắp xếp thứ tự và cấu trúc menu.</p>
+                      <h2 className="text-xl font-bold text-text-primary">Quản lý Danh mục</h2>
+                      <p className="text-xs text-text-muted">Kéo thả để sắp xếp thứ tự và cấu trúc menu.</p>
                     </div>
                   </div>
                   <button 
                     onClick={onClose}
-                    className="p-2.5 text-[#9A8677] hover:bg-white/60 rounded-xl transition-all"
+                    className="p-2.5 text-text-muted hover:bg-white/60 rounded-xl transition-all"
                   >
                     <X size={20} />
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 min-h-[400px]">
+                <div className="flex-1 overflow-y-auto p-6 min-h-100">
                   {isAdding && (
                     <motion.div 
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mb-6 p-4 rounded-[24px] bg-primary/5 border border-primary/20"
+                      className="mb-6 p-4 rounded-3xl bg-primary/5 border border-primary/20"
                     >
-                      <label className="text-[10px] font-bold text-[#9A8677] uppercase tracking-widest block mb-2 px-1">
+                      <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest block mb-2 px-1">
                         {editingCategory ? 'Chỉnh sửa danh mục' : parentForNew ? 'Thêm danh mục con' : 'Thêm danh mục mới'}
                       </label>
                       <div className="flex gap-2">
@@ -266,7 +265,7 @@ export function CategoryManagementModal({
                         </button>
                         <button 
                           onClick={() => { setIsAdding(false); setEditingCategory(null); setParentForNew(undefined); }}
-                          className="px-4 py-2 rounded-xl text-xs font-bold text-[#6F5A4A] hover:bg-white transition-all"
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:bg-white transition-all"
                         >
                           Hủy
                         </button>
@@ -295,13 +294,13 @@ export function CategoryManagementModal({
                               onEdit={startEdit}
                               onDeleteRequest={handleDeleteRequest}
                               onAddSub={startAddSub}
-                              hasChildren={categories.some(c => c.parentId === item.id)}
+                              hasChildren={categories.some(c => c.parent_id === item.id)}
                               isExpanded={expandedIds.has(item.id)}
                               onToggle={toggleExpand}
                             />
                           ))
                         ) : (
-                          <div className="py-20 text-center text-[#9A8677]">
+                          <div className="py-20 text-center text-text-muted">
                              <Folder className="mx-auto mb-3 opacity-20" size={48} />
                              <p className="text-sm">Chưa có danh mục nào.</p>
                           </div>
@@ -314,7 +313,7 @@ export function CategoryManagementModal({
                         <div className="flex items-center gap-3 p-3 rounded-2xl border bg-white border-primary shadow-2xl opacity-90 scale-105">
                            <GripVertical size={18} className="text-primary" />
                            <FolderOpen size={18} className="text-primary" />
-                           <span className="font-bold text-[#2A1E17]">
+                           <span className="font-bold text-text-primary">
                               {categories.find(c => c.id === activeId)?.name}
                            </span>
                         </div>
@@ -324,17 +323,17 @@ export function CategoryManagementModal({
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-[#D8B894]/20 bg-white/40 flex items-center justify-between shrink-0">
+                <div className="p-6 border-t border-primary-soft/20 bg-white/40 flex items-center justify-between shrink-0">
                   <button 
                     onClick={() => { setIsAdding(true); setEditingCategory(null); setParentForNew(undefined); }}
-                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-[#D8B894]/30 text-sm font-bold text-[#6F5A4A] shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white border border-primary-soft/30 text-sm font-bold text-text-secondary shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
                   >
                     <Plus size={18} />
                     Danh mục gốc
                   </button>
                   <button 
                     onClick={onClose}
-                    className="px-8 py-3 rounded-2xl bg-[#8B5E3C] text-white text-sm font-bold shadow-lg shadow-[#8B5E3C]/20 hover:bg-[#5B3A29] transition-all active:scale-[0.98]"
+                    className="px-8 py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary-deep transition-all active:scale-[0.98]"
                   >
                     Hoàn tất
                   </button>

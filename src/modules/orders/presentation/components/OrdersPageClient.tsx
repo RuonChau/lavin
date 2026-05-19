@@ -29,7 +29,7 @@ import { getPaymentStatusConfig } from '../../config/payment-status.config';
 import { StatsOverviewOrder } from '../../mocks/stats-overview-order.mock';
 
 export default function OrdersPage() {
-  const { orders, isLoading, refreshOrders } = useOrders();
+  const { orders, isLoading, isMutating, refreshOrders, updateOrderStatus, cancelOrder } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -38,6 +38,7 @@ export default function OrdersPage() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = isSubmitting || isMutating;
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
@@ -90,8 +91,20 @@ export default function OrdersPage() {
   };
 
   const handleConfirmPayment = async () => {
+    if (!selectedOrder) return;
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const paid = await updateOrderStatus({
+      id: selectedOrder.id,
+      data: { payment_status: 'PAID' },
+    }).then(() => true).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Khong the cap nhat thanh toan';
+      toast.error(message);
+      return false;
+    });
+    if (!paid) {
+      setIsSubmitting(false);
+      return;
+    }
     toast.success('Xác nhận thanh toán thành công!');
     setIsSubmitting(false);
     setIsPaymentModalOpen(false);
@@ -99,8 +112,20 @@ export default function OrdersPage() {
   };
 
   const handleConfirmStatus = async () => {
+    if (!selectedOrder) return;
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const updated = await updateOrderStatus({
+      id: selectedOrder.id,
+      data: { order_status: 'SHIPPED' },
+    }).then(() => true).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Khong the cap nhat trang thai';
+      toast.error(message);
+      return false;
+    });
+    if (!updated) {
+      setIsSubmitting(false);
+      return;
+    }
     toast.success('Đã cập nhật trạng thái chuẩn bị xong!');
     setIsSubmitting(false);
     setIsStatusModalOpen(false);
@@ -108,8 +133,19 @@ export default function OrdersPage() {
   };
 
   const handleConfirmCancel = async () => {
+    if (!selectedOrder) return;
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    const cancelled = await cancelOrder(selectedOrder.id)
+      .then(() => true)
+      .catch((error: unknown) => {
+        const message = error instanceof Error ? error.message : 'Khong the huy don hang';
+        toast.error(message);
+        return false;
+      });
+    if (!cancelled) {
+      setIsSubmitting(false);
+      return;
+    }
     toast.error('Đã hủy đơn hàng.');
     setIsSubmitting(false);
     setIsCancelModalOpen(false);
@@ -143,7 +179,7 @@ export default function OrdersPage() {
         onClose={() => setIsPaymentModalOpen(false)}
         order={selectedOrder}
         onConfirm={handleConfirmPayment}
-        isSubmitting={isSubmitting}
+        isSubmitting={submitting}
       />
 
       <StatusUpdateModal
@@ -151,7 +187,7 @@ export default function OrdersPage() {
         onClose={() => setIsStatusModalOpen(false)}
         order={selectedOrder}
         onConfirm={handleConfirmStatus}
-        isSubmitting={isSubmitting}
+        isSubmitting={submitting}
         title="Đồ uống đã sẵn sàng?"
         description="Xác nhận món đã pha chế xong và thông báo cho khách hàng đến lấy."
       />
@@ -161,7 +197,7 @@ export default function OrdersPage() {
         onClose={() => setIsCancelModalOpen(false)}
         order={selectedOrder}
         onConfirm={handleConfirmCancel}
-        isSubmitting={isSubmitting}
+        isSubmitting={submitting}
       />
 
       {/* Stats Overview */}

@@ -37,8 +37,8 @@ export const useCategories = () => {
       // In a real app, you might have a bulk update endpoint
       for (const cat of updatedCategories) {
         await categoryService.updateCategory(cat.id, { 
-          displayOrder: cat.displayOrder,
-          parentId: cat.parentId 
+          display_order: cat.display_order,
+          parent_id: cat.parent_id,
         });
       }
     },

@@ -1,5 +1,6 @@
 import { URL_API } from "@/infrastructure/configs/env";
 import { browserAuthSession } from "@/modules/auth/infrastructure/auth/browser-auth-session";
+import { unwrapData } from "@/shared/lib/api-response";
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
@@ -7,7 +8,12 @@ type RetryableRequestConfig = InternalAxiosRequestConfig & {
 };
 
 type RefreshTokenResponse = {
-  accessToken: string;
+  accessToken?: string;
+  access_token?: string;
+  data?: {
+    accessToken?: string;
+    access_token?: string;
+  };
 };
 
 const axiosClient = axios.create({
@@ -76,7 +82,13 @@ axiosClient.interceptors.response.use(
         { withCredentials: true }
       );
 
-      const newToken = res.data.accessToken;
+      const payload = unwrapData<RefreshTokenResponse>(res.data);
+      const newToken = payload.accessToken ?? payload.access_token;
+
+      if (!newToken) {
+        throw new Error("Refresh token response did not include an access token.");
+      }
+
       browserAuthSession.setAccessToken(newToken);
       processQueue(newToken);
 

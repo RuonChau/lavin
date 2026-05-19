@@ -1,21 +1,28 @@
 'use client';
 
-import { useForm } from 'react-hook-form';
+import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Check, Loader2, Plus, XCircle, PencilLine, Save } from 'lucide-react';
+import { X, Loader2, Plus, XCircle, PencilLine, Save } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
 import { useState, useEffect } from 'react';
 import { EditProductFormData, editProductSchema } from '@/modules/products/validations/edit-product.schema';
 import { EditProductModalProps } from '@/modules/products/types/edit-product-modal-props.type';
 
+type SizeImagePreview = {
+  id: string;
+  previewUrl: string;
+};
 
-
+function getCurrencyLocale(currency: string) {
+  if (currency === 'USD') return 'en-US';
+  if (currency === 'EUR') return 'de-DE';
+  return 'vi-VN';
+}
 
 export function EditProductModal({ isOpen, onClose, product, categories, onSubmit, isSubmitting }: EditProductModalProps) {
-  const [sizeImages, setSizeImages] = useState<Record<string, string[]>>({
+  const [sizeImages, setSizeImages] = useState<Record<string, SizeImagePreview[]>>({
     'S': [],
     'M': [],
     'L': [],
@@ -25,6 +32,7 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
     register,
     handleSubmit,
     reset,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<EditProductFormData>({
@@ -36,36 +44,55 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
     if (product) {
       reset({
         name: product.name,
-        categoryId: product.categoryId,
-        basePrice: product.basePrice,
-        baseCurrency: (product as any).baseCurrency || '₫',
+        categoryId: product.category_id,
+        base_price: product.base_price,
+        currency: product.currency ?? {
+          currency: 'VND',
+          locale: 'vi-VN',
+        },
         description: product.description || '',
-        isActive: product.isActive,
-        sizes: (product as any).sizes || [],
-        sizeConfigs: (product as any).sizeConfigs || {
+        is_active: product.is_active,
+        sizes: product.sizes || [],
+        sizeConfigs: product.sizeConfigs || {
           'S': { price: 0 },
           'M': { price: 0 },
           'L': { price: 0 },
         },
       });
-      // In a real app, images would be initialized from the product entity
       setSizeImages({
-        'S': (product as any).sizeImages?.S || [],
-        'M': (product as any).sizeImages?.M || [],
-        'L': (product as any).sizeImages?.L || [],
+        'S': (product.sizeImages?.S || []).map((url, index) => ({ id: `S-${index}-${url}`, previewUrl: url })),
+        'M': (product.sizeImages?.M || []).map((url, index) => ({ id: `M-${index}-${url}`, previewUrl: url })),
+        'L': (product.sizeImages?.L || []).map((url, index) => ({ id: `L-${index}-${url}`, previewUrl: url })),
       });
     }
   }, [product, reset]);
 
   const selectedSizes = watch('sizes') || [];
 
-  const addMockImage = (size: string) => {
-    if (sizeImages[size].length >= 5) return;
-    const newImages = [...sizeImages[size], `https://picsum.photos/seed/${size}${sizeImages[size].length + Math.random()}/200/200`];
-    setSizeImages({ ...sizeImages, [size]: newImages });
+  const addLocalImages = (size: string, files: FileList | null) => {
+    if (!files?.length) return;
+
+    const availableSlots = Math.max(0, 5 - sizeImages[size].length);
+    const nextImages = Array.from(files)
+      .filter((file) => file.type.startsWith('image/'))
+      .slice(0, availableSlots)
+      .map((file) => ({
+        id: `${size}-${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        previewUrl: URL.createObjectURL(file),
+      }));
+
+    if (nextImages.length === 0) return;
+
+    setSizeImages({
+      ...sizeImages,
+      [size]: [...sizeImages[size], ...nextImages],
+    });
   };
 
   const removeImage = (size: string, index: number) => {
+    const removedImage = sizeImages[size][index];
+    if (removedImage?.previewUrl.startsWith('blob:')) URL.revokeObjectURL(removedImage.previewUrl);
+
     const newImages = sizeImages[size].filter((_, i) => i !== index);
     setSizeImages({ ...sizeImages, [size]: newImages });
   };
@@ -146,13 +173,13 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
                       >
                         <option value="">Chọn danh mục...</option>
                         {categories
-                          .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0))
+                          .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
                           .map(cat => {
                             let currentDepth = 0;
-                            let parent = categories.find(c => c.id === cat.parentId);
+                            let parent = categories.find(c => c.id === cat.parent_id);
                             while (parent) {
                               currentDepth++;
-                              const nextParentId = parent.parentId;
+                              const nextParentId = parent.parent_id;
                               parent = nextParentId ? categories.find(c => c.id === nextParentId) : undefined;
                             }
                             return (
@@ -173,33 +200,40 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
                       <div className="flex gap-2">
                         <div className="flex-1">
                           <input 
-                            {...register('basePrice', { valueAsNumber: true })}
+                            {...register('base_price', { valueAsNumber: true })}
                             type="number" 
                             className={cn(
                               "w-full glass-control rounded-2xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-[#2A1E17] placeholder:text-[#9A8677]/40",
-                              errors.basePrice && "border-red-400"
+                              errors.base_price && "border-red-400"
                             )}
                           />
                         </div>
                         <div className="w-24">
                           <select 
-                            {...register('baseCurrency')}
+                            {...register('currency.currency', {
+                              onChange: (event) => {
+                                setValue('currency.locale', getCurrencyLocale(event.target.value), {
+                                  shouldValidate: true,
+                                });
+                              },
+                            })}
                             className="w-full glass-control rounded-2xl py-3 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-[#2A1E17] bg-white/40 appearance-none"
                           >
-                            <option value="₫">₫ (VNĐ)</option>
-                            <option value="$">$ (USD)</option>
-                            <option value="€">€ (EUR)</option>
+                            <option value="VND">VND</option>
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
                           </select>
+                          <input type="hidden" {...register('currency.locale')} />
                         </div>
                       </div>
-                      {errors.basePrice && <p className="text-[10px] text-red-500 ml-1">{errors.basePrice.message}</p>}
+                      {errors.base_price && <p className="text-[10px] text-red-500 ml-1">{errors.base_price.message}</p>}
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[11px] font-bold text-[#9A8677] uppercase tracking-widest ml-1">Trạng thái bán</label>
                       <div className="flex items-center gap-3 p-3 glass-control rounded-2xl bg-white/40">
                          <input 
-                           {...register('isActive')}
+                           {...register('is_active')}
                            type="checkbox" 
                            id="edit-is-active"
                            className="w-5 h-5 rounded-md border-[#D8B894]/40 text-primary focus:ring-primary/20 bg-white"
@@ -258,7 +292,7 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
                               <label className="text-[10px] font-bold text-[#9A8677] uppercase tracking-widest ml-1">Giá bán Size {size}</label>
                               <div className="relative">
                                 <input 
-                                  {...register(`sizeConfigs.${size}.price` as any, { valueAsNumber: true })}
+                                  {...register(`sizeConfigs.${size}.price` as FieldPath<EditProductFormData>, { valueAsNumber: true })}
                                   type="number" 
                                   placeholder="0"
                                   className="w-full glass-control rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-[#2A1E17]"
@@ -269,9 +303,9 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
                             <div className="space-y-2">
                               <label className="text-[10px] font-bold text-[#9A8677] uppercase tracking-widest ml-1">Hình ảnh Size {size}</label>
                               <div className="flex flex-wrap gap-3">
-                                {sizeImages[size]?.map((img, idx) => (
-                                  <div key={idx} className="relative w-[72px] h-[72px] rounded-xl overflow-hidden border border-[#D8B894]/30 shadow-sm transition-transform hover:scale-[1.02]">
-                                    <img src={img} alt={`Preview ${size} ${idx}`} className="w-full h-full object-cover" />
+                                {sizeImages[size]?.map((image, idx) => (
+                                  <div key={image.id} className="relative w-[72px] h-[72px] rounded-xl overflow-hidden border border-[#D8B894]/30 shadow-sm transition-transform hover:scale-[1.02]">
+                                    <img src={image.previewUrl} alt={`Preview ${size} ${idx}`} className="w-full h-full object-cover" />
                                     <button 
                                       type="button"
                                       onClick={() => removeImage(size, idx)}
@@ -283,16 +317,24 @@ export function EditProductModal({ isOpen, onClose, product, categories, onSubmi
                                 ))}
 
                                 {sizeImages[size]?.length < 5 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => addMockImage(size)}
+                                  <label
                                     className="w-[110px] h-[72px] rounded-xl border-1.5 border-dashed border-[#8B5E3C]/30 bg-[#8B5E3C]/5 flex flex-col items-center justify-center gap-1 transition-all hover:bg-[#8B5E3C]/10 hover:border-[#8B5E3C]/50"
                                   >
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      multiple
+                                      className="sr-only"
+                                      onChange={(event) => {
+                                        addLocalImages(size, event.target.files);
+                                        event.target.value = '';
+                                      }}
+                                    />
                                     <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shadow-sm">
                                       <Plus size={14} strokeWidth={3} />
                                     </div>
                                     <span className="text-[10px] font-bold text-primary">Thêm ảnh</span>
-                                  </button>
+                                  </label>
                                 )}
                               </div>
                             </div>
