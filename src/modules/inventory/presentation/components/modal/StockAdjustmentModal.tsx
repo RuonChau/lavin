@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { X, Save, Loader2, ArrowUpRight, ArrowDownRight, AlertTriangle, History } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Material } from '../../../domain/entities/material.entity';
 import { cn } from '@/shared/utils/cn';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface StockAdjustmentModalProps {
   isOpen: boolean;
@@ -42,24 +42,7 @@ export function StockAdjustmentModal({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[120] bg-black/20 backdrop-blur-sm"
-          />
-
-          <div className="fixed inset-0 z-[121] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={448} zIndex={1200}>
               <GlassCard className="relative p-8" radius="4xl">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -176,10 +159,6 @@ export function StockAdjustmentModal({
                   </div>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

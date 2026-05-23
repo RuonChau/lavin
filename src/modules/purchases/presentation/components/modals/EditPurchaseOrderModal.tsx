@@ -3,7 +3,7 @@ import { MaterialSelectionModal } from "@/modules/inventory/presentation/compone
 import { MOCK_MATERIALS } from "@/modules/purchases/mocks/material.mock";
 import { EditPurchaseOrderModalProps } from "@/modules/purchases/types/EditPurchaseOrderModalProps";
 import { GlassCard } from "@/shared/components/GlassCard";
-import { AnimatePresence, motion } from "framer-motion";
+import { AntdModalShell } from "@/shared/ui/antdModalShell";
 import { Edit2, Minus, Package, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 
@@ -46,23 +46,8 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-md"
-      />
-
-      <div key="modal-container" className="fixed inset-0 z-[151] flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 50 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 50 }}
-          className="w-full max-w-2xl pointer-events-auto"
-        >
+    <>
+      <AntdModalShell open={!!order} onClose={onClose} width={672} zIndex={1500} maskColor="rgba(0, 0, 0, 0.4)">
           <GlassCard className="overflow-hidden" radius="4xl">
             <div className="p-8 border-b border-[#D8B894]/20 bg-white/60 flex items-center justify-between">
               <div className="flex items-center gap-5">
@@ -205,8 +190,7 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
                </div>
             </div>
           </GlassCard>
-        </motion.div>
-      </div>
+      </AntdModalShell>
 
       <MaterialSelectionModal
         isOpen={isMaterialPickerOpen}
@@ -216,6 +200,6 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
         title="Thêm mặt hàng nhập"
         description="Chọn nguyên liệu cần cập nhật cho đơn hàng này."
       />
-    </AnimatePresence>
+    </>
   );
 }

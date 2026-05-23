@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
-import { X, AlertTriangle, Trash2, Loader2, XCircle } from 'lucide-react';
+import { X, Trash2, Loader2, XCircle } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Order } from '@/modules/orders/domain/entities/order.entity';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface CancelOrderModalProps {
   isOpen: boolean;
@@ -17,24 +17,7 @@ export function CancelOrderModal({ isOpen, onClose, order, onConfirm, isSubmitti
   if (!order) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
-          />
-
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-sm pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={384} zIndex={1000}>
               <GlassCard className="relative overflow-hidden p-8 text-center" radius="4xl">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center text-red-500 shadow-inner border border-red-100">
@@ -75,10 +58,6 @@ export function CancelOrderModal({ isOpen, onClose, order, onConfirm, isSubmitti
                   <X size={20} />
                 </button>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

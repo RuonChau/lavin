@@ -1,24 +1,21 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, 
   Printer, 
-  Clock, 
   CheckCircle2, 
-  XCircle,
   User, 
   CreditCard, 
   ShoppingBag,
   MapPin,
   MessageSquare,
-  Coffee,
   Timer
 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Order, OrderStatus } from '@/modules/orders/domain/entities/order.entity';
 import { cn } from '@/shared/utils/cn';
 import { getStatusConfig } from '@/modules/orders/config/order-status.config';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -33,26 +30,7 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
   const currentStatus = getStatusConfig(order.status);
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-3xl pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={768} zIndex={1000}>
               <GlassCard className="relative overflow-hidden flex flex-col max-h-[90vh]" radius="4xl">
                 {/* Header */}
                 <div className="p-6 border-b border-[#D8B894]/20 bg-white/40 flex items-center justify-between">
@@ -249,10 +227,6 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                   </div>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

@@ -8,4 +8,5 @@ export interface EditProductModalProps {
   categories: Category[];
   onSubmit: (data: EditProductFormData) => void;
   isSubmitting?: boolean;
+  isLoadingProductDetail?: boolean;
 }

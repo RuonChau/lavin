@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
-import { X, Coffee, Check, Loader2, Sparkles } from 'lucide-react';
+import { X, Coffee, Check, Loader2 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Order } from '@/modules/orders/domain/entities/order.entity';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface StatusUpdateModalProps {
   isOpen: boolean;
@@ -29,24 +29,7 @@ export function StatusUpdateModal({
   if (!order) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
-          />
-
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-sm pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={384} zIndex={1000}>
               <GlassCard className="relative overflow-hidden p-8 text-center" radius="4xl">
                 <div className="flex flex-col items-center space-y-4">
                   <div className="w-16 h-16 rounded-3xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
@@ -87,10 +70,6 @@ export function StatusUpdateModal({
                   <X size={18} />
                 </button>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

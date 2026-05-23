@@ -1,39 +1,21 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { X, Coffee, CheckCircle2, XCircle, Info, Tag, Calendar, DollarSign, Layers } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
 import { ProductDetailsModalProps } from '@/modules/products/types/product-details-modal-props.type';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 
 
 export function ProductDetailsModal({ isOpen, onClose, product, categories }: ProductDetailsModalProps) {
   if (!product) return null;
+  console.log('product: ', product);
 
   const categoryName = categories.find(c => c.id === product.category_id)?.name || 'Chưa phân loại';
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-100 bg-black/20 backdrop-blur-sm"
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 z-101 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={672} zIndex={1000}>
               <GlassCard className="relative overflow-hidden flex flex-col max-h-[90vh]" radius="4xl">
                 {/* Header with Background Pattern */}
                 <div className="relative h-32 bg-primary overflow-hidden">
@@ -67,7 +49,7 @@ export function ProductDetailsModal({ isOpen, onClose, product, categories }: Pr
                        <h2 className="text-2xl font-bold text-text-primary leading-tight">{product.name}</h2>
                        <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] font-mono text-text-muted uppercase tracking-wider bg-[#FFFAF4] px-2 py-0.5 rounded-md border border-primary-soft/20">
-                            SKU: PROD-{product.id.split('-')[1] || '001'}
+                            SKU: {product.sku || 'N/A'}
                           </span>
                           <div className={cn(
                             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold",
@@ -147,22 +129,33 @@ export function ProductDetailsModal({ isOpen, onClose, product, categories }: Pr
                          <h3 className="text-sm font-bold text-text-primary uppercase tracking-wider">Cấu hình chi tiết theo Size</h3>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                         {Object.entries(product.sizeConfigs).filter(([size]) => product.sizes?.includes(size)).map(([size, config]) => (
-                           <div key={size} className="p-4 rounded-2xl bg-white border border-primary-soft/20 shadow-sm flex flex-col gap-2">
+                        { product.variants?.map(variant => (
+                            <div key={variant.size} className="p-4 rounded-2xl bg-white border border-primary-soft/20 shadow-sm flex flex-col gap-2">
                               <div className="flex items-center justify-between">
-                                 <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">
-                                   {size}
-                                 </span>
-                                 <span className="text-xs font-bold text-primary">₫{config.price.toLocaleString('vi-VN')}</span>
+                                <div className="flex items-center gap-2 text-text-muted">
+                                  <Coffee size={14} />
+                                  <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[10px] font-bold">
+                                    {variant.size}
+                                  </span>
+                                </div>
+                                <span className="text-xs font-bold text-primary">
+                                {Number(variant.price).toLocaleString(product.currency?.locale || 'vi-VN', {
+                                  style: 'currency',
+                                  currency: product.currency?.currency || 'VND',
+                                })}
+                                </span>
                               </div>
-                              <div className="mt-2 flex -space-x-2 overflow-hidden">
-                                 {/* Simulating size-specific images if they exist in state or entity */}
-                                 <div className="inline-block h-8 w-8 rounded-lg ring-2 ring-white bg-[#FFFAF4] items-center justify-center text-primary-soft">
-                                    <Coffee size={14} />
-                                 </div>
+                              <div className="mt-2 flex items-center space-x-3 overflow-hidden">
+                                <span className="text-xs font-bold text-primary">
+                                  Đã bán: {variant.sold_count}
+                                </span>
+                              </div>
+                              <div className="mt-2 flex items-center space-x-3 overflow-hidden">
+                                <span className='text-xs text-primary font-bold'>Số lượng {variant.quantity} </span>
                               </div>
                            </div>
-                         ))}
+                          ))
+                        }
                       </div>
                     </div>
                   )}
@@ -183,10 +176,6 @@ export function ProductDetailsModal({ isOpen, onClose, product, categories }: Pr
                   </button>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

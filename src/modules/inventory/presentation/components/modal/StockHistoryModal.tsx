@@ -1,11 +1,12 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { X, History, User, Clock, ArrowUpRight, ArrowDownRight, Package } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Material, StockAdjustment } from '../../../domain/entities/material.entity';
 import { cn } from '@/shared/utils/cn';
 import { useMaterialHistory } from '../../hooks/useInventory';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface StockHistoryModalProps {
   isOpen: boolean;
@@ -19,24 +20,7 @@ export function StockHistoryModal({ isOpen, onClose, material }: StockHistoryMod
   if (!material) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[130] bg-black/20 backdrop-blur-sm"
-          />
-
-          <div className="fixed inset-0 z-[131] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={672} zIndex={1300}>
               <GlassCard className="relative overflow-hidden flex flex-col max-h-[85vh]" radius="4xl">
                 {/* Header */}
                 <div className="p-6 border-b border-[#D8B894]/20 bg-white/40 flex items-center justify-between">
@@ -128,10 +112,6 @@ export function StockHistoryModal({ isOpen, onClose, material }: StockHistoryMod
                    </button>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

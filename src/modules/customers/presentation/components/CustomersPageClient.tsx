@@ -26,7 +26,6 @@ export default function CustomersPage() {
   const [form] = Form.useForm();
 
   const handleAddCustomer = (values: any) => {
-    console.log('New customer:', values);
     setIsAddModalOpen(false);
     form.resetFields();
   };

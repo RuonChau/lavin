@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { 
   X, 
   GripVertical, 
@@ -34,6 +34,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CategoryManagementModalProps } from '@/modules/products/types/category-management-modal-props.type';
 import { SortableCategoryItem } from './SortableCategoryItem';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 type CategoryNode = Category & {
   children: CategoryNode[];
@@ -197,24 +198,8 @@ export function CategoryManagementModal({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-100 bg-black/20 backdrop-blur-sm"
-          />
-
-          <div className="fixed inset-0 z-101 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl pointer-events-auto"
-            >
+    <>
+      <AntdModalShell open={isOpen} onClose={onClose} width={672} zIndex={1000}>
               <GlassCard className="flex flex-col max-h-[85vh] shadow-[0_32px_64px_rgba(91,58,41,0.15)]" radius="4xl">
                 {/* Header */}
                 <div className="p-6 border-b border-primary-soft/20 bg-white/40 flex items-center justify-between shrink-0">
@@ -339,18 +324,15 @@ export function CategoryManagementModal({
                   </button>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
+      </AntdModalShell>
 
           <DeleteCategoryConfirmModal 
-            isOpen={isDeleteConfirmOpen}
+            isOpen={isOpen && isDeleteConfirmOpen}
             onClose={() => setIsDeleteConfirmOpen(false)}
             category={categoryToDelete}
             onConfirm={handleConfirmDelete}
             isDeleting={isMutating}
           />
-        </>
-      )}
-    </AnimatePresence>
+    </>
   );
 }

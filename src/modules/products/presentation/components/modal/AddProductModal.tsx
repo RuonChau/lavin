@@ -2,7 +2,6 @@
 
 import { useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, Loader2, Plus, XCircle, Save } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
@@ -10,6 +9,7 @@ import { useEffect, useRef, useState, type BaseSyntheticEvent } from 'react';
 import { ProductFormData, productSchema } from '../../../validations/add-product.schema';
 import { SIZES } from '@/modules/products/domain/enum/product-size.enum';
 import { AddProductModalProps, type VariantImageItem } from '@/modules/products/types/product-modal-props.type';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 function getCurrencyLocale(currency: string) {
   if (currency === 'USD') return 'en-US';
@@ -23,6 +23,7 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
     'M': [],
     'L': [],
   });
+  const formScrollRef = useRef<HTMLFormElement | null>(null);
   const sizeImagesRef = useRef(sizeImages);
   sizeImagesRef.current = sizeImages;
 
@@ -90,6 +91,14 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
     setSizeImages({ ...sizeImages, [size]: newImages });
   };
 
+  const restoreFormScroll = (scrollTop: number | undefined) => {
+    if (scrollTop === undefined) return;
+
+    requestAnimationFrame(() => {
+      if (formScrollRef.current) formScrollRef.current.scrollTop = scrollTop;
+    });
+  };
+
   const handleFormSubmit = (data: ProductFormData, event?: BaseSyntheticEvent) => {
     const submitter = (event?.nativeEvent as SubmitEvent | undefined)?.submitter as HTMLButtonElement | null;
     const is_draft = submitter?.dataset.draft === 'true';
@@ -101,29 +110,16 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-100 bg-black/20 backdrop-blur-sm"
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 z-101 flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-2xl pointer-events-auto"
-            >
-              <GlassCard className="relative overflow-hidden flex flex-col max-h-[90vh]" radius="4xl">
+    <AntdModalShell
+      open={isOpen}
+      onClose={onClose}
+      width={672}
+      zIndex={1000}
+      className="[&_.ant-modal-content]:!max-h-[calc(100vh-48px)]"
+    >
+              <GlassCard className="relative flex max-h-[calc(100vh-48px)] min-h-0 flex-col overflow-hidden" radius="4xl">
                 {/* Header */}
-                <div className="p-6 border-b border-primary-soft/20 flex items-center justify-between bg-white/40">
+                <div className="shrink-0 p-6 border-b border-primary-soft/20 flex items-center justify-between bg-white/40">
                   <div>
                     <h2 className="text-xl font-bold text-text-primary">Thêm sản phẩm mới</h2>
                     <p className="text-xs text-text-secondary mt-0.5">Điền thông tin chi tiết để tạo sản phẩm trong thực đơn.</p>
@@ -137,7 +133,12 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                 </div>
 
                 {/* Body */}
-                <form id="add-product-form" onSubmit={handleSubmit(handleFormSubmit)} className="flex-1 overflow-y-auto p-8 space-y-6">
+                <form
+                  ref={formScrollRef}
+                  id="add-product-form"
+                  onSubmit={handleSubmit(handleFormSubmit)}
+                  className="max-h-[calc(100vh-230px)] overflow-y-auto overscroll-contain p-8 space-y-6"
+                >
                   {/* Basic Info Group */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -324,8 +325,11 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                                       multiple
                                       className="sr-only"
                                       onChange={(event) => {
+                                        const scrollTop = formScrollRef.current?.scrollTop;
                                         addLocalImages(size, event.target.files);
                                         event.target.value = '';
+                                        event.currentTarget.blur();
+                                        restoreFormScroll(scrollTop);
                                       }}
                                     />
                                     <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shadow-sm">
@@ -344,7 +348,7 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                 </form>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-primary-soft/20 bg-white/40 flex items-center justify-end gap-3">
+                <div className="shrink-0 p-6 border-t border-primary-soft/20 bg-white/40 flex items-center justify-end gap-3">
                   <button 
                     type="button"
                     onClick={onClose}
@@ -382,10 +386,6 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                   </button>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

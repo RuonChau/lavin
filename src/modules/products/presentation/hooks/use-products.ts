@@ -44,6 +44,17 @@ export const useProducts = () => {
     },
   });
 
+  const productDetailQueryOptions = (id: string) => ({
+    queryKey: ['products', id],
+    queryFn: () => productService.getProductDetail(id),
+  });
+
+  const getProductDetail = (id: string) =>
+    queryClient.fetchQuery(productDetailQueryOptions(id));
+
+  const prefetchProductDetail = (id: string) =>
+    queryClient.prefetchQuery(productDetailQueryOptions(id));
+
   return {
     products: productsQuery.data || [],
     isLoadingProducts: productsQuery.isLoading,
@@ -53,6 +64,8 @@ export const useProducts = () => {
     createProduct: createProductMutation.mutateAsync,
     updateProduct: updateProductMutation.mutateAsync,
     deleteProduct: deleteProductMutation.mutateAsync,
+    getProductDetail,
+    prefetchProductDetail,
     isMutatingProduct:
       createProductMutation.isPending ||
       updateProductMutation.isPending ||

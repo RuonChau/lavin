@@ -2,8 +2,9 @@ import { history } from "@/modules/customers/mocks/history.mock";
 import { FilterChipsHistory } from "@/modules/purchases/mocks/filter-chips-history.mock";
 import { HistorySuppiler } from "@/modules/purchases/mocks/history.mock";
 import { SupplierHistoryModalProps } from "@/modules/purchases/types/SupplierHistoryModalProps";
+import { AntdModalShell } from "@/shared/ui/antdModalShell";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, Check, Copy, FileText, History, X } from "lucide-react";
 import { useState } from "react";
 
@@ -22,24 +23,8 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
   if (!supplier) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        key="backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[150] bg-black/40 backdrop-blur-md"
-      />
-
-      <div key="modal-container" className="fixed inset-0 z-[151] flex items-center justify-end pointer-events-none">
-        <motion.div
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="w-full max-w-lg h-full bg-[#FCF9F6] shadow-2xl pointer-events-auto border-l border-[#D8B894]/20"
-        >
+    <AntdModalShell open={!!supplier} onClose={onClose} width={512} zIndex={1500} maskColor="rgba(0, 0, 0, 0.4)">
+        <div className="relative h-[90vh] max-h-[90vh] overflow-hidden bg-[#FCF9F6] shadow-2xl border border-[#D8B894]/20 rounded-[32px]">
           {/* Sidebar Header */}
           <div className="p-8 border-b border-[#D8B894]/10 bg-white/60">
             <div className="flex items-center justify-between mb-6">
@@ -169,8 +154,7 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
                 </button>
              </div>
           </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+        </div>
+    </AntdModalShell>
   );
 }

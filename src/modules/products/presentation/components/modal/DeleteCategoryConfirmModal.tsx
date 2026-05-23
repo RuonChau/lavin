@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { X, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { DeleteCategoryConfirmModalProps } from '@/modules/products/types/delete-category-confirm-modal-props.type';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 
 
@@ -17,26 +17,7 @@ export function DeleteCategoryConfirmModal({
   if (!category) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-md"
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 z-[201] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-sm pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={384} zIndex={1200} maskColor="rgba(0, 0, 0, 0.4)">
               <GlassCard className="relative overflow-hidden p-8 text-center shadow-[0_32px_64px_rgba(220,38,38,0.15)]" radius="4xl">
                 <div className="flex flex-col items-center space-y-4">
                   {/* Warning Icon */}
@@ -83,10 +64,6 @@ export function DeleteCategoryConfirmModal({
                   <X size={18} />
                 </button>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

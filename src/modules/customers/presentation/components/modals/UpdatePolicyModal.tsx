@@ -1,10 +1,10 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { X, Settings, Coins, CalendarClock, Bell, Save } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/shared/utils/cn';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface UpdatePolicyModalProps {
   isOpen: boolean;
@@ -20,27 +20,7 @@ export function UpdatePolicyModal({ isOpen, onClose }: UpdatePolicyModalProps) {
   });
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-primary-deep/20 backdrop-blur-sm z-40"
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="pointer-events-auto w-full max-w-3xl"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={768} zIndex={1000} maskColor="rgba(91, 58, 41, 0.2)">
               <GlassCard radius="3xl" className="p-0 overflow-hidden border-[#D8B894]/30 shadow-2xl">
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-[#D8B894]/20 flex items-center justify-between bg-white/40">
@@ -176,10 +156,6 @@ export function UpdatePolicyModal({ isOpen, onClose }: UpdatePolicyModalProps) {
                   </button>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

@@ -12,7 +12,7 @@ export enum StockStatusEnum {
   PRE_ORDER = "Đặt trước",
 }
 
-export type T_STOCK_STATUS = keyof typeof StockStatusEnum;
+export type TStockStatus = keyof typeof StockStatusEnum;
 
 
 // return:

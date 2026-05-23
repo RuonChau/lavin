@@ -1,10 +1,10 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { X, Warehouse, MapPin, User, ThermometerSnowflake, ShieldCheck, Box } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
 import { useState } from 'react';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface WarehouseModalProps {
   isOpen: boolean;
@@ -25,22 +25,7 @@ export function WarehouseModal({ isOpen, onClose, onSave }: WarehouseModalProps)
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[150] bg-black/20 backdrop-blur-sm"
-      />
-
-      <div className="fixed inset-0 z-[151] flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="w-full max-w-xl pointer-events-auto"
-        >
+    <AntdModalShell open={isOpen} onClose={onClose} width={576} zIndex={1500}>
           <GlassCard className="relative overflow-hidden" radius="4xl">
             {/* Header */}
             <div className="p-8 border-b border-[#D8B894]/20 bg-white/40 flex items-center justify-between">
@@ -170,8 +155,6 @@ export function WarehouseModal({ isOpen, onClose, onSave }: WarehouseModalProps)
               </button>
             </div>
           </GlassCard>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

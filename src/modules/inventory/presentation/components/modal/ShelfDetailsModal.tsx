@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Layout, Box, Hash, MoreVertical, Search, Filter, Warehouse, Layers, CheckCircle2, AlertTriangle, Package, Plus } from 'lucide-react';
+import { X, Layout, Hash, MoreVertical, Search, Warehouse, Layers, CheckCircle2, AlertTriangle, Package, Plus } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
 import { Warehouse as WarehouseType } from '../../../domain/entities/warehouse.entity';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface ShelfDetailsModalProps {
   isOpen: boolean;
@@ -62,23 +63,8 @@ export function ShelfDetailsModal({ isOpen, onClose, warehouse }: ShelfDetailsMo
 
   return (
     <>
-      <AnimatePresence>
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 z-[150] bg-black/20 backdrop-blur-sm"
-        />
-
-        <div className="fixed inset-0 z-[151] flex items-center justify-center p-4 pointer-events-none">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="w-full max-w-5xl pointer-events-auto h-[90vh] flex flex-col"
-          >
-            <GlassCard className="relative overflow-hidden flex flex-col h-full shadow-2xl" radius="4xl">
+      <AntdModalShell open={isOpen} onClose={onClose} width={1024} zIndex={1500}>
+            <GlassCard className="relative overflow-hidden flex flex-col h-[90vh] shadow-2xl" radius="4xl">
               {/* Header */}
               <div className="p-8 border-b border-[#D8B894]/20 bg-white/40 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-5">
@@ -289,12 +275,10 @@ export function ShelfDetailsModal({ isOpen, onClose, warehouse }: ShelfDetailsMo
                  </div>
                  <button onClick={onClose} className="px-10 py-3.5 rounded-2xl bg-white border border-[#D8B894]/30 text-sm font-bold text-[#6F5A4A] transition-all hover:shadow-md active:scale-95">
                    Đóng cửa sổ
-                 </button>
+                </button>
               </div>
             </GlassCard>
-          </motion.div>
-        </div>
-      </AnimatePresence>
+      </AntdModalShell>
 
       <ShelfLevelModal 
         isOpen={isLevelModalOpen}
@@ -330,22 +314,7 @@ function ShelfLevelModal({ isOpen, onClose, rack }: { isOpen: boolean, onClose: 
   })).reverse();
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[160] bg-black/40 backdrop-blur-md"
-      />
-
-      <div className="fixed inset-0 z-[161] flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 100 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 100 }}
-          className="w-full max-w-2xl pointer-events-auto"
-        >
+    <AntdModalShell open={isOpen} onClose={onClose} width={672} zIndex={1600} maskColor="rgba(0, 0, 0, 0.4)">
           <GlassCard className="overflow-hidden" radius="4xl">
             {/* Header */}
             <div className="p-8 border-b border-[#D8B894]/20 bg-white/60 flex items-center justify-between">
@@ -427,9 +396,7 @@ function ShelfLevelModal({ isOpen, onClose, rack }: { isOpen: boolean, onClose: 
                </button>
             </div>
           </GlassCard>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }
 
@@ -450,22 +417,7 @@ function ActionModal({ isOpen, type, rack, onClose }: { isOpen: boolean, type: a
   const Icon = config.icon;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[180] bg-black/50 backdrop-blur-md"
-      />
-
-      <div className="fixed inset-0 z-[181] flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 30 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 30 }}
-          className="w-full max-w-md pointer-events-auto"
-        >
+    <AntdModalShell open={isOpen} onClose={onClose} width={448} zIndex={1800} maskColor="rgba(0, 0, 0, 0.5)">
           <GlassCard className="overflow-hidden" radius="4xl">
             <div className="p-8 border-b border-[#D8B894]/20 bg-white/60 flex items-center justify-between">
               <div className="flex items-center gap-5">
@@ -578,9 +530,7 @@ function ActionModal({ isOpen, type, rack, onClose }: { isOpen: boolean, type: a
                </button>
             </div>
           </GlassCard>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }
 
@@ -588,22 +538,7 @@ function AddRackModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[170] bg-black/40 backdrop-blur-md"
-      />
-
-      <div className="fixed inset-0 z-[171] flex items-center justify-center p-4 pointer-events-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 50 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 50 }}
-          className="w-full max-w-md pointer-events-auto"
-        >
+    <AntdModalShell open={isOpen} onClose={onClose} width={448} zIndex={1700} maskColor="rgba(0, 0, 0, 0.4)">
           <GlassCard className="overflow-hidden" radius="4xl">
             <div className="p-8 border-b border-[#D8B894]/20 bg-white/60 flex items-center justify-between">
               <div className="flex items-center gap-5">
@@ -677,9 +612,6 @@ function AddRackModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => voi
                </button>
             </div>
           </GlassCard>
-        </motion.div>
-      </div>
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }
-

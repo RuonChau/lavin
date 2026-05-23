@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { X, Printer, Calculator, Layers, Beaker, ArrowRight, History } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Formula } from '../../../domain/entities/formula.entity';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 interface FormulaDetailsModalProps {
   isOpen: boolean;
@@ -16,24 +16,7 @@ export function FormulaDetailsModal({ isOpen, onClose, formula, onEdit }: Formul
   if (!formula) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
-          />
-
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-4xl pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={896} zIndex={1000}>
               <GlassCard className="relative overflow-hidden flex flex-col max-h-[90vh]" radius="4xl">
                 {/* Header */}
                 <div className="p-6 border-b border-[#D8B894]/20 bg-white/40 flex items-center justify-between">
@@ -186,10 +169,6 @@ export function FormulaDetailsModal({ isOpen, onClose, formula, onEdit }: Formul
                   </button>
                 </div>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }

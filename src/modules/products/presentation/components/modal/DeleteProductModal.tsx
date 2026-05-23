@@ -1,9 +1,9 @@
 'use client';
 
-import { motion, AnimatePresence } from 'motion/react';
 import { X, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { DeleteProductModalProps } from '@/modules/products/types/delete-product-modal-props.type';
+import { AntdModalShell } from '@/shared/ui/antdModalShell';
 
 
 
@@ -11,26 +11,7 @@ export function DeleteProductModal({ isOpen, onClose, product, onConfirm, isDele
   if (!product) return null;
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/20 backdrop-blur-sm"
-          />
-
-          {/* Modal Container */}
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4 pointer-events-none">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md pointer-events-auto"
-            >
+    <AntdModalShell open={isOpen} onClose={onClose} width={448} zIndex={1000}>
               <GlassCard className="relative overflow-hidden p-8" radius="4xl">
                 <div className="flex flex-col items-center text-center space-y-4">
                   {/* Warning Icon */}
@@ -78,10 +59,6 @@ export function DeleteProductModal({ isOpen, onClose, product, onConfirm, isDele
                   <X size={20} />
                 </button>
               </GlassCard>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    </AntdModalShell>
   );
 }
