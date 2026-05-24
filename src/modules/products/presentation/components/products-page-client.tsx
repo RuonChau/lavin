@@ -136,28 +136,29 @@ export default function ProductsPage() {
     if (data.sizes.length > 0) {
       const imagesBySize = getVariantImagesBySize(data.sizes, options);
 
-      if (!imagesBySize || Object.keys(imagesBySize).length === 0) {
-        setIsSubmitting(false);
-        return;
-      }
+      // Tạo các biến thể song song cho từng size được chọn với giá trị giá tương ứng
+      try {
+        const createPromises = data.sizes.map(async (size) => {
+          const sizeImages = imagesBySize[size] ? { [size]: imagesBySize[size] } : {};
+          const price = data.sizeConfigs?.[size]?.price ?? data.base_price;
 
-      const createdVariant = await productVariantService.createVariant({
-        product_id: createdProduct.id,
-        variant_name: data.name,
-        size: data.sizes,
-        imagesBySize,
-        price: getVariantPrice(data),
-        discounted_price: 0,
-        quantity: 0,
-        stock_status: 'IN_STOCK',
-        is_active: data.is_active,
-      }).catch((error: unknown) => {
+          return await productVariantService.createVariant({
+            product_id: createdProduct.id,
+            variant_name: `${data.name}-${size}`,
+            size: [size],
+            imagesBySize: sizeImages,
+            price,
+            discounted_price: 0,
+            quantity: 0,
+            stock_status: 'IN_STOCK',
+            is_active: data.is_active,
+          });
+        });
+
+        await Promise.all(createPromises);
+      } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Không thể tạo biến thể sản phẩm';
         toast.error(message);
-        return null;
-      });
-
-      if (!createdVariant) {
         setIsSubmitting(false);
         return;
       }

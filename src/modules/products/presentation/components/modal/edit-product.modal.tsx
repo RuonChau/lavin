@@ -11,6 +11,7 @@ import { EditProductModalProps } from '@/modules/products/types/edit-product-mod
 import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
 import { currencies } from '@/shared/constants/currencies';
 import { Select } from 'antd';
+import InputNumberCustom from '@/shared/ui/input-number';
 
 type SizeImagePreview = {
   id: string;
@@ -61,9 +62,9 @@ export function EditProductModal({
         is_active: product.is_active,
         sizes: product.sizes || [],
         sizeConfigs: product.sizeConfigs || {
-          'S': { price: 0 },
-          'M': { price: 0 },
-          'L': { price: 0 },
+          'S': { price: undefined },
+          'M': { price: undefined },
+          'L': { price: undefined },
         },
       });
       setSizeImages({
@@ -217,12 +218,25 @@ export function EditProductModal({
               <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Giá cơ bản</label>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <input
+                  {/* <input
                     {...register('base_price', { valueAsNumber: true })}
                     type="number"
                     className={cn(
                       "w-full glass-control rounded-2xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/40",
                       errors.base_price && "border-red-400"
+                    )}
+                  /> */}
+                  <Controller
+                    name="base_price"
+                    control={control}
+                    defaultValue={undefined}
+                    render={({ field }) => (
+                      <InputNumberCustom
+                        value={field.value}
+                        onChange={field.onChange}
+                        error={!!errors.base_price}
+                        placeholder="45,000"
+                      />
                     )}
                   />
                 </div>
@@ -327,11 +341,24 @@ export function EditProductModal({
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Giá bán Size {size}</label>
                       <div className="relative">
-                        <input
+                        {/* <input
                           {...register(`sizeConfigs.${size}.price` as FieldPath<EditProductFormData>, { valueAsNumber: true })}
                           type="number"
                           placeholder="0"
                           className="w-full glass-control rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary"
+                        /> */}
+                        <Controller
+                          name={`sizeConfigs.${size}.price` as FieldPath<EditProductFormData>}
+                          control={control}
+                          defaultValue={undefined}
+                          render={({ field }) => (
+                            <InputNumberCustom
+                              value={field.value as number | undefined}
+                              onChange={field.onChange}
+                              error={!!errors.sizeConfigs?.[size]?.price}
+                              className="rounded-xl!"
+                            />
+                          )}
                         />
                       </div>
                     </div>

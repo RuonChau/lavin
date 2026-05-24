@@ -49,9 +49,9 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
       is_active: true,
       sizes: [],
       sizeConfigs: {
-        'S': { price: 0 },
-        'M': { price: 0 },
-        'L': { price: 0 },
+        'S': { price: undefined },
+        'M': { price: undefined },
+        'L': { price: undefined },
       }
     },
   });
@@ -260,14 +260,7 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                               shouldDirty: true,
                             });
                           }}
-                          className="
-                w-full
-                text-sm
-                text-text-primary
-                [&_.ant-select-selector]:bg-transparent!
-                [&_.ant-select-selection-item]:text-sm!
-                [&_.ant-select-selection-item]:text-text-primary!
-              "
+                          className="w-full text-sm text-text-primary [&_.ant-select-selector]:bg-transparent! [&_.ant-select-selection-item]:text-sm! [&_.ant-select-selection-item]:text-text-primary!"
                           suffixIcon={
                             <ChevronDown size={16} className="text-text-muted" />
                           }
@@ -354,11 +347,24 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Giá bán Size {size}</label>
                       <div className="relative">
-                        <input
+                        {/* <input
                           {...register(`sizeConfigs.${size}.price` as FieldPath<ProductFormData>, { valueAsNumber: true })}
                           type="number"
                           placeholder="0"
                           className="w-full glass-control rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/40"
+                        /> */}
+                        <Controller
+                          name={`sizeConfigs.${size}.price` as FieldPath<ProductFormData>}
+                          control={control}
+                          defaultValue={undefined}
+                          render={({ field }) => (
+                            <InputNumberCustom
+                              value={field.value as number | undefined}
+                              onChange={field.onChange}
+                              error={!!errors.sizeConfigs?.[size]?.price}
+                              className="rounded-xl!"
+                            />
+                          )}
                         />
                       </div>
                     </div>
@@ -370,9 +376,7 @@ export function AddProductModal({ isOpen, onClose, categories, onSubmit, isSubmi
                         {sizeImages[size].map((image, idx) => (
                           <div key={image.id} className="relative w-18 h-18 rounded-xl overflow-hidden border border-primary-soft/30 shadow-sm transition-transform hover:scale-[1.02]">
                             <img src={image.previewUrl} alt={`Preview ${size} ${idx}`} className="w-full h-full object-cover" />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(size, idx)}
+                            <button type="button" onClick={() => removeImage(size, idx)}
                               className="absolute -top-0.5 -right-0.5 p-0.5 bg-white rounded-full shadow-md text-red-500 hover:text-red-600 border border-slate-100"
                             >
                               <XCircle size={14} />

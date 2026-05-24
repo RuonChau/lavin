@@ -7,7 +7,7 @@ interface InputNumberCustomProps
     "formatter" | "parser" | "controls" | "onChange"
   > {
   error?: boolean;
-  onChange?: (value: number | undefined) => void;
+  onChange?: (value: number | null | undefined) => void;
 }
 
 export default function InputNumberCustom({
@@ -21,9 +21,9 @@ export default function InputNumberCustom({
   return (
     <InputNumber<number>
       {...props}
-      value={value ?? undefined}
+      value={value ?? null}
       onChange={(value) => {
-        onChange?.(value === null ? undefined : value);
+        onChange?.(value === null ? null : value);
       }}
       controls={false}
       placeholder={placeholder}
