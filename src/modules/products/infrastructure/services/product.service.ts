@@ -116,7 +116,17 @@ function mapServerProductVariant(value: unknown): ProductVariant | undefined {
     final_price: String(variant.final_price ?? variant.finalPrice ?? variant.price ?? '0'),
     price: String(variant.price ?? '0'),
     sku: String(variant.sku ?? ''),
-    image: image ? [image] : [],
+    image: (() => {
+      const primary = image ? [image] : [];
+      const others = unwrapList<unknown>(variant.images ?? variant.media ?? variant.medias)
+        .map(mapServerImage)
+        .filter((img): img is Image => Boolean(img));
+      const combined = [...primary, ...others];
+      // Filter to ensure uniqueness by public_id
+      return combined.filter(
+        (img, idx, self) => self.findIndex((i) => i.public_id === img.public_id) === idx
+      );
+    })(),
     is_active: Boolean(variant.is_active ?? variant.isActive ?? true),
     quantity: toNumber(variant.quantity),
     size: toStringArray(variant.size ?? variant.sizes)[0] ?? '',

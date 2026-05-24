@@ -1,26 +1,27 @@
-﻿'use client';
+'use client';
 
 import { GlassCard } from '@/shared/components/GlassCard';
 import { useProducts } from '@/modules/products/presentation/hooks/use-products';
-import { 
-  Plus, 
-  Search, 
+import {
+  Plus,
+  Search,
   Filter,
   FileDown,
   FolderEdit,
 } from 'lucide-react';
 import { Table } from 'antd';
 import { useState } from 'react';
-import { AddProductModal } from '@/modules/products/presentation/components/modal/AddProductModal';
-import { ProductDetailsModal } from '@/modules/products/presentation/components/modal/ProductDetailsModal';
-import { EditProductModal } from '@/modules/products/presentation/components/modal/EditProductModal';
-import { DeleteProductModal } from '@/modules/products/presentation/components/modal/DeleteProductModal';
-import { CategoryManagementModal } from '@/modules/products/presentation/components/modal/CategoryManagementModal';
+import { AddProductModal } from '@/modules/products/presentation/components/modal/add-product.modal';
+import { ProductDetailsModal } from '@/modules/products/presentation/components/modal/product-details.modal';
+import { EditProductModal } from '@/modules/products/presentation/components/modal/edit-product.modal';
+import { DeleteProductModal } from '@/modules/products/presentation/components/modal/delete-product.modal';
+import { CategoryManagementModal } from '@/modules/products/presentation/components/modal/category-management.modal';
 import { useCategories } from '@/modules/products/presentation/hooks/use-categories';
 import { toast } from 'react-toastify';
 import { Product } from '@/modules/products/domain/entities/product.entity';
 import type { ProductFormData } from '@/modules/products/validations/add-product.schema';
 import type { EditProductFormData } from '@/modules/products/validations/edit-product.schema';
+import type { EditProductSubmitOptions } from '@/modules/products/types/edit-product-modal-props.type';
 import { productVariantService } from '@/modules/products/infrastructure/services/product-variant.service';
 import type { AddProductSubmitOptions } from '@/modules/products/types/product-modal-props.type';
 import { getProductTableColumns } from '@/modules/products/config/product-table-columns.config';
@@ -39,13 +40,13 @@ export default function ProductsPage() {
     isMutatingProduct,
   } = useProducts();
 
-  const { 
-    categories, 
-    createCategory, 
-    updateCategory, 
-    deleteCategory, 
+  const {
+    categories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
     reorderCategories,
-    isMutating: isCategoryMutating 
+    isMutating: isCategoryMutating
   } = useCategories();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -200,7 +201,7 @@ export default function ProductsPage() {
     );
   };
 
-  const handleUpdateProduct = async (data: EditProductFormData) => {
+  const handleUpdateProduct = async (data: EditProductFormData, options: EditProductSubmitOptions) => {
     if (!selectedProduct) return;
     setIsSubmitting(true);
     const updatedProduct = await updateProduct({
@@ -218,10 +219,94 @@ export default function ProductsPage() {
       toast.error(message);
       return null;
     });
+
     if (!updatedProduct) {
       setIsSubmitting(false);
       return;
     }
+
+    // Cập nhật cấu hình và hình ảnh song song cho từng size (Biến thể)
+    try {
+      const allSizes = ['S', 'M', 'L'];
+      const updatePromises = allSizes.map(async (size) => {
+        const existingVariant = selectedProduct.variants?.find((v) => v.size === size);
+        const isSizeSelected = data.sizes.includes(size);
+
+        if (existingVariant && isSizeSelected) {
+          // Case 1: Đã có và vẫn được chọn -> Cập nhật (giá, ảnh)
+          const formData = new FormData();
+          formData.append("product_id", selectedProduct.id);
+          formData.append("variant_name", `${data.name}-${size}`);
+          const price = data.sizeConfigs?.[size]?.price ?? data.base_price;
+          formData.append("price", String(price));
+          formData.append("is_active", String(data.is_active));
+          formData.append("size", size);
+
+          // Tìm danh sách ảnh bị xóa
+          const existingImages = existingVariant.image || [];
+          const newImagesList = options.size_images[size] || [];
+
+          const deletedImages = existingImages.filter(
+            (img) => !newImagesList.some((nImg) => nImg.previewUrl === img.file_url)
+          );
+
+          deletedImages.forEach((img) => {
+            formData.append("removeFiles", img.public_id);
+          });
+
+          // Tìm danh sách ảnh mới cần upload
+          const newFilesToUpload = newImagesList
+            .map((img) => img.file)
+            .filter((file): file is File => file instanceof File);
+
+          newFilesToUpload.forEach((file) => {
+            formData.append("images", file);
+          });
+
+          // Cấu hình image_groups
+          const imageGroups = [
+            {
+              size,
+              count: newFilesToUpload.length,
+            },
+          ];
+          formData.append("image_groups", JSON.stringify(imageGroups));
+
+          await productVariantService.updateVariant(existingVariant.id, formData);
+        } else if (!existingVariant && isSizeSelected) {
+          // Case 2: Chưa có nhưng được chọn mới -> Tạo mới
+          const newImagesList = options.size_images[size] || [];
+          const newFilesToUpload = newImagesList
+            .map((img) => img.file)
+            .filter((file): file is File => file instanceof File);
+
+          const imagesBySize: Record<string, File[]> = {
+            [size]: newFilesToUpload,
+          };
+
+          await productVariantService.createVariant({
+            product_id: selectedProduct.id,
+            variant_name: `${data.name}-${size}`,
+            size: [size],
+            imagesBySize,
+            price: data.sizeConfigs?.[size]?.price ?? data.base_price,
+            discounted_price: 0,
+            quantity: 0,
+            stock_status: 'IN_STOCK',
+            is_active: data.is_active,
+          });
+        } else if (existingVariant && !isSizeSelected) {
+          // Case 3: Đã có nhưng bị bỏ chọn -> Xóa
+          await productVariantService.deleteVariant(existingVariant.id);
+        }
+      });
+
+      await Promise.all(updatePromises);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Không thể đồng bộ cấu hình kích cỡ sản phẩm';
+      toast.error(message);
+    }
+
     toast.success('Cập nhật sản phẩm thành công!');
     setIsSubmitting(false);
     setIsEditModalOpen(false);
@@ -269,9 +354,9 @@ export default function ProductsPage() {
           <h1 className="text-[28px] font-bold text-text-primary tracking-tight">Menu sản phẩm</h1>
           <p className="text-text-secondary">Quản lý danh sách thức uống, bánh ngọt và định giá toàn hệ thống.</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => setIsCategoryModalOpen(true)}
             className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-white/80"
           >
@@ -282,7 +367,7 @@ export default function ProductsPage() {
             <FileDown size={18} />
             Xuất Excel
           </button>
-          <button 
+          <button
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(139,94,60,0.28)] transition hover:bg-primary-deep active:scale-[0.98]"
           >
@@ -293,7 +378,7 @@ export default function ProductsPage() {
       </header>
 
       {/* MODAL */}
-      <AddProductModal 
+      <AddProductModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         categories={categories}
@@ -301,7 +386,7 @@ export default function ProductsPage() {
         isSubmitting={submitting}
       />
 
-      <ProductDetailsModal 
+      <ProductDetailsModal
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         product={selectedProduct}
@@ -318,7 +403,7 @@ export default function ProductsPage() {
         isLoadingProductDetail={isLoadingEditDetail}
       />
 
-      <DeleteProductModal 
+      <DeleteProductModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         product={selectedProduct}
@@ -326,7 +411,7 @@ export default function ProductsPage() {
         isDeleting={submitting}
       />
 
-      <CategoryManagementModal 
+      <CategoryManagementModal
         isOpen={isCategoryModalOpen}
         onClose={() => setIsCategoryModalOpen(false)}
         categories={categories}
@@ -342,19 +427,19 @@ export default function ProductsPage() {
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-soft" size={18} />
-            <input 
-              type="text" 
-              placeholder="Tìm tên sản phẩm, SKU..." 
+            <input
+              type="text"
+              placeholder="Tìm tên sản phẩm, SKU..."
               value={searchTerm}
               onChange={handleSearchChange}
               className="w-full glass-control rounded-xl py-2.5 px-11 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/60"
             />
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-text-muted uppercase tracking-widest whitespace-nowrap">Danh mục:</span>
-              <select 
+              <select
                 value={selectedCategory}
                 onChange={handleCategoryChange}
                 className="glass-control rounded-xl py-2.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary bg-white/40"
@@ -379,7 +464,7 @@ export default function ProductsPage() {
                 }
               </select>
             </div>
-            
+
             <button className="flex items-center gap-2 glass-control rounded-xl py-2.5 px-4 text-sm font-semibold text-text-secondary hover:bg-white/60 transition-all">
               <Filter size={18} />
               Bộ lọc khác

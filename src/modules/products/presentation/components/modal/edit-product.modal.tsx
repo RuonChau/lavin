@@ -1,25 +1,22 @@
 'use client';
 
-import { useForm, type FieldPath } from 'react-hook-form';
+import { Controller, useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { X, Loader2, Plus, XCircle, PencilLine, Save } from 'lucide-react';
+import { X, Loader2, Plus, XCircle, PencilLine, Save, ChevronDown } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
 import { useState, useEffect, useRef } from 'react';
 import { EditProductFormData, editProductSchema } from '@/modules/products/validations/edit-product.schema';
 import { EditProductModalProps } from '@/modules/products/types/edit-product-modal-props.type';
 import { AntdModalShell } from '@/shared/ui/antdModalShell';
+import { currencies } from '@/shared/constants/currencies';
+import { Select } from 'antd';
 
 type SizeImagePreview = {
   id: string;
+  file?: File;
   previewUrl: string;
 };
-
-function getCurrencyLocale(currency: string) {
-  if (currency === 'USD') return 'en-US';
-  if (currency === 'EUR') return 'de-DE';
-  return 'vi-VN';
-}
 
 export function EditProductModal({
   isOpen,
@@ -43,6 +40,7 @@ export function EditProductModal({
     reset,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<EditProductFormData>({
     resolver: zodResolver(editProductSchema),
@@ -87,6 +85,7 @@ export function EditProductModal({
       .slice(0, availableSlots)
       .map((file) => ({
         id: `${size}-${file.name}-${file.lastModified}-${crypto.randomUUID()}`,
+        file,
         previewUrl: URL.createObjectURL(file),
       }));
 
@@ -115,7 +114,9 @@ export function EditProductModal({
   };
 
   const handleFormSubmit = (data: EditProductFormData) => {
-    onSubmit(data);
+    onSubmit(data, {
+      size_images: sizeImages,
+    });
   };
 
   if (!product) return null;
@@ -167,10 +168,10 @@ export function EditProductModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Tên sản phẩm</label>
-              <input 
+              <input
                 {...register('name')}
-                type="text" 
-                placeholder="VD: Phê La Latte" 
+                type="text"
+                placeholder="VD: Phê La Latte"
                 className={cn(
                   "w-full glass-control rounded-2xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/40",
                   errors.name && "border-red-400"
@@ -181,7 +182,7 @@ export function EditProductModal({
 
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Danh mục</label>
-              <select 
+              <select
                 {...register('categoryId')}
                 className={cn(
                   "w-full glass-control rounded-2xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary bg-white/40 appearance-none",
@@ -216,9 +217,9 @@ export function EditProductModal({
               <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Giá cơ bản</label>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <input 
+                  <input
                     {...register('base_price', { valueAsNumber: true })}
-                    type="number" 
+                    type="number"
                     className={cn(
                       "w-full glass-control rounded-2xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/40",
                       errors.base_price && "border-red-400"
@@ -226,21 +227,39 @@ export function EditProductModal({
                   />
                 </div>
                 <div className="w-24">
-                  <select 
-                    {...register('currency.currency', {
-                      onChange: (event) => {
-                        setValue('currency.locale', getCurrencyLocale(event.target.value), {
-                          shouldValidate: true,
-                        });
-                      },
-                    })}
-                    className="w-full glass-control rounded-2xl py-3 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary bg-white/40 appearance-none"
-                  >
-                    <option value="VND">VND</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                  </select>
-                  <input type="hidden" {...register('currency.locale')} />
+                  <Controller
+                    name="currency.currency"
+                    control={control}
+                    render={({ field }) => (
+                      <div className="w-full glass-control rounded-2xl h-[46px] flex items-center px-1.5 focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-white/40">
+                        <Select
+                          variant="borderless"
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+
+                            const selectedCountry = currencies.find(
+                              (country) => country.currency === value
+                            );
+
+                            setValue("currency.locale", selectedCountry?.locale ?? "vi-VN", {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
+                          }}
+                          className="w-full text-sm text-text-primary [&_.ant-select-selection-item]:text-text-primary! [&_.ant-select-selection-item]:text-sm!"
+                          classNames={{
+                            root: "rounded-2xl"
+                          }}
+                          suffixIcon={<ChevronDown size={16} className="text-text-muted" />}
+                          options={currencies.map((country) => ({
+                            value: country.currency,
+                            label: country.currency,
+                          }))}
+                        />
+                      </div>
+                    )}
+                  />
                 </div>
               </div>
               {errors.base_price && <p className="text-[10px] text-red-500 ml-1">{errors.base_price.message}</p>}
@@ -249,20 +268,20 @@ export function EditProductModal({
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Trạng thái bán</label>
               <div className="flex items-center gap-3 p-3 glass-control rounded-2xl bg-white/40">
-                  <input 
-                    {...register('is_active')}
-                    type="checkbox" 
-                    id="edit-is-active"
-                    className="w-5 h-5 rounded-md border-primary-soft/40 text-primary focus:ring-primary/20 bg-white"
-                  />
-                  <label htmlFor="edit-is-active" className="text-sm font-semibold text-text-secondary cursor-pointer">Cho phép bán ngay</label>
+                <input
+                  {...register('is_active')}
+                  type="checkbox"
+                  id="edit-is-active"
+                  className="w-5 h-5 rounded-md border-primary-soft/40 text-primary focus:ring-primary/20 bg-white"
+                />
+                <label htmlFor="edit-is-active" className="text-sm font-semibold text-text-secondary cursor-pointer">Cho phép bán ngay</label>
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-text-muted uppercase tracking-widest ml-1">Mô tả sản phẩm</label>
-            <textarea 
+            <textarea
               {...register('description')}
               rows={3}
               className="w-full glass-control rounded-2xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary placeholder:text-text-muted/40 resize-none"
@@ -274,9 +293,9 @@ export function EditProductModal({
             <div className="flex gap-4">
               {['S', 'M', 'L'].map((size) => (
                 <label key={size} className="flex items-center gap-2 cursor-pointer group">
-                  <input 
+                  <input
                     {...register('sizes')}
-                    type="checkbox" 
+                    type="checkbox"
                     value={size}
                     className="w-5 h-5 rounded-md border-primary-soft/40 text-primary focus:ring-primary/20 bg-white/50"
                   />
@@ -308,22 +327,22 @@ export function EditProductModal({
                     <div className="space-y-1.5">
                       <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Giá bán Size {size}</label>
                       <div className="relative">
-                        <input 
+                        <input
                           {...register(`sizeConfigs.${size}.price` as FieldPath<EditProductFormData>, { valueAsNumber: true })}
-                          type="number" 
+                          type="number"
                           placeholder="0"
                           className="w-full glass-control rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all text-text-primary"
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Hình ảnh Size {size}</label>
                       <div className="flex flex-wrap gap-3">
                         {sizeImages[size]?.map((image, idx) => (
                           <div key={image.id} className="relative w-18 h-18 rounded-xl overflow-hidden border border-primary-soft/30 shadow-sm transition-transform hover:scale-[1.02]">
                             <img src={image.previewUrl} alt={`Preview ${size} ${idx}`} className="w-full h-full object-cover" />
-                            <button 
+                            <button
                               type="button"
                               onClick={() => removeImage(size, idx)}
                               className="absolute -top-0.5 -right-0.5 p-0.5 bg-white rounded-full shadow-md text-red-500 hover:text-red-600 border border-slate-100"
@@ -367,14 +386,14 @@ export function EditProductModal({
 
         {/* Footer */}
         <div className="shrink-0 p-6 border-t border-primary-soft/20 bg-white/40 flex items-center justify-end gap-3">
-          <button 
+          <button
             type="button"
             onClick={onClose}
             className="px-6 py-2.5 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-primary hover:bg-white/60 transition-all"
           >
             Hủy bỏ
           </button>
-          <button 
+          <button
             form="edit-product-form"
             type="submit"
             disabled={isSubmitting}

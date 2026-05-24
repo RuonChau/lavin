@@ -69,8 +69,9 @@ export const productVariantService = {
   },
 
 
-  updateVariant: async (id: string, data: ProductVariantInput): Promise<ProductVariant> => {
-    const response = await api.patch(`/product-variant/${id}`, data);
+  updateVariant: async (id: string, data: FormData | ProductVariantInput): Promise<ProductVariant> => {
+    const headers = data instanceof FormData ? { "Content-Type": "multipart/form-data" } : undefined;
+    const response = await api.patch(`/product-variant/${id}`, data, { headers });
     return unwrapData<ProductVariant>(response.data);
   },
 

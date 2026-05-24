@@ -1,12 +1,22 @@
 import { Category, Product } from "../domain/entities/product.entity";
 import { EditProductFormData } from "../validations/edit-product.schema";
 
+export interface EditVariantImageItem {
+  id: string;
+  file?: File;
+  previewUrl: string;
+}
+
+export interface EditProductSubmitOptions {
+  size_images: Record<string, EditVariantImageItem[]>;
+}
+
 export interface EditProductModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: Product | null;
   categories: Category[];
-  onSubmit: (data: EditProductFormData) => void;
+  onSubmit: (data: EditProductFormData, options: EditProductSubmitOptions) => void;
   isSubmitting?: boolean;
   isLoadingProductDetail?: boolean;
 }
