@@ -1,2 +1,2 @@
-export { default as FormulasPageClient } from './presentation/components/FormulasPageClient';
+export { default as FormulasPageClient } from './presentation/components/formulas-page-client';
 export * from './domain/entities/formula.entity';

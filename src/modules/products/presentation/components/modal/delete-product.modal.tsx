@@ -3,7 +3,7 @@
 import { X, AlertTriangle, Trash2, Loader2 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { DeleteProductModalProps } from '@/modules/products/types/delete-product-modal-props.type';
-import { AntdModalShell } from '@/shared/ui/antdModalShell';
+import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
 
 
 

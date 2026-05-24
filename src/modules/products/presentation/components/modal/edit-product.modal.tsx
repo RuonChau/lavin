@@ -8,7 +8,7 @@ import { cn } from '@/shared/utils/cn';
 import { useState, useEffect, useRef } from 'react';
 import { EditProductFormData, editProductSchema } from '@/modules/products/validations/edit-product.schema';
 import { EditProductModalProps } from '@/modules/products/types/edit-product-modal-props.type';
-import { AntdModalShell } from '@/shared/ui/antdModalShell';
+import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
 import { currencies } from '@/shared/constants/currencies';
 import { Select } from 'antd';
 

@@ -5,7 +5,7 @@ import { GlassCard } from "@/shared/components/GlassCard";
 import { cn } from "@/shared/utils/cn";
 import { Edit2, Gift, TrendingUp } from "lucide-react";
 import { tiers } from "../../../mocks/tiers.mock";
-import { UpdatePolicyModal } from "../modals/UpdatePolicyModal";
+import { UpdatePolicyModal } from "../modals/update-policy.modal";
 
 export default function TiersTab() {
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
@@ -24,7 +24,7 @@ export default function TiersTab() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {tiers.map((tier) => (
-          <GlassCard key={tier.id} className="p-8 relative group hover:border-primary/30 transition-all border-[#D8B894]/20" radius="4xl">
+          <GlassCard key={tier.id} className="p-8 relative group hover:border-primary/30 transition-all border-primary-soft/20" radius="4xl">
             <div className="flex justify-between items-start mb-6">
               <div className={cn(
                 "px-4 py-1.5 rounded-full border text-xs font-black uppercase tracking-widest",
@@ -35,20 +35,20 @@ export default function TiersTab() {
               )}>
                 {tier.name}
               </div>
-              <button className="p-2 text-[#9A8677] hover:text-primary transition-colors"><Edit2 size={16} /></button>
+              <button className="p-2 text-text-muted hover:text-primary transition-colors"><Edit2 size={16} /></button>
             </div>
 
             <div className="mb-6">
               <p className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em] mb-1">MỨC ĐIỂM YÊU CẦU</p>
-              <p className="text-3xl font-black text-[#2A1E17]">{tier.minPoints}</p>
+              <p className="text-3xl font-black text-text-primary">{tier.minPoints}</p>
             </div>
 
             <div className="space-y-3">
-              <p className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em] border-b border-[#D8B894]/10 pb-2">ĐẶC QUYỀN</p>
+              <p className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em] border-b border-primary-soft/10 pb-2">ĐẶC QUYỀN</p>
               {tier.benefits.map((benefit, idx) => (
                 <div key={idx} className="flex items-start gap-2">
                   <div className="mt-1"><Gift size={12} className="text-primary" /></div>
-                  <span className="text-sm font-medium text-[#6F5A4A]">{benefit}</span>
+                  <span className="text-sm font-medium text-text-secondary">{benefit}</span>
                 </div>
               ))}
             </div>

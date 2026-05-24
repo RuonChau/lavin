@@ -34,7 +34,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CategoryManagementModalProps } from '@/modules/products/types/category-management-modal-props.type';
 import { SortableCategoryItem } from './sortable-category-item';
-import { AntdModalShell } from '@/shared/ui/antdModalShell';
+import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
 
 type CategoryNode = Category & {
   children: CategoryNode[];

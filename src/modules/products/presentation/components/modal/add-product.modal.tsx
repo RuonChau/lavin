@@ -9,7 +9,7 @@ import { useEffect, useRef, useState, type BaseSyntheticEvent } from 'react';
 import { ProductFormData, productSchema } from '../../../validations/add-product.schema';
 import { SIZES } from '@/modules/products/domain/enum/product-size.enum';
 import { AddProductModalProps, type VariantImageItem } from '@/modules/products/types/product-modal-props.type';
-import { AntdModalShell } from '@/shared/ui/antdModalShell';
+import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
 import { InputNumber, Select } from 'antd';
 import { currencies } from '@/shared/constants/currencies';
 import PriceInput from '@/shared/ui/input-number';

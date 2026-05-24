@@ -11,9 +11,9 @@ import {
 } from 'lucide-react';
 import { ConfigProvider, Modal, Form, Input, Row, Col, Select, DatePicker } from 'antd';
 import { cn } from '@/shared/utils/cn';
-import CustomersListTab from './tabs/CustomersListTab';
-import TiersTab from './tabs/TiersTab';
-import HistoryTab from './tabs/HistoryTab';
+import CustomersListTab from './tabs/customers-list.tab';
+import TiersTab from './tabs/tiers.tab';
+import HistoryTab from './tabs/history.tab';
 import { antdTheme } from '@/shared/utils/antdTheme';
 import { TabType } from '../../types/tab.type';
 import { tabs } from '../../mocks/tabs.mock';
