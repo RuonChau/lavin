@@ -25,7 +25,7 @@ import { isActivePath } from '@/shared/utils/isActivePath';
 
 const MENU_ITEMS = [
   { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, href: '/', description: 'Tổng quan tình hình kinh doanh của cửa hàng' },
-  { id: 'pos', label: 'POS', icon: CreditCard, href: '/pos', description: 'Bán hàng, nhận order và thanh toán online/offline' },
+  // { id: 'pos', label: 'POS', icon: CreditCard, href: '/pos', description: 'Bán hàng, nhận order và thanh toán online/offline' },
   { id: 'orders', label: 'Đơn hàng', icon: ClipboardList, href: '/orders', description: 'Theo dõi, xử lý và cập nhật trạng thái đơn hàng thời gian thực' },
   { id: 'products', label: 'Menu sản phẩm', icon: UtensilsCrossed, href: '/products', description: 'Menu cafe, giá bán và vòng đời sản phẩm' },
   { id: 'formulas', label: 'Công thức / BOM', icon: BookOpenText, href: '/formulas', description: 'Công thức, giá vốn thành phần và định mức mẻ' },

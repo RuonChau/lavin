@@ -21,22 +21,25 @@ import {
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
-import { useInventory } from '@/modules/inventory/presentation/hooks/useInventory';
+import { useInventory, useWarehouses } from '@/modules/inventory/presentation/hooks/useInventory';
 import { Material } from '@/modules/inventory/domain/entities/material.entity';
 import { StockAdjustmentModal } from '@/modules/inventory/presentation/components/modal/stock-adjustment.modal';
 import { StockHistoryModal } from '@/modules/inventory/presentation/components/modal/stock-history.modal';
 import { MaterialSelectionModal } from '@/modules/inventory/presentation/components/modal/material-selection.modal';
+import { AddMaterialModal } from '@/modules/inventory/presentation/components/modal/add-material.modal';
 import { toast } from 'react-toastify';
 
 export default function InventoryPage() {
   const router = useRouter();
-  const { materials, isLoading, updateStock, isUpdating } = useInventory();
+  const { materials, isLoading, updateStock, isUpdating, createMaterial, isCreating } = useInventory();
+  const { warehouses, isLoading: isWarehousesLoading } = useWarehouses();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isSelectionModalOpen, setIsSelectionModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const lowStockCount = materials.filter(m => m.currentStock < m.minStock).length;
 
@@ -69,6 +72,16 @@ export default function InventoryPage() {
     }
   };
 
+  const handleSaveMaterial = async (newMaterialData: Omit<Material, 'id' | 'lastUpdated' | 'status'>) => {
+    try {
+      await createMaterial(newMaterialData);
+      toast.success(`Đã thêm nguyên liệu "${newMaterialData.name}" thành công!`);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      toast.error('Có lỗi xảy ra khi thêm nguyên liệu.');
+    }
+  };
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header Section */}
@@ -90,12 +103,22 @@ export default function InventoryPage() {
             <FileDown size={18} />
             Xuất báo cáo tồn
           </button>
-          <button className="flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-deep hover:-translate-y-0.5 active:translate-y-0">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 transition-all hover:bg-primary-deep hover:-translate-y-0.5 active:translate-y-0"
+          >
             <Plus size={20} />
             Thêm nguyên liệu
           </button>
         </div>
       </div>
+
+      <AddMaterialModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSave={handleSaveMaterial}
+        isSubmitting={isCreating}
+      />
 
       <StockAdjustmentModal
         isOpen={isAdjustmentModalOpen}
@@ -297,26 +320,43 @@ export default function InventoryPage() {
               <Warehouse size={18} className="text-primary" /> Vị trí kho hàng
             </h3>
             <div className="space-y-4">
-              {[
-                { name: 'Kho tổng A', items: 156, status: 'Ổn định', color: 'bg-green-500' },
-                { name: 'Kho lạnh B', items: 42, status: 'Đang đầy', color: 'bg-amber-500' },
-                { name: 'Kho vật tư', items: 88, status: 'Ổn định', color: 'bg-green-500' },
-              ].map((warehouse, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => router.push('/inventory/warehouses')}
-                  className="p-4 rounded-3xl bg-[#FFFAF4]/40 border border-primary-soft/20 hover:border-primary/20 transition-all group flex items-center justify-between cursor-pointer"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={cn("w-2 h-2 rounded-full", warehouse.color)} />
-                    <div>
-                      <p className="text-sm font-bold text-text-primary">{warehouse.name}</p>
-                      <p className="text-[10px] text-text-muted font-bold">{warehouse.items} mặt hàng</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="text-primary-soft group-hover:translate-x-1 transition-transform" />
+              {isWarehousesLoading ? (
+                <div className="py-6 flex flex-col items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-[10px] font-bold text-text-muted">Đang tải vị trí kho...</p>
                 </div>
-              ))}
+              ) : warehouses.length === 0 ? (
+                <div className="text-center py-6 border border-dashed border-primary-soft/30 rounded-3xl p-4 bg-[#FFFAF4]/20">
+                  <p className="text-xs font-bold text-text-muted">Chưa có vị trí kho hàng nào.</p>
+                  <button 
+                     onClick={() => router.push('/inventory/warehouses')}
+                     className="mt-3 text-xs font-black text-primary hover:underline"
+                  >
+                     + Thiết lập ngay
+                  </button>
+                </div>
+              ) : (
+                warehouses.map((wh: any) => {
+                  const itemsCount = materials.filter(m => m.warehouse === wh.name).length;
+                  const color = wh.type === 'COLD' ? 'bg-blue-500' : 'bg-green-500';
+                  return (
+                    <div
+                      key={wh.id}
+                      onClick={() => router.push('/inventory/warehouses')}
+                      className="p-4 rounded-3xl bg-[#FFFAF4]/40 border border-primary-soft/20 hover:border-primary/20 transition-all group flex items-center justify-between cursor-pointer"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={cn("w-2 h-2 rounded-full", color)} />
+                        <div>
+                          <p className="text-sm font-bold text-text-primary">{wh.name}</p>
+                          <p className="text-[10px] text-text-muted font-bold">{itemsCount} mặt hàng</p>
+                        </div>
+                      </div>
+                      <ChevronRight size={16} className="text-primary-soft group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  );
+                })
+              )}
             </div>
           </GlassCard>
 

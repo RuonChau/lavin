@@ -3,16 +3,17 @@
 import { X, Warehouse, MapPin, User, ThermometerSnowflake, ShieldCheck, Box } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
 
 interface WarehouseModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: any) => void;
+  warehouse?: any;
 }
 
-export function WarehouseModal({ isOpen, onClose, onSave }: WarehouseModalProps) {
+export function WarehouseModal({ isOpen, onClose, onSave, warehouse }: WarehouseModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     code: '',
@@ -21,6 +22,28 @@ export function WarehouseModal({ isOpen, onClose, onSave }: WarehouseModalProps)
     manager: '',
     capacity: 1000,
   });
+
+  useEffect(() => {
+    if (warehouse) {
+      setFormData({
+        name: warehouse.name || '',
+        code: warehouse.code || '',
+        type: warehouse.type || 'GENERAL',
+        location: warehouse.location || '',
+        manager: warehouse.manager || '',
+        capacity: warehouse.capacity || 1000,
+      });
+    } else {
+      setFormData({
+        name: '',
+        code: '',
+        type: 'GENERAL',
+        location: '',
+        manager: '',
+        capacity: 1000,
+      });
+    }
+  }, [warehouse, isOpen]);
 
   if (!isOpen) return null;
 
@@ -34,8 +57,8 @@ export function WarehouseModal({ isOpen, onClose, onSave }: WarehouseModalProps)
               <Warehouse size={28} />
             </div>
             <div>
-              <h2 className="text-2xl font-black text-text-primary">Thêm kho mới</h2>
-              <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">Thiết lập khu vực lưu trữ mới</p>
+              <h2 className="text-2xl font-black text-text-primary">{warehouse ? "Cập nhật kho" : "Thêm kho mới"}</h2>
+              <p className="text-xs text-text-muted font-bold uppercase tracking-widest mt-0.5">{warehouse ? "Điều chỉnh khu vực lưu trữ" : "Thiết lập khu vực lưu trữ mới"}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-3 text-text-muted hover:bg-white/60 rounded-2xl transition-all">

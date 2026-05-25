@@ -1,4 +1,4 @@
-import LoginPageClient from '@/modules/auth/presentation/components/LoginPageClient';
+import LoginPageClient from '@/modules/auth/presentation/components/login-page-client';
 
 export default function LoginPage() {
   return (
