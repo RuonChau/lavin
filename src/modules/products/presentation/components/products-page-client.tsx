@@ -26,6 +26,7 @@ import { productVariantService } from '@/modules/products/infrastructure/service
 import type { AddProductSubmitOptions } from '@/modules/products/types/product-modal-props.type';
 import { getProductTableColumns } from '@/modules/products/config/product-table-columns.config';
 import { styleTable } from '../../utils/style-table';
+import { exportProductsToExcel } from '../../utils/export-products-excel';
 
 export default function ProductsPage() {
   const {
@@ -347,6 +348,21 @@ export default function ProductsPage() {
     onDeleteProduct: handleDeleteProduct,
   });
 
+  const handleExportExcel = () => {
+    if (filteredProducts.length === 0) {
+      toast.warning('Không có sản phẩm nào để xuất Excel!');
+      return;
+    }
+    try {
+      toast.info(`Đang chuẩn bị xuất ${filteredProducts.length} sản phẩm ra file Excel...`);
+      exportProductsToExcel(filteredProducts, categories);
+      toast.success('Xuất file Excel thành công!');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Có lỗi xảy ra khi xuất file Excel';
+      toast.error(message);
+    }
+  };
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header Section */}
@@ -364,7 +380,10 @@ export default function ProductsPage() {
             <FolderEdit size={18} />
             Danh mục
           </button>
-          <button className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-white/80">
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-white/80 active:scale-[0.98]"
+          >
             <FileDown size={18} />
             Xuất Excel
           </button>
