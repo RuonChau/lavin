@@ -38,6 +38,7 @@ export const inventoryService = {
 
   getWarehouses: async (): Promise<any[]> => {
     const response = await api.get('/ingredient/warehouses');
+    console.log("🚀 ~ response:", response)
     return response.data.data;
   },
 
@@ -60,5 +61,25 @@ export const inventoryService = {
   deleteWarehouse: async (id: string): Promise<any> => {
     const response = await api.delete(`/ingredient/warehouse/${id}`);
     return response.data;
+  },
+
+  getWarehouseLayout: async (warehouseId: string): Promise<any[]> => {
+    const response = await api.get(`/warehouse/${warehouseId}/layout`);
+    return response.data.data;
+  },
+
+  createShelf: async (data: { warehouse_id: string; name: string; code: string }): Promise<any> => {
+    const response = await api.post('/warehouse/shelf', data);
+    return response.data.data;
+  },
+
+  createLocation: async (data: { shelf_id: string; name: string; code: string; ingredient_id?: string; max_capacity?: number; current_quantity?: number }): Promise<any> => {
+    const response = await api.post('/warehouse/location', data);
+    return response.data.data;
+  },
+
+  assignIngredient: async (data: { location_id: string; ingredient_id: string | null; current_quantity: number }): Promise<any> => {
+    const response = await api.post('/warehouse/location/assign', data);
+    return response.data.data;
   }
 };

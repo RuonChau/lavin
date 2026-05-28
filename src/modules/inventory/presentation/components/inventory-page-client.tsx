@@ -21,7 +21,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
-import { useInventory, useWarehouses } from '@/modules/inventory/presentation/hooks/useInventory';
+import { useInventory, useWarehouses, useAllInventoryHistory } from '@/modules/inventory/presentation/hooks/useInventory';
 import { Material } from '@/modules/inventory/domain/entities/material.entity';
 import { StockAdjustmentModal } from '@/modules/inventory/presentation/components/modal/stock-adjustment.modal';
 import { StockHistoryModal } from '@/modules/inventory/presentation/components/modal/stock-history.modal';
@@ -33,6 +33,7 @@ export default function InventoryPage() {
   const router = useRouter();
   const { materials, isLoading, updateStock, isUpdating, createMaterial, isCreating } = useInventory();
   const { warehouses, isLoading: isWarehousesLoading } = useWarehouses();
+  const { data: activityLog, isLoading: isActivityLoading } = useAllInventoryHistory();
   const [searchTerm, setSearchTerm] = useState('');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
@@ -42,6 +43,17 @@ export default function InventoryPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const lowStockCount = materials.filter(m => m.currentStock < m.minStock).length;
+
+  // Dynamic calculations for stats overview
+  const totalWarehouseValue = materials.reduce((sum, m) => sum + (m.currentStock * m.pricePerUnit), 0);
+
+  const today = new Date();
+  const todayTransactionsCount = activityLog?.filter((log: any) => {
+    const logDate = new Date(log.timestamp);
+    return logDate.getDate() === today.getDate() &&
+           logDate.getMonth() === today.getMonth() &&
+           logDate.getFullYear() === today.getFullYear();
+  }).length || 0;
 
   const filteredMaterials = materials.filter(m => {
     const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -153,9 +165,21 @@ export default function InventoryPage() {
         {[
           { label: 'TỔNG NGUYÊN LIỆU', value: `${materials.length} loại`, change: '+12% so với tháng trước', icon: Boxes, color: 'bg-primary' },
           { label: 'CẢNH BÁO TỒN THẤP', value: lowStockCount.toString().padStart(2, '0'), change: 'Cần nhập hàng ngay', icon: AlertTriangle, color: lowStockCount > 0 ? 'bg-red-500' : 'bg-gray-400', active: lowStockCount > 0 },
-          { label: 'GIÁ TRỊ KHO TỔNG', value: '₫425.8M', change: '-2.4M hao hụt', icon: Warehouse, color: 'bg-amber-500', negative: true },
-          { label: 'GIAO DỊCH TRONG NGÀY', value: '24', change: 'vừa cập nhật 5 phút trước', icon: ArrowRightLeft, color: 'bg-green-500' },
-        ].map((stat) => (
+          { 
+            label: 'GIÁ TRỊ KHO TỔNG', 
+            value: `₫${(totalWarehouseValue).toLocaleString('vi-VN')}`, 
+            change: 'Từ tồn kho thực tế', 
+            icon: Warehouse, 
+            color: 'bg-amber-500' 
+          },
+          { 
+            label: 'GIAO DỊCH TRONG NGÀY', 
+            value: todayTransactionsCount.toString(), 
+            change: 'Hôm nay', 
+            icon: ArrowRightLeft, 
+            color: 'bg-green-500' 
+          },
+        ].map((stat: any) => (
           <GlassCard
             key={`stat-${stat.label}`}
             className={cn(
@@ -366,17 +390,31 @@ export default function InventoryPage() {
               <History size={18} className="text-primary" /> Nhật ký xuất nhập
             </h3>
             <div className="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-primary-soft/30">
-              {[
-                { action: 'Nhập kho', material: 'Hạt Arabica', qty: '+50kg', time: '12/05/2024 10:30', user: 'Admin' },
-                { action: 'Xuất kho', material: 'Sữa tươi', qty: '-24 hộp', time: '12/05/2024 09:15', user: 'POS-01' },
-                { action: 'Hao hụt', material: 'Matcha Uji', qty: '-0.2kg', time: '11/05/2024 17:00', user: 'Ký duyệt' },
-              ].map((log, idx) => (
-                <div key={idx} className="relative">
-                  <div className="absolute left-[-1.65rem] top-1 w-3 h-3 rounded-full bg-white border-2 border-primary shadow-sm" />
-                  <p className="text-xs font-bold text-text-primary">{log.action}: <span className={cn(log.qty.startsWith('+') ? "text-green-600" : "text-red-500")}>{log.qty}</span> {log.material}</p>
-                  <p className="text-[10px] text-text-muted mt-0.5">{log.time} • {log.user}</p>
+              {isActivityLoading ? (
+                <div className="py-6 flex flex-col items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2" />
+                  <p className="text-[10px] font-bold text-text-muted">Đang tải nhật ký...</p>
                 </div>
-              ))}
+              ) : !activityLog || activityLog.length === 0 ? (
+                <p className="text-xs font-bold text-[#968271] italic py-2">Chưa có giao dịch xuất nhập nào.</p>
+              ) : (
+                activityLog.slice(0, 5).map((log: any, idx: number) => {
+                  const isIncrease = log.type === 'INCREASE';
+                  const qtyText = `${isIncrease ? '+' : '-'}${log.quantity}${log.unit || 'đv'}`;
+                  
+                  return (
+                    <div key={log.id || idx} className="relative">
+                      <div className="absolute left-[-1.65rem] top-1 w-3 h-3 rounded-full bg-white border-2 border-primary shadow-sm" />
+                      <p className="text-xs font-bold text-text-primary">
+                        {isIncrease ? 'Nhập kho' : 'Xuất kho'}: <span className={cn(isIncrease ? "text-green-600" : "text-red-500")}>{qtyText}</span> {log.materialName}
+                      </p>
+                      <p className="text-[10px] text-text-muted mt-0.5">
+                        {new Date(log.timestamp).toLocaleString('vi-VN')} • {log.user}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
             </div>
             <button
               onClick={() => router.push('/inventory/history')}

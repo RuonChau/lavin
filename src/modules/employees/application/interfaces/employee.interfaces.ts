@@ -1,27 +1,52 @@
-import { IPaginatedData } from "@/modules/common/application/dto/pagination.dto";
 import { IEmployeeEntity } from "../../domain/entities/employee.entity";
 import { CreateEmployeeDTO, UpdateEmployeeDTO } from "../dto/employee.dto";
 
-
-
+/** Shape dùng để hiển thị trên table */
 export interface Employee {
   key: string;
   id: string;
+  employee_code: string;
   name: string;
   role: string;
   email: string;
   phone: string;
   status: 'ACTIVE' | 'INACTIVE';
-  joinDate: string;
+  hire_date: string;
   branch: string;
-  type: string;
+  base_salary: number;
+}
+
+/** Response pagination từ server */
+export interface EmployeePaginatedResponse {
+  data: IEmployeeEntity[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface EmployeeInterface {
   createEmployee(data: CreateEmployeeDTO): Promise<IEmployeeEntity>;
   updateEmployee(data: UpdateEmployeeDTO): Promise<IEmployeeEntity>;
   getDetailEmployee(id: string): Promise<IEmployeeEntity | null>;
-  getEmployees(page?: number, limit?: number): Promise<IPaginatedData<IEmployeeEntity>>;
+  getEmployees(page?: number, limit?: number): Promise<EmployeePaginatedResponse>;
   deleteEmployee(id: string): Promise<void>;
 }
 
+/** Helper: map IEmployeeEntity từ server → Employee hiển thị trên table */
+export function mapEmployeeToDisplay(e: IEmployeeEntity): Employee {
+  return {
+    key: e.id,
+    id: e.id,
+    employee_code: e.employee_code,
+    name: e.user?.username ?? '—',
+    role: e.position,
+    email: e.user?.email ?? '—',
+    phone: e.user?.phone ?? '—',
+    status: 'ACTIVE',
+    hire_date: e.hire_date
+      ? new Date(e.hire_date).toLocaleDateString('vi-VN')
+      : '—',
+    branch: e.user?.branch?.name ?? '—',
+    base_salary: e.base_salary,
+  };
+}

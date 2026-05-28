@@ -1,57 +1,42 @@
 import axiosClient from "@/shared/lib/axios";
 import { CreateEmployeeDTO, UpdateEmployeeDTO } from "../../application/dto/employee.dto";
 import { IEmployeeEntity } from "../../domain/entities/employee.entity";
-import { IPaginatedData } from "@/modules/common/application/dto/pagination.dto";
-import { EmployeeInterface } from "../../application/interfaces/employee.interfaces";
-
+import { EmployeeInterface, EmployeePaginatedResponse } from "../../application/interfaces/employee.interfaces";
 
 export class EmployeeRepositoryImpl implements EmployeeInterface {
   async createEmployee(data: CreateEmployeeDTO): Promise<IEmployeeEntity> {
-    const res = await axiosClient.post<{employee: IEmployeeEntity}>("/employee", data);
-    return res.data.employee
+    const res = await axiosClient.post<{ success: boolean; data: IEmployeeEntity }>("/employee", data);
+    return res.data.data;
   }
 
   async updateEmployee(data: UpdateEmployeeDTO): Promise<IEmployeeEntity> {
-    const res = await axiosClient.patch<IEmployeeEntity>(`/employee/${data.id}`, data);
-    return res.data;
+    const res = await axiosClient.patch<{ success: boolean; data: IEmployeeEntity }>(`/employee/${data.id}`, data);
+    return res.data.data;
   }
 
-  // all Employee
-  async getEmployees(page: number = 1, limit: number = 10): Promise<IPaginatedData<IEmployeeEntity>> {
-    try {
-      const res = await axiosClient.get<IPaginatedData<IEmployeeEntity>>("/employees", {
-        params: { page, limit },
-      });
-      return res.data;
-    } catch {
-      return {
-        success: false,
-        data: [],
-        pagination: {
-          page,
-          limit,
-          totalItems: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPrevPage: false,
-        }
-      };
-    }
+  async getEmployees(page: number = 1, limit: number = 10): Promise<EmployeePaginatedResponse> {
+    const res = await axiosClient.get<{ success: boolean; data: IEmployeeEntity[]; total: number; page: number; limit: number }>(
+      "/employees",
+      { params: { page, limit } }
+    );
+    return {
+      data: res.data.data,
+      total: res.data.total,
+      page: res.data.page,
+      limit: res.data.limit,
+    };
   }
 
   async deleteEmployee(id: string): Promise<void> {
     await axiosClient.delete(`/employee/${id}`);
   }
 
-
-  // get detail product
   async getDetailEmployee(id: string): Promise<IEmployeeEntity | null> {
     try {
-      const res = await axiosClient.get<IEmployeeEntity>(`/employee/${id}`);
-      return res.data;
+      const res = await axiosClient.get<{ success: boolean; data: IEmployeeEntity }>(`/employee/${id}`);
+      return res.data.data;
     } catch {
       return null;
     }
   }
-
 }

@@ -18,7 +18,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'BrewGlass ERP',
+  title: 'Lavin Coffee Chain Management System',
   description: 'Premium High-End ERP for Coffee Shop Chains',
 };
 

@@ -1,1 +1,1 @@
-export { default as PromotionsPageClient } from './presentation/components/PromotionsPageClient';
+export { default as PromotionsPageClient } from './presentation/components/promotions-page-client';

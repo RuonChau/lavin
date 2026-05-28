@@ -11,7 +11,7 @@ export const useInventory = () => {
   });
 
   const updateStockMutation = useMutation({
-    mutationFn: ({ id, newStock }: { id: string; newStock: number }) => 
+    mutationFn: ({ id, newStock }: { id: string; newStock: number }) =>
       inventoryService.updateStock(id, newStock),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
@@ -19,7 +19,7 @@ export const useInventory = () => {
   });
 
   const createMaterialMutation = useMutation({
-    mutationFn: (data: Omit<Material, 'id' | 'lastUpdated' | 'status'>) => 
+    mutationFn: (data: Omit<Material, 'id' | 'lastUpdated' | 'status'>) =>
       inventoryService.createMaterial(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
@@ -67,7 +67,7 @@ export const useWarehouses = () => {
   });
 
   const updateWarehouseMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => 
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
       inventoryService.updateWarehouse(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['warehouses'] });
@@ -90,5 +90,50 @@ export const useWarehouses = () => {
     isUpdating: updateWarehouseMutation.isPending,
     deleteWarehouse: deleteWarehouseMutation.mutateAsync,
     isDeleting: deleteWarehouseMutation.isPending,
+  };
+};
+
+export const useWarehouseLayout = (warehouseId: string | null) => {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['warehouse-layout', warehouseId],
+    queryFn: () => warehouseId ? inventoryService.getWarehouseLayout(warehouseId) : Promise.resolve([]),
+    enabled: !!warehouseId,
+  });
+
+  const createShelfMutation = useMutation({
+    mutationFn: (data: { warehouse_id: string; name: string; code: string }) =>
+      inventoryService.createShelf(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['warehouse-layout', warehouseId] });
+    },
+  });
+
+  const createLocationMutation = useMutation({
+    mutationFn: (data: { shelf_id: string; name: string; code: string; ingredient_id?: string; max_capacity?: number; current_quantity?: number }) =>
+      inventoryService.createLocation(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['warehouse-layout', warehouseId] });
+    },
+  });
+
+  const assignIngredientMutation = useMutation({
+    mutationFn: (data: { location_id: string; ingredient_id: string | null; current_quantity: number }) =>
+      inventoryService.assignIngredient(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['warehouse-layout', warehouseId] });
+    },
+  });
+
+  return {
+    layout: query.data || [],
+    isLoading: query.isLoading,
+    createShelf: createShelfMutation.mutateAsync,
+    isCreatingShelf: createShelfMutation.isPending,
+    createLocation: createLocationMutation.mutateAsync,
+    isCreatingLocation: createLocationMutation.isPending,
+    assignIngredient: assignIngredientMutation.mutateAsync,
+    isAssigning: assignIngredientMutation.isPending,
   };
 };

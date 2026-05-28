@@ -11,7 +11,10 @@ import {
   Edit3,
   TrendingDown,
   Beaker,
-  AlertCircle
+  AlertCircle,
+  BookOpenText,
+  Calculator,
+  Timer
 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
@@ -21,7 +24,6 @@ import { FormulaDetailsModal } from '@/modules/formulas/presentation/components/
 import { EditFormulaModal } from '@/modules/formulas/presentation/components/modal/edit-formula.modal';
 import { AddFormulaModal } from '@/modules/formulas/presentation/components/modal/add-formula.modal';
 import { toast } from 'react-toastify';
-import { StatsOverview } from '../../mocks/stats-overview.mock';
 
 export default function FormulasPage() {
   const { formulas, isLoading, updateFormula, createFormula, isUpdating, isCreating } = useFormulas();
@@ -30,6 +32,29 @@ export default function FormulasPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Dynamic statistics calculation
+  const totalFormulas = formulas.length;
+  const avgCost = totalFormulas > 0 
+    ? Math.round(formulas.reduce((sum, f) => sum + f.totalCost, 0) / totalFormulas)
+    : 0;
+
+  const activeIngredients = new Set(
+    formulas.flatMap(f => f.ingredients.map(i => i.materialId))
+  ).size;
+
+  const recentUpdates = formulas.filter(f => {
+    const diffTime = Math.abs(new Date().getTime() - new Date(f.updatedAt).getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  }).length;
+
+  const stats = [
+    { label: 'TỔNG CÔNG THỨC', value: totalFormulas.toString(), change: 'Đang hoạt động', icon: BookOpenText, color: 'bg-primary' },
+    { label: 'CHI PHÍ TB / MÓN', value: `₫${avgCost.toLocaleString('vi-VN')}`, change: 'Định mức thực tế', icon: Calculator, color: 'bg-amber-500' },
+    { label: 'NGUYÊN LIỆU ĐANG DÙNG', value: activeIngredients.toString(), change: 'Từ danh mục kho', icon: Beaker, color: 'bg-blue-500' },
+    { label: 'CẬP NHẬT GẦN ĐÂY', value: recentUpdates.toString(), change: 'Trong 7 ngày qua', icon: Timer, color: 'bg-green-500' },
+  ];
 
   const filteredFormulas = formulas.filter(f =>
     f.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -115,17 +140,16 @@ export default function FormulasPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {StatsOverview.map((stat, idx) => (
+        {stats.map((stat, idx) => (
           <GlassCard key={idx} className="p-6 relative group overflow-hidden" radius="4xl">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{stat.label}</p>
                 <h3 className="text-2xl font-bold text-text-primary mt-2 mb-1">{stat.value}</h3>
                 <div className={cn(
-                  "flex items-center gap-1 text-[11px] font-bold",
-                  stat.negative ? "text-red-500" : "text-green-600"
+                  "flex items-center gap-1 text-[11px] font-bold text-green-600"
                 )}>
-                  {stat.negative ? <TrendingDown size={12} /> : "•"} {stat.change}
+                  • {stat.change}
                 </div>
               </div>
               <div className={cn("p-2.5 rounded-2xl text-white shadow-lg", stat.color)}>

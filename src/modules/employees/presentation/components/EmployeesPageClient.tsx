@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
+import {
   Users,
   Plus,
   FileDown,
@@ -15,7 +15,9 @@ import {
   Select,
   DatePicker,
   Row,
-  Col
+  Col,
+  InputNumber,
+  message,
 } from 'antd';
 
 const { Option } = Select;
@@ -27,7 +29,19 @@ import AttendanceTab from './AttendanceTab';
 import { antdTheme } from '@/shared/utils/antdTheme';
 import { TabType } from '../../types/tab.type';
 import { staffTabs } from '../../config/staff-tabs.config';
+import { useEmployees } from '../hooks/useEmployees';
 
+const POSITION_OPTIONS = [
+  { value: 'BARISTA', label: 'Barista (Nhân viên pha chế)' },
+  { value: 'SERVER', label: 'Server (Nhân viên phục vụ)' },
+  { value: 'CASHIER', label: 'Cashier (Thu ngân)' },
+  { value: 'SHIFT_LEADER', label: 'Shift Leader (Quản lý ca)' },
+  { value: 'STORE_MANAGER', label: 'Store Manager (Quản lý chi nhánh)' },
+  { value: 'AREA_MANAGER', label: 'Area Manager (Quản lý khu vực)' },
+  { value: 'ACCOUNTANT', label: 'Kế toán' },
+  { value: 'PURCHASING', label: 'Mua hàng' },
+  { value: 'ADMIN', label: 'Admin' },
+];
 
 
 
@@ -36,13 +50,24 @@ export default function EmployeesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  const handleAddEmployee = (values: any) => {
-    console.log('New employee:', values);
-    setIsAddModalOpen(false);
-    form.resetFields();
+  const { users, isLoadingUsers, createEmployee, isCreating } = useEmployees();
+
+  const handleAddEmployee = async (values: any) => {
+    try {
+      await createEmployee({
+        user_id: values.user_id,
+        position: values.position,
+        base_salary: values.base_salary,
+        hire_date: values.hire_date?.format('YYYY-MM-DD') ?? '',
+      });
+      message.success('Thêm nhân viên thành công!');
+      setIsAddModalOpen(false);
+      form.resetFields();
+    } catch (err: any) {
+      message.error(err?.response?.data?.message ?? 'Có lỗi xảy ra, vui lòng thử lại.');
+    }
   };
- 
-  
+
 
   return (
     <ConfigProvider theme={antdTheme}>
@@ -64,7 +89,7 @@ export default function EmployeesPage() {
               <FileDown size={14} strokeWidth={3} />
               Xuất báo cáo
             </button>
-            <button 
+            <button
               onClick={() => setIsAddModalOpen(true)}
               className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
             >
@@ -84,8 +109,8 @@ export default function EmployeesPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "flex-1 min-w-60 text-left p-6 rounded-4xl border transition-all duration-500 group relative overflow-hidden",
-                  isActive 
-                    ? "bg-white border-primary/30 shadow-xl shadow-primary/5 -translate-y-1" 
+                  isActive
+                    ? "bg-white border-primary/30 shadow-xl shadow-primary/5 -translate-y-1"
                     : "bg-white/40 border-primary-soft/20 hover:border-primary/20 hover:bg-white/60"
                 )}
               >
@@ -103,11 +128,11 @@ export default function EmployeesPage() {
                     <p className="text-[10px] text-text-muted font-medium mt-1 leading-tight">{tab.description}</p>
                   </div>
                 </div>
-                
+
                 {isActive && (
-                  <motion.div 
+                  <motion.div
                     layoutId="activeTabGlow"
-                    className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent pointer-events-none" 
+                    className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent pointer-events-none"
                   />
                 )}
               </button>
@@ -131,7 +156,11 @@ export default function EmployeesPage() {
           </motion.div>
         </AnimatePresence>
 
-        <Modal title={<span className="text-xl font-black text-text-primary tracking-tight italic">Thêm Nhân Viên Mới</span>} footer={null} width={700}
+        {/* Modal Thêm Nhân Viên */}
+        <Modal
+          title={<span className="text-xl font-black text-text-primary tracking-tight italic">Thêm Nhân Viên Mới</span>}
+          footer={null}
+          width={680}
           open={isAddModalOpen}
           onCancel={() => {
             setIsAddModalOpen(false);
@@ -147,100 +176,70 @@ export default function EmployeesPage() {
             className="mt-6"
             requiredMark={false}
           >
-            <Row gutter={24}>
-              <Col span={12}>
-                <Form.Item
-                  name="name"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Họ và tên</span>}
-                  rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
-                >
-                  <Input placeholder="Nguyễn Văn A" className="h-12 rounded-xl bg-white/60 border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="id"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Mã nhân viên</span>}
-                >
-                  <Input placeholder="Mã tự động tạo (VD: EMP-006)" disabled className="h-12 rounded-xl border-primary-soft/20 bg-gray-50/50" />
-                </Form.Item>
-              </Col>
-            </Row>
+            {/* Chọn tài khoản người dùng */}
+            <Form.Item
+              name="user_id"
+              label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Tài khoản nhân viên</span>}
+              rules={[{ required: true, message: 'Vui lòng chọn tài khoản' }]}
+            >
+              <Select
+                placeholder={isLoadingUsers ? 'Đang tải...' : 'Chọn tài khoản người dùng'}
+                loading={isLoadingUsers}
+                showSearch
+                optionFilterProp="label"
+                className="h-12"
+                classNames={{ popup: { root: '!rounded-2xl' } }}
+                options={users.map((u) => ({
+                  value: u.id,
+                  label: `${u.username}${u.email ? ` — ${u.email}` : ''}${u.branch?.name ? ` (${u.branch.name})` : ''}`,
+                }))}
+              />
+            </Form.Item>
 
             <Row gutter={24}>
               <Col span={12}>
                 <Form.Item
-                  name="role"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Vị trí</span>}
-                  rules={[{ required: true, message: 'Vui lòng chọn vị trí' }]}
+                  name="position"
+                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Chức vụ</span>}
+                  rules={[{ required: true, message: 'Vui lòng chọn chức vụ' }]}
                 >
-                  <Select placeholder="Chọn vị trí" className="h-12" classNames={{ popup: { root: '!rounded-2xl' } }}>
-                    <Option value="Barista">Barista</Option>
-                    <Option value="Thu ngân">Thu ngân</Option>
-                    <Option value="Phục vụ">Phục vụ</Option>
-                    <Option value="Quản lý">Quản lý</Option>
+                  <Select placeholder="Chọn chức vụ" className="h-12" classNames={{ popup: { root: '!rounded-2xl' } }}>
+                    {POSITION_OPTIONS.map(opt => (
+                      <Option key={opt.value} value={opt.value}>{opt.label}</Option>
+                    ))}
                   </Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
-                  name="branch"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Chi nhánh</span>}
-                  rules={[{ required: true, message: 'Vui lòng chọn chi nhánh' }]}
-                >
-                  <Select placeholder="Chọn chi nhánh" className="h-12" classNames={{ popup: { root: '!rounded-2xl' } }}>
-                    <Option value="Quận 1">Quận 1</Option>
-                    <Option value="Quận 3">Quận 3</Option>
-                    <Option value="Tân Bình">Tân Bình</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={24}>
-              <Col span={12}>
-                <Form.Item
-                  name="email"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Email</span>}
-                  rules={[{ type: 'email', message: 'Email không hợp lệ' }, { required: true, message: 'Vui lòng nhập email' }]}
-                >
-                  <Input placeholder="example@brewglass.vn" className="h-12 rounded-xl bg-white/60 border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="phone"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Số điện thoại</span>}
-                  rules={[{ required: true, message: 'Vui lòng nhập SDT' }]}
-                >
-                  <Input placeholder="090x xxx xxx" className="h-12 rounded-xl bg-white/60 border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm" />
-                </Form.Item>
-              </Col>
-            </Row>
-
-            <Row gutter={24}>
-              <Col span={12}>
-                <Form.Item
-                  name="type"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Loại hợp đồng</span>}
-                  rules={[{ required: true, message: 'Vui lòng chọn loại HĐ' }]}
-                >
-                  <Select placeholder="Chọn loại phân bổ" className="h-12" classNames={{ popup: { root: '!rounded-2xl' } }}>
-                    <Option value="Toàn thời gian">Toàn thời gian</Option>
-                    <Option value="Bán thời gian">Bán thời gian</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item
-                  name="joinDate"
-                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Ngày gia nhập</span>}
+                  name="hire_date"
+                  label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Ngày bắt đầu làm việc</span>}
                   rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
                 >
-                  <DatePicker format="DD/MM/YYYY" placeholder="Chọn ngày" className="w-full h-12 rounded-xl bg-white/60 border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm" classNames={{ popup: '!rounded-2xl' }} />
+                  <DatePicker
+                    format="DD/MM/YYYY"
+                    placeholder="Chọn ngày"
+                    className="w-full h-12 rounded-xl bg-white/60 border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm"
+                    classNames={{ popup: '!rounded-2xl' }}
+                  />
                 </Form.Item>
               </Col>
             </Row>
+
+            <Form.Item
+              name="base_salary"
+              label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Lương cơ bản (₫)</span>}
+              rules={[{ required: true, message: 'Vui lòng nhập mức lương' }]}
+            >
+              <InputNumber
+                placeholder="VD: 8,000,000"
+                className="w-full h-12 rounded-xl"
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => value!.replace(/,/g, '') as any}
+                min={0}
+                step={500000}
+              />
+            </Form.Item>
 
             <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-primary-soft/10">
               <button
@@ -255,9 +254,10 @@ export default function EmployeesPage() {
               </button>
               <button
                 type="submit"
-                className="px-8 py-3.5 bg-primary hover:scale-[1.02] active:scale-95 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all shadow-lg shadow-primary/20"
+                disabled={isCreating}
+                className="px-8 py-3.5 bg-primary hover:scale-[1.02] active:scale-95 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all shadow-lg shadow-primary/20 disabled:opacity-60 disabled:scale-100"
               >
-                Lưu hồ sơ
+                {isCreating ? 'Đang lưu...' : 'Lưu hồ sơ'}
               </button>
             </div>
           </Form>

@@ -11,7 +11,7 @@ export const useFormulas = () => {
   });
 
   const updateFormulaMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Formula> }) => 
+    mutationFn: ({ id, data }: { id: string; data: any }) => 
       formulaService.updateFormula(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['formulas'] });
@@ -19,7 +19,7 @@ export const useFormulas = () => {
   });
 
   const createFormulaMutation = useMutation({
-    mutationFn: (data: Partial<Formula>) => formulaService.createFormula(data),
+    mutationFn: (data: any) => formulaService.createFormula(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['formulas'] });
     },

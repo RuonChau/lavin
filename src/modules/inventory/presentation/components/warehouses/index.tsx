@@ -28,13 +28,14 @@ import { Warehouse as WarehouseType } from '@/modules/inventory/domain/entities/
 
 export const Warehouses = () => {
    const router = useRouter();
-   const { 
-      warehouses, 
-      isLoading, 
-      createWarehouse, 
-      updateWarehouse, 
-      deleteWarehouse 
+   const {
+      warehouses,
+      isLoading,
+      createWarehouse,
+      updateWarehouse,
+      deleteWarehouse
    } = useWarehouses();
+   console.log("🚀 ~ Warehouses ~ warehouses:", warehouses)
    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -59,14 +60,14 @@ export const Warehouses = () => {
             onSave={async (data) => {
                try {
                   if (selectedWarehouse) {
-                     await updateWarehouse({ 
-                        id: selectedWarehouse.id, 
-                        data: { name: data.name, location: data.location } 
+                     await updateWarehouse({
+                        id: selectedWarehouse.id,
+                        data: { name: data.name, location: data.location }
                      });
                   } else {
-                     await createWarehouse({ 
-                        name: data.name, 
-                        location: data.location 
+                     await createWarehouse({
+                        name: data.name,
+                        location: data.location
                      });
                   }
                } catch (err) {
@@ -135,61 +136,61 @@ export const Warehouses = () => {
                      key={wh.id}
                   >
                      <GlassCard className="p-8 group relative overflow-hidden h-full" radius="4xl">
-                         <div className="absolute top-0 right-0 p-4 z-30">
-                            <button 
-                               onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveMenuId(activeMenuId === wh.id ? null : wh.id);
-                               }}
-                               className="p-2 text-text-muted hover:bg-primary/5 rounded-xl transition-all active:scale-95"
-                            >
-                               <MoreVertical size={20} />
-                            </button>
-                            
-                            {activeMenuId === wh.id && (
-                               <>
-                                  <div 
-                                     className="fixed inset-0 z-40" 
-                                     onClick={(e) => {
-                                        e.stopPropagation();
-                                        setActiveMenuId(null);
-                                     }}
-                                  />
-                                  <motion.div 
-                                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                                     className="absolute right-4 top-14 bg-white border border-primary-soft/20 rounded-2xl shadow-xl py-2 w-40 z-50 overflow-hidden"
-                                     onClick={(e) => e.stopPropagation()}
-                                  >
-                                     <button 
-                                        onClick={() => {
-                                           setSelectedWarehouse(wh);
-                                           setIsAddModalOpen(true);
-                                           setActiveMenuId(null);
-                                        }}
-                                        className="w-full text-left px-4 py-3 text-xs font-bold text-text-secondary hover:bg-primary/5 hover:text-primary transition-all flex items-center gap-2"
-                                     >
-                                        Chỉnh sửa
-                                     </button>
-                                     <button 
-                                        onClick={async () => {
-                                           if (confirm(`Bạn có chắc muốn xóa nhà kho "${wh.name}" không?`)) {
-                                              try {
-                                                 await deleteWarehouse(wh.id);
-                                              } catch (err) {
-                                                 console.error(err);
-                                              }
-                                           }
-                                           setActiveMenuId(null);
-                                        }}
-                                        className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 transition-all flex items-center gap-2"
-                                     >
-                                        Xóa kho
-                                     </button>
-                                  </motion.div>
-                               </>
-                            )}
-                         </div>
+                        <div className="absolute top-0 right-0 p-4 z-30">
+                           <button
+                              onClick={(e) => {
+                                 e.stopPropagation();
+                                 setActiveMenuId(activeMenuId === wh.id ? null : wh.id);
+                              }}
+                              className="p-2 text-text-muted hover:bg-primary/5 rounded-xl transition-all active:scale-95"
+                           >
+                              <MoreVertical size={20} />
+                           </button>
+
+                           {activeMenuId === wh.id && (
+                              <>
+                                 <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={(e) => {
+                                       e.stopPropagation();
+                                       setActiveMenuId(null);
+                                    }}
+                                 />
+                                 <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    className="absolute right-4 top-14 bg-white border border-primary-soft/20 rounded-2xl shadow-xl py-2 w-40 z-50 overflow-hidden"
+                                    onClick={(e) => e.stopPropagation()}
+                                 >
+                                    <button
+                                       onClick={() => {
+                                          setSelectedWarehouse(wh);
+                                          setIsAddModalOpen(true);
+                                          setActiveMenuId(null);
+                                       }}
+                                       className="w-full text-left px-4 py-3 text-xs font-bold text-text-secondary hover:bg-primary/5 hover:text-primary transition-all flex items-center gap-2"
+                                    >
+                                       Chỉnh sửa
+                                    </button>
+                                    <button
+                                       onClick={async () => {
+                                          if (confirm(`Bạn có chắc muốn xóa nhà kho "${wh.name}" không?`)) {
+                                             try {
+                                                await deleteWarehouse(wh.id);
+                                             } catch (err) {
+                                                console.error(err);
+                                             }
+                                          }
+                                          setActiveMenuId(null);
+                                       }}
+                                       className="w-full text-left px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-50 transition-all flex items-center gap-2"
+                                    >
+                                       Xóa kho
+                                    </button>
+                                 </motion.div>
+                              </>
+                           )}
+                        </div>
 
                         {/* Icon & Status */}
                         <div className="flex items-start justify-between mb-6">

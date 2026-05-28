@@ -24,29 +24,29 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
 
   return (
     <AntdModalShell open={!!supplier} onClose={onClose} width={512} zIndex={1500} maskColor="rgba(0, 0, 0, 0.4)">
-      <div className="relative h-[90vh] max-h-[90vh] overflow-hidden bg-[#FCF9F6] shadow-2xl border border-[#D8B894]/20 rounded-[32px]">
+      <div className="relative h-[90vh] max-h-[90vh] overflow-hidden bg-[#FCF9F6] shadow-2xl border border-primary-soft/20 rounded-4xl">
         {/* Sidebar Header */}
-        <div className="p-8 border-b border-[#D8B894]/10 bg-white/60">
+        <div className="p-8 border-b border-primary-soft/10 bg-white/60">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group">
-                <History size={24} className="group-hover:rotate-[-45deg] transition-transform" />
+                <History size={24} className="group-hover:-rotate-45 transition-transform" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-[#2A1E17]">Lịch sử nhà cung cấp</h2>
-                <p className="text-[10px] font-black text-[#9A8677] uppercase tracking-[0.2em] mt-0.5">{supplier.name}</p>
+                <h2 className="text-xl font-black text-text-primary">Lịch sử nhà cung cấp</h2>
+                <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mt-0.5">{supplier.name}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-3 text-[#9A8677] hover:bg-[#FFFAF4] rounded-2xl transition-all"
+              className="p-3 text-text-muted hover:bg-[#FFFAF4] rounded-2xl transition-all"
             >
               <X size={24} />
             </button>
           </div>
 
           {/* Filter Chips */}
-          <div className="flex items-center gap-2 p-1 bg-[#FFFAF4]/80 rounded-2xl border border-[#D8B894]/20">
+          <div className="flex items-center gap-2 p-1 bg-white/80 rounded-2xl border border-primary-soft/20">
             {FilterChipsHistory.map((f) => (
               <button
                 key={f.id}
@@ -55,7 +55,7 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
                   "px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex-1",
                   timeFilter === f.id
                     ? "bg-white text-primary shadow-sm"
-                    : "text-[#9A8677] hover:bg-white/40"
+                    : "text-text-muted hover:bg-white/40"
                 )}
               >
                 {f.label}
@@ -68,7 +68,7 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
         <div className="p-8 h-[calc(100%-180px)] overflow-y-auto custom-scrollbar">
           <div className="relative space-y-12">
             {/* Vertical Line */}
-            <div className="absolute left-[21px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-primary/30 via-[#D8B894]/20 to-transparent" />
+            <div className="absolute left-[21px] top-2 bottom-2 w-0.5 bg-linear-to-b from-primary/30 via-primary-soft/20 to-transparent" />
 
             {HistorySuppiler.map((event, idx) => (
               <motion.div
@@ -87,23 +87,23 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
                 </div>
 
                 {/* Content Card */}
-                <div className="bg-white/60 border border-[#D8B894]/20 rounded-3xl p-5 hover:border-primary/30 hover:bg-white transition-all shadow-sm group-hover:shadow-md">
+                <div className="bg-white/60 border border-primary-soft/20 rounded-3xl p-5 hover:border-primary/30 hover:bg-white transition-all shadow-sm group-hover:shadow-md">
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="text-[10px] font-black text-primary uppercase tracking-widest">{event.date}</p>
-                      <h4 className="text-sm font-black text-[#2A1E17] mt-1">{event.title}</h4>
+                      <h4 className="text-sm font-black text-text-primary mt-1">{event.title}</h4>
                     </div>
-                    <span className="text-[10px] font-black text-[#9A8677] bg-[#FFFAF4] px-2 py-1 rounded-lg">
+                    <span className="text-[10px] font-black text-text-muted bg-[#FFFAF4] px-2 py-1 rounded-lg">
                       {event.time}
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#6F5A4A] leading-relaxed mb-3">{event.desc}</p>
+                  <p className="text-xs text-text-muted leading-relaxed mb-3">{event.desc}</p>
 
-                  <div className="flex items-center justify-between pt-3 border-t border-[#D8B894]/10">
+                  <div className="flex items-center justify-between pt-3 border-t border-primary-soft/20">
                     <button
                       onClick={() => copyToClipboard(event.orderId)}
-                      className="text-[10px] font-bold text-[#9A8677] flex items-center gap-1 hover:text-primary transition-all group/copy"
+                      className="text-[10px] font-bold text-text-muted flex items-center gap-1 hover:text-primary transition-all group/copy"
                     >
                       <FileText size={12} /> {event.orderId}
                       {copiedId === event.orderId ? (
@@ -126,7 +126,7 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
 
           {/* Empty State placeholder */}
           {history.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 text-[#D8B894]/60">
+            <div className="flex flex-col items-center justify-center py-20 text-primary-soft/60">
               <History size={48} className="mb-4 opacity-20" />
               <p className="text-sm font-bold">Chưa có hoạt động nào trong khoảng thời gian này</p>
             </div>
@@ -134,22 +134,22 @@ export default function SupplierHistoryModal({ supplier, onClose, onViewOrder }:
         </div>
 
         {/* Footer Info */}
-        <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-[#D8B894]/20 bg-white/80 backdrop-blur-md">
+        <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-primary-soft/20 bg-white/80 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] font-black text-[#968271] uppercase tracking-widest mb-1">Hiệu suất cung ứng</p>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
-                  <span className="text-xs font-black text-[#2A1E17]">98% Đúng hạn</span>
+                  <span className="text-xs font-black text-text-primary">98% Đúng hạn</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" />
-                  <span className="text-xs font-black text-[#2A1E17]">4.8 Sao</span>
+                  <span className="text-xs font-black text-text-primary">4.8 Sao</span>
                 </div>
               </div>
             </div>
-            <button className="px-6 py-3 rounded-2xl bg-[#FFFAF4] border border-[#D8B894]/30 text-[10px] font-black text-[#6F5A4A] uppercase tracking-widest transition-all hover:bg-white hover:shadow-sm">
+            <button className="px-6 py-3 rounded-2xl bg-primary-soft border border-primary-soft/30 text-[10px] font-black text-text-secondary uppercase tracking-widest transition-all hover:bg-white hover:shadow-sm">
               Xuất sao kê
             </button>
           </div>

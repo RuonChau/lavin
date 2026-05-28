@@ -16,4 +16,5 @@ export interface Formula {
   ingredients: FormulaIngredient[];
   totalCost: number;
   updatedAt: string;
+  variantPrice?: number;
 }

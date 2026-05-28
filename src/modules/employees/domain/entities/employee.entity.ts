@@ -1,13 +1,25 @@
-export interface IEmployeeEntity {
-  employeeId: number;
-  fullName: string;
+export interface IEmployeeBranch {
+  id: string;
+  name: string;
+}
+
+export interface IEmployeeUser {
+  id: string;
+  username: string;
   email: string;
-  phoneNumber: string;
-  department: string;
+  phone: string;
+  branch_id?: string;
+  branch?: IEmployeeBranch;
+}
+
+export interface IEmployeeEntity {
+  id: string;
+  employee_code: string;
   position: string;
-  salary: number;
-  avatar?: string;
-  fileCV?: string;
+  base_salary: number;
+  hire_date?: string;
+  user_id?: string;
+  user?: IEmployeeUser;
   createdAt: string;
   updatedAt: string;
 }

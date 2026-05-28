@@ -1,69 +1,80 @@
-import { Formula } from '../../domain/entities/formula.entity';
+import { api } from '@/shared/lib/axios';
+import { Formula, FormulaIngredient } from '../../domain/entities/formula.entity';
 
 export const formulaService = {
-  getFormulas: (): Promise<Formula[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([
-          {
-            id: 'f-1',
-            productId: 'p-1',
-            productName: 'Phê La Latte',
-            category: 'Cà phê',
-            totalCost: 15400,
-            updatedAt: '2024-05-12T10:30:00Z',
-            ingredients: [
-              { id: 'i-1', materialId: 'm-1', materialName: 'Hạt Arabica Cầu Đất', quantity: 18, unit: 'g', cost: 7200 },
-              { id: 'i-2', materialId: 'm-2', materialName: 'Sữa tươi Dalat Milk', quantity: 150, unit: 'ml', cost: 4500 },
-              { id: 'i-3', materialId: 'm-3', materialName: 'Đường nước', quantity: 20, unit: 'ml', cost: 1200 },
-              { id: 'i-4', materialId: 'm-4', materialName: 'Bột béo', quantity: 10, unit: 'g', cost: 2500 },
-            ]
-          },
-          {
-            id: 'f-2',
-            productId: 'p-2',
-            productName: 'Espresso Arabica',
-            category: 'Cà phê',
-            totalCost: 8500,
-            updatedAt: '2024-05-11T14:20:00Z',
-            ingredients: [
-              { id: 'i-5', materialId: 'm-1', materialName: 'Hạt Arabica Cầu Đất', quantity: 18, unit: 'g', cost: 7200 },
-              { id: 'i-6', materialId: 'm-5', materialName: 'Nước lọc RO', quantity: 30, unit: 'ml', cost: 500 },
-              { id: 'i-7', materialId: 'm-3', materialName: 'Đường nước', quantity: 10, unit: 'ml', cost: 800 },
-            ]
-          },
-          {
-            id: 'f-3',
-            productId: 'p-3',
-            productName: 'Matcha Latte',
-            category: 'Trà & Đá xay',
-            totalCost: 18200,
-            updatedAt: '2024-05-13T09:15:00Z',
-            ingredients: [
-              { id: 'i-8', materialId: 'm-6', materialName: 'Bột Matcha Uji', quantity: 5, unit: 'g', cost: 9500 },
-              { id: 'i-9', materialId: 'm-2', materialName: 'Sữa tươi Dalat Milk', quantity: 180, unit: 'ml', cost: 5400 },
-              { id: 'i-10', materialId: 'm-3', materialName: 'Đường nước', quantity: 30, unit: 'ml', cost: 1800 },
-              { id: 'i-11', materialId: 'm-4', materialName: 'Bột béo', quantity: 6, unit: 'g', cost: 1500 },
-            ]
-          }
-        ]);
-      }, 500);
+  getFormulas: async (): Promise<Formula[]> => {
+    const response = await api.get('/recipes?limit=1000');
+    const recipeRows = response.data.data || [];
+
+    // Group recipes by variant_id
+    const grouped: Record<string, Formula> = {};
+
+    recipeRows.forEach((row: any) => {
+      const variantId = row.variant_id;
+      if (!variantId) return;
+
+      const variant = row.variant || {};
+      const product = variant.product || {};
+      const categoryName = product.category?.name || row.ingredient?.category || "Khác";
+      const ingredient = row.ingredient || {};
+
+      const ingredientCost = Number(row.quantity) * Number(ingredient.price_per_unit || 0);
+
+      const formulaIngredient: FormulaIngredient = {
+        id: row.id,
+        materialId: row.ingredient_id,
+        materialName: ingredient.name || "Nguyên liệu",
+        quantity: Number(row.quantity),
+        unit: ingredient.unit || "đơn vị",
+        cost: ingredientCost,
+      };
+
+      if (!grouped[variantId]) {
+        grouped[variantId] = {
+          id: variantId,
+          productId: product.id || "unknown",
+          productName: variant.variant_name || product.name || "Sản phẩm",
+          productImage: variant.images?.[0]?.file_url || undefined,
+          category: categoryName,
+          ingredients: [],
+          totalCost: 0,
+          updatedAt: row.updatedAt || new Date().toISOString(),
+          variantPrice: Number(variant.price || 0),
+        };
+      }
+
+      grouped[variantId].ingredients.push(formulaIngredient);
+      grouped[variantId].totalCost += ingredientCost;
+
+      if (new Date(row.updatedAt) > new Date(grouped[variantId].updatedAt)) {
+        grouped[variantId].updatedAt = row.updatedAt;
+      }
     });
+
+    return Object.values(grouped);
   },
 
-  updateFormula: (id: string, data: Partial<Formula>): Promise<Formula> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ id, ...data } as Formula);
-      }, 1000);
-    });
+  createFormula: async (data: { variant_id: string; ingredients: { ingredient_id: string; quantity: number | string }[] }): Promise<any> => {
+    const response = await api.post('/recipe/bulk', data);
+    return response.data.data;
   },
 
-  createFormula: (data: Partial<Formula>): Promise<Formula> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ id: Math.random().toString(36).substr(2, 9), ...data } as Formula);
-      }, 1000);
+  updateFormula: async (id: string, data: { ingredients: { ingredient_id: string; quantity: number | string }[] }): Promise<any> => {
+    const response = await api.post('/recipe/bulk', {
+      variant_id: id,
+      ingredients: data.ingredients,
     });
+    return response.data.data;
+  },
+
+  getIngredients: async (): Promise<any[]> => {
+    const response = await api.get('/ingredients');
+    return response.data.data || [];
+  },
+
+  getProductVariants: async (): Promise<any[]> => {
+    const response = await api.get('/product-variants');
+    return response.data.data || [];
   }
 };
+
