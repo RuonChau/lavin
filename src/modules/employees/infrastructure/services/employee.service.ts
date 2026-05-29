@@ -2,16 +2,23 @@ import { api } from '@/shared/lib/axios';
 import { IEmployeeEntity } from '../../domain/entities/employee.entity';
 
 export interface EmployeeCreateInput {
-  user_id: string;
+  user_id?: string;
+  full_name?: string;
   position: string;
   base_salary: number;
   hire_date: string;
+  phone?: string;
+  branch_id?: string;
 }
 
 export interface EmployeeUpdateInput {
   position?: string;
   base_salary?: number;
   hire_date?: string;
+  full_name?: string;
+  phone?: string;
+  branch_id?: string;
+  user_id?: string;
 }
 
 export interface EmployeeListResponse {

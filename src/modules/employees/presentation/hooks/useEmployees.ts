@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { employeeService } from '@/modules/employees/infrastructure/services/employee.service';
+import { employeeService, EmployeeUpdateInput } from '@/modules/employees/infrastructure/services/employee.service';
 import { mapEmployeeToDisplay } from '@/modules/employees/application/interfaces/employee.interfaces';
 import { userService, UserItem } from '@/modules/users/infrastructure/services/user.service';
+import { branchService } from '@/modules/branches/infrastructure/services/branch.service';
 
 export const useEmployees = (page = 1, limit = 10) => {
   const queryClient = useQueryClient();
@@ -19,13 +20,20 @@ export const useEmployees = (page = 1, limit = 10) => {
     staleTime: 1000 * 60 * 5,
   });
 
+  // Danh sách chi nhánh để chọn khi tạo nhân viên mới
+  const { data: branchesRaw, isLoading: isLoadingBranches } = useQuery({
+    queryKey: ['branches-list'],
+    queryFn: () => branchService.getBranches({ limit: 200 }),
+    staleTime: 1000 * 60 * 5,
+  });
+
   // Map server data → display format
   const employees = (employeeResponse?.data ?? []).map(mapEmployeeToDisplay);
   const total = employeeResponse?.total ?? 0;
 
   // Mutation tạo nhân viên
   const createMutation = useMutation({
-    mutationFn: (data: { user_id: string; position: string; base_salary: number; hire_date: string }) =>
+    mutationFn: (data: { user_id?: string; full_name?: string; position: string; base_salary: number; hire_date: string; phone?: string; branch_id?: string }) =>
       employeeService.createEmployee(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -34,7 +42,7 @@ export const useEmployees = (page = 1, limit = 10) => {
 
   // Mutation cập nhật nhân viên
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { position?: string; base_salary?: number; hire_date?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: EmployeeUpdateInput }) =>
       employeeService.updateEmployee(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -51,6 +59,7 @@ export const useEmployees = (page = 1, limit = 10) => {
 
   return {
     employees,
+    rawEmployees: employeeResponse?.data ?? [],
     total,
     isLoading,
     refetch,
@@ -58,6 +67,10 @@ export const useEmployees = (page = 1, limit = 10) => {
     // Users for dropdown - đã là UserItem[]
     users: (usersRaw ?? []) as UserItem[],
     isLoadingUsers,
+
+    // Branches for dropdown
+    branches: branchesRaw ?? [],
+    isLoadingBranches,
 
     // Mutations
     createEmployee: createMutation.mutateAsync,

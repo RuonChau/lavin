@@ -34,19 +34,21 @@ export interface EmployeeInterface {
 
 /** Helper: map IEmployeeEntity từ server → Employee hiển thị trên table */
 export function mapEmployeeToDisplay(e: IEmployeeEntity): Employee {
+  // Ưu tiên tên từ user account; fallback sang full_name khi không có tài khoản liên kết
+  const displayName = e.user?.username ?? e.full_name ?? '—';
   return {
     key: e.id,
     id: e.id,
     employee_code: e.employee_code,
-    name: e.user?.username ?? '—',
+    name: displayName,
     role: e.position,
     email: e.user?.email ?? '—',
-    phone: e.user?.phone ?? '—',
+    phone: e.user?.phone ?? e.phone ?? '—',
     status: 'ACTIVE',
     hire_date: e.hire_date
       ? new Date(e.hire_date).toLocaleDateString('vi-VN')
       : '—',
-    branch: e.user?.branch?.name ?? '—',
+    branch: e.user?.branch?.name ?? e.branch?.name ?? '—',
     base_salary: e.base_salary,
   };
 }

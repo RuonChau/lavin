@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import {
   ConfigProvider,
+  App,
   Input,
   Modal,
   Form,
@@ -17,7 +18,6 @@ import {
   Row,
   Col,
   InputNumber,
-  message,
 } from 'antd';
 
 const { Option } = Select;
@@ -45,20 +45,46 @@ const POSITION_OPTIONS = [
 
 
 
-export default function EmployeesPage() {
+function EmployeesPageInner() {
   const [activeTab, setActiveTab] = useState<TabType>('LIST');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  const { users, isLoadingUsers, createEmployee, isCreating } = useEmployees();
+  const { users, isLoadingUsers, branches, isLoadingBranches, createEmployee, isCreating } = useEmployees();
+  const { message } = App.useApp();
+
+  // Watch user_id để show/hide field full_name
+  const selectedUserId = Form.useWatch('user_id', form);
+
+  // Khi chọn user → tự điền full_name, phone, branch_id từ tài khoản đó
+  const handleUserChange = (userId: string) => {
+    const found = users.find(u => u.id === userId);
+    if (found) {
+      form.setFieldsValue({
+        full_name: found.username,
+        phone: found.phone || undefined,
+        branch_id: found.branch_id || undefined,
+      });
+    } else {
+      form.setFieldsValue({
+        full_name: undefined,
+        phone: undefined,
+        branch_id: undefined,
+      });
+    }
+  };
 
   const handleAddEmployee = async (values: any) => {
     try {
       await createEmployee({
-        user_id: values.user_id,
+        user_id: values.user_id || undefined,
+        full_name: values.full_name?.trim(),
         position: values.position,
         base_salary: values.base_salary,
-        hire_date: values.hire_date?.format('YYYY-MM-DD') ?? '',
+        // hire_date: giữ nguyên local date (YYYY-MM-DD), không để dayjs convert sang UTC
+        hire_date: values.hire_date ? values.hire_date.format('YYYY-MM-DD') : '',
+        phone: values.phone?.trim() || undefined,
+        branch_id: values.branch_id || undefined,
       });
       message.success('Thêm nhân viên thành công!');
       setIsAddModalOpen(false);
@@ -70,8 +96,7 @@ export default function EmployeesPage() {
 
 
   return (
-    <ConfigProvider theme={antdTheme}>
-      <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
@@ -173,28 +198,117 @@ export default function EmployeesPage() {
             form={form}
             layout="vertical"
             onFinish={handleAddEmployee}
-            className="mt-6"
+            className="mt-6 w-full"
             requiredMark={false}
           >
-            {/* Chọn tài khoản người dùng */}
+            {/* Liên kết tài khoản — tuỳ chọn */}
             <Form.Item
               name="user_id"
-              label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Tài khoản nhân viên</span>}
-              rules={[{ required: true, message: 'Vui lòng chọn tài khoản' }]}
+              label={
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Tài khoản hệ thống</span>
+                  <span className="text-[10px] font-medium text-text-muted bg-gray-100 px-2 py-0.5 rounded-full">Tuỳ chọn</span>
+                </div>
+              }
             >
               <Select
-                placeholder={isLoadingUsers ? 'Đang tải...' : 'Chọn tài khoản người dùng'}
+                placeholder={isLoadingUsers ? 'Đang tải...' : 'Chọn tài khoản để liên kết (nếu có)'}
                 loading={isLoadingUsers}
                 showSearch
+                allowClear
                 optionFilterProp="label"
                 className="h-12"
                 classNames={{ popup: { root: '!rounded-2xl' } }}
+                onChange={handleUserChange}
+                onClear={() => form.setFieldsValue({ full_name: undefined, phone: undefined, branch_id: undefined })}
                 options={users.map((u) => ({
                   value: u.id,
                   label: `${u.username}${u.email ? ` — ${u.email}` : ''}${u.branch?.name ? ` (${u.branch.name})` : ''}`,
                 }))}
               />
             </Form.Item>
+
+            {/* Tên nhân viên — bắt buộc khi không có tài khoản; tự điền khi có tài khoản */}
+            <Form.Item
+              name="full_name"
+              label={
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Tên nhân viên</span>
+                  {!selectedUserId && (
+                    <span className="text-[10px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Bắt buộc</span>
+                  )}
+                </div>
+              }
+              rules={[{
+                required: !selectedUserId,
+                message: 'Vui lòng nhập tên nhân viên',
+              }]}
+            >
+              <Input
+                placeholder={selectedUserId ? 'Tự điền từ tài khoản đã chọn' : 'Nhập tên đầy đủ của nhân viên'}
+                readOnly={!!selectedUserId}
+                className={`h-12 rounded-xl border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm ${selectedUserId ? 'bg-gray-50 text-text-muted cursor-not-allowed' : 'bg-white/60'}`}
+              />
+            </Form.Item>
+
+            {/* SĐT và Chi nhánh — bắt buộc khi không có tài khoản; tự điền khi có tài khoản */}
+            <Row gutter={24}>
+              <Col span={12}>
+                <Form.Item
+                  name="phone"
+                  label={
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Số điện thoại</span>
+                      {!selectedUserId && (
+                        <span className="text-[10px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Bắt buộc</span>
+                      )}
+                    </div>
+                  }
+                  rules={[{
+                    required: !selectedUserId,
+                    message: 'Vui lòng nhập số điện thoại',
+                  }]}
+                >
+                  <Input
+                    placeholder={selectedUserId ? 'Tự điền từ tài khoản' : 'Nhập số điện thoại'}
+                    readOnly={!!selectedUserId}
+                    className={`h-12 rounded-xl border-primary-soft/30 hover:border-primary/50 focus:border-primary/50 shadow-sm ${selectedUserId ? 'bg-gray-50 text-text-muted cursor-not-allowed' : 'bg-white/60'}`}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="branch_id"
+                  label={
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Chi nhánh làm việc</span>
+                      {!selectedUserId && (
+                        <span className="text-[10px] font-medium text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Bắt buộc</span>
+                      )}
+                    </div>
+                  }
+                  rules={[{
+                    required: !selectedUserId,
+                    message: 'Vui lòng chọn chi nhánh',
+                  }]}
+                >
+                  <Select
+                    placeholder={isLoadingBranches ? 'Đang tải...' : 'Chọn chi nhánh'}
+                    loading={isLoadingBranches}
+                    disabled={!!selectedUserId}
+                    showSearch
+                    allowClear
+                    optionFilterProp="label"
+                    className="h-12"
+                    classNames={{ popup: { root: '!rounded-2xl' } }}
+                    options={branches.map((b: any) => ({
+                      value: b.id,
+                      label: b.name,
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
 
             <Row gutter={24}>
               <Col span={12}>
@@ -230,14 +344,17 @@ export default function EmployeesPage() {
               name="base_salary"
               label={<span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Lương cơ bản (₫)</span>}
               rules={[{ required: true, message: 'Vui lòng nhập mức lương' }]}
+              className="[&_.ant-input-number]:w-full [&_.ant-input-number]:h-12 [&_.ant-input-number]:rounded-xl [&_.ant-input-number]:border-primary-soft/30 [&_.ant-input-number:hover]:border-primary/50 [&_.ant-input-number-focused]:border-primary/50 [&_.ant-input-number-input]:h-full [&_.ant-input-number-input]:px-4"
             >
               <InputNumber
                 placeholder="VD: 8,000,000"
-                className="w-full h-12 rounded-xl"
+                className='w-full! h-12! rounded-xl!'
+                // style={{ width: '100%', height: '48px', borderRadius: '12px' }}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 parser={(value) => value!.replace(/,/g, '') as any}
                 min={0}
                 step={500000}
+                controls={false}
               />
             </Form.Item>
 
@@ -263,6 +380,15 @@ export default function EmployeesPage() {
           </Form>
         </Modal>
       </div>
+  );
+}
+
+export default function EmployeesPage() {
+  return (
+    <ConfigProvider theme={antdTheme}>
+      <App>
+        <EmployeesPageInner />
+      </App>
     </ConfigProvider>
   );
 }

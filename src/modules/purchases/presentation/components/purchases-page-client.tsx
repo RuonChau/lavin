@@ -25,11 +25,11 @@ import { cn } from '@/shared/utils/cn';
 import { useRouter } from 'next/navigation';
 import { usePurchases } from '@/modules/purchases/presentation/hooks/usePurchases';
 import { STATUS_CONFIG } from '../../configs/status-pos.config';
-import { Supplier } from '../../mocks/supplier.mock';
 import CreatePurchaseOrderModal from './modals/create-purchase-order.modal';
 import ViewPurchaseOrderModal from './modals/view-purchase-order.modal';
 import EditPurchaseOrderModal from './modals/edit-purchase-order.modal';
 import SupplierHistoryModal from './modals/supplier-history.modal';
+import { mapSystemAlerts } from '../utils/map-system-alerts';
 
 
 
@@ -67,41 +67,8 @@ export default function PurchaseOrdersPage() {
     { label: 'ĐỐI TÁC GIAO DỊCH', value: uniqueSuppliersCount.toString(), change: 'Nhà cung cấp đang dùng', icon: User, color: 'bg-green-500' },
   ];
 
-  // Dynamic Top Suppliers from API
-  const displaySuppliers = topSuppliers.length > 0 ? topSuppliers : Supplier;
-
   // Map backend alerts to frontend display details
-  const displayAlerts = systemAlerts.length > 0 
-    ? systemAlerts.map((alert: any) => {
-        let icon = AlertCircle;
-        let color = 'bg-amber-50 border-amber-100 text-amber-500';
-
-        if (alert.type === 'PENDING_APPROVAL') {
-          icon = Clock;
-          color = 'bg-amber-50 border-amber-100 text-amber-500';
-        } else if (alert.type === 'SHIPPING_ACTIVE') {
-          icon = Truck;
-          color = 'bg-blue-50 border-blue-100 text-blue-500';
-        } else if (alert.type === 'DEBT_WARNING') {
-          icon = AlertCircle;
-          color = 'bg-amber-50 border-amber-100 text-amber-500';
-        }
-
-        return {
-          title: alert.title,
-          desc: alert.desc,
-          icon,
-          color
-        };
-      })
-    : [
-        {
-          title: 'Cảnh báo công nợ',
-          desc: 'Có 2 nhà cung cấp sắp đến hạn thanh toán công nợ. Vui lòng kiểm tra đối soát trước khi duyệt đơn mới.',
-          icon: AlertCircle,
-          color: 'bg-amber-50 border-amber-100 text-amber-500'
-        }
-      ];
+  const displayAlerts = mapSystemAlerts(systemAlerts);
 
   return (
     <div className="space-y-8 pb-12">
@@ -333,7 +300,7 @@ export default function PurchaseOrdersPage() {
             <User size={18} className="text-primary" /> Nhà cung cấp hàng đầu
           </h3>
           <div className="space-y-4">
-            {displaySuppliers.map((sup, idx) => (
+            {topSuppliers.map((sup, idx) => (
               <div
                 key={idx}
                 onClick={() => setViewingSupplier(sup)}

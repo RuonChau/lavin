@@ -18,8 +18,12 @@ export interface IEmployeeEntity {
   position: string;
   base_salary: number;
   hire_date?: string;
+  full_name?: string;
   user_id?: string;
   user?: IEmployeeUser;
+  phone?: string;
+  branch_id?: string;
+  branch?: IEmployeeBranch;
   createdAt: string;
   updatedAt: string;
 }

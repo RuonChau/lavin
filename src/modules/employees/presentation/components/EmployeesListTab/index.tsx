@@ -1,16 +1,39 @@
 import Table from "antd/es/table";
 import { ChevronLeft, ChevronRight, Filter, Search, Users } from "lucide-react";
-import { Input, Modal } from "antd";
+import { Input, App } from "antd";
 import { GlassCard } from "@/shared/components/GlassCard";
 import { employeeTableColumns } from "@/modules/employees/config/employee-table-columns.config";
 import { useEmployees } from "@/modules/employees/presentation/hooks/useEmployees";
 import { useState } from "react";
 import { Employee } from "@/modules/employees/application/interfaces/employee.interfaces";
+import { IEmployeeEntity } from "@/modules/employees/domain/entities/employee.entity";
+import { DeleteEmployeeModal } from "../DeleteEmployeeModal";
+import { EditEmployeeModal } from "../EditEmployeeModal";
 
 export default function EmployeesListTab() {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const { employees, total, isLoading, deleteEmployee, isDeleting } = useEmployees(page, 10);
+  const {
+    employees,
+    rawEmployees,
+    total,
+    isLoading,
+    deleteEmployee,
+    isDeleting,
+    updateEmployee,
+    isUpdating,
+    users,
+    isLoadingUsers,
+    branches,
+    isLoadingBranches,
+  } = useEmployees(page, 10);
+  const { message } = App.useApp();
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedEditEmployee, setSelectedEditEmployee] = useState<IEmployeeEntity | null>(null);
 
   const filtered = employees.filter((emp: Employee) => {
     if (!searchTerm) return true;
@@ -23,20 +46,53 @@ export default function EmployeesListTab() {
     );
   });
 
-  const handleDelete = (id: string) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: 'Bạn có chắc muốn xóa hồ sơ nhân viên này không?',
-      okText: 'Xóa',
-      cancelText: 'Hủy',
-      okButtonProps: { danger: true, loading: isDeleting },
-      onOk: () => deleteEmployee(id),
-    });
+  const handleDelete = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedEmployee) return;
+    try {
+      await deleteEmployee(selectedEmployee.id);
+      message.success(`Đã xóa hồ sơ nhân viên ${selectedEmployee.name} thành công!`);
+      setIsDeleteModalOpen(false);
+      setSelectedEmployee(null);
+    } catch (err: any) {
+      message.error(err?.response?.data?.message ?? 'Không thể xóa nhân viên');
+    }
   };
 
   const handleEdit = (record: Employee) => {
-    // TODO: mở modal edit (sẽ implement sau nếu cần)
-    console.log('Edit employee:', record);
+    const raw = rawEmployees.find(r => r.id === record.id);
+    if (raw) {
+      setSelectedEditEmployee(raw);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleConfirmEdit = async (values: any) => {
+    if (!selectedEditEmployee) return;
+    try {
+      await updateEmployee({
+        id: selectedEditEmployee.id,
+        data: {
+          user_id: values.user_id || undefined,
+          full_name: values.full_name?.trim(),
+          position: values.position,
+          base_salary: values.base_salary,
+          // hire_date: giữ nguyên local date
+          hire_date: values.hire_date ? values.hire_date.format('YYYY-MM-DD') : '',
+          phone: values.phone?.trim() || undefined,
+          branch_id: values.branch_id || undefined,
+        }
+      });
+      message.success(`Cập nhật hồ sơ nhân viên thành công!`);
+      setIsEditModalOpen(false);
+      setSelectedEditEmployee(null);
+    } catch (err: any) {
+      message.error(err?.response?.data?.message ?? 'Không thể cập nhật hồ sơ');
+    }
   };
 
   const columns = employeeTableColumns(handleEdit, handleDelete);
@@ -97,6 +153,32 @@ export default function EmployeesListTab() {
           rowClassName="group"
         />
       </GlassCard>
+
+      <DeleteEmployeeModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedEmployee(null);
+        }}
+        employee={selectedEmployee}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
+
+      <EditEmployeeModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedEditEmployee(null);
+        }}
+        employee={selectedEditEmployee}
+        users={users}
+        isLoadingUsers={isLoadingUsers}
+        branches={branches}
+        isLoadingBranches={isLoadingBranches}
+        onSubmit={handleConfirmEdit}
+        isSubmitting={isUpdating}
+      />
     </div>
   );
 }
