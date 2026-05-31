@@ -25,8 +25,8 @@ export function CancelOrderModal({ isOpen, onClose, order, onConfirm, isSubmitti
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-[#2A1E17]">Hủy đơn hàng này?</h2>
-            <p className="text-sm text-[#6F5A4A]">Bạn có chắc chắn muốn hủy đơn hàng <span className="font-bold">{order.orderNumber}</span>? Hành động này sẽ được ghi lại trong lịch sử hệ thống.</p>
+            <h2 className="text-xl font-bold text-text-primary">Hủy đơn hàng này?</h2>
+            <p className="text-sm text-text-secondary">Bạn có chắc chắn muốn hủy đơn hàng <span className="font-bold">{order.orderNumber}</span>? Hành động này sẽ được ghi lại trong lịch sử hệ thống.</p>
           </div>
 
           <div className="w-full space-y-3 pt-4">
@@ -44,7 +44,7 @@ export function CancelOrderModal({ isOpen, onClose, order, onConfirm, isSubmitti
             </button>
             <button
               onClick={onClose}
-              className="w-full px-6 py-3 rounded-2xl border border-[#D8B894]/30 text-sm font-bold text-[#6F5A4A] hover:bg-white/60 transition-all"
+              className="w-full px-6 py-3 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-secondary hover:bg-white/60 transition-all"
             >
               Quay lại
             </button>
@@ -53,7 +53,7 @@ export function CancelOrderModal({ isOpen, onClose, order, onConfirm, isSubmitti
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-[#9A8677] hover:bg-white/60 rounded-xl transition-all"
+          className="absolute top-4 right-4 p-2 text-text-muted hover:bg-white/60 rounded-xl transition-all"
         >
           <X size={20} />
         </button>

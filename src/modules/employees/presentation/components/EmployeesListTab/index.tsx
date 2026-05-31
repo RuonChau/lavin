@@ -7,8 +7,8 @@ import { useEmployees } from "@/modules/employees/presentation/hooks/useEmployee
 import { useState } from "react";
 import { Employee } from "@/modules/employees/application/interfaces/employee.interfaces";
 import { IEmployeeEntity } from "@/modules/employees/domain/entities/employee.entity";
-import { DeleteEmployeeModal } from "../DeleteEmployeeModal";
-import { EditEmployeeModal } from "../EditEmployeeModal";
+import { DeleteEmployeeModal } from "../modal/delete-employee.modal";
+import { EditEmployeeModal } from "../modal/edit-employee.modal";
 
 export default function EmployeesListTab() {
   const [page, setPage] = useState(1);

@@ -1,8 +1,8 @@
 import { Col, Form, Row, Select, TimePicker } from "antd";
 import { Store } from "lucide-react";
-import { PremiumPanel } from "./PremiumPanel";
-import { SectionTitle } from "./SectionTitle";
-import { SwitchCard } from "../card/SwitchCard";
+import { PremiumPanel } from "./premium-panel";
+import { SectionTitle } from "./section-title";
+import { SwitchCard } from "../card/switch.card";
 
 const branchOptions = [
   { value: 'nguyen-hue', label: 'LaVin Nguyễn Huệ' },

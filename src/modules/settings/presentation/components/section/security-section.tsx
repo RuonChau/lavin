@@ -1,8 +1,8 @@
 import { Col, Form, Input, Row, Select, Tag } from "antd";
 import { LockKeyhole, Smartphone } from "lucide-react";
-import { PremiumPanel } from "./PremiumPanel";
-import { SectionTitle } from "./SectionTitle";
-import { SwitchCard } from "../card/SwitchCard";
+import { PremiumPanel } from "./premium-panel";
+import { SectionTitle } from "./section-title";
+import { SwitchCard } from "../card/switch.card";
 
 const recentDevices = [
   { id: 'd1', device: 'MacBook Pro 14"', browser: 'Chrome 125', location: 'TP. Hồ Chí Minh', lastActive: 'Hôm nay, 14:12', trusted: true },
@@ -44,17 +44,17 @@ export function SecuritySection({ dirty, onReset }: { dirty: boolean; onReset: (
           <SwitchCard name={['security', 'twoFactorEnabled']} title="Bật/tắt 2FA" description="Yêu cầu mã xác thực khi đăng nhập thiết bị mới." compact />
         </Col>
       </Row>
-      <div className="mt-4 rounded-3xl border border-[#D8B894]/25 bg-white/58 p-4">
+      <div className="mt-4 rounded-3xl border border-primary-soft/25 bg-white/58 p-4">
         <div className="mb-4 flex items-center gap-2">
           <Smartphone size={18} className="text-primary" />
-          <h3 className="font-black text-[#2A1E17]">Thiết bị đăng nhập gần đây</h3>
+          <h3 className="font-black text-text-primary">Thiết bị đăng nhập gần đây</h3>
         </div>
         <div className="space-y-3">
           {recentDevices.map((device) => (
-            <div key={device.id} className="flex flex-col gap-3 rounded-2xl border border-[#D8B894]/15 bg-[#FFFAF4]/75 p-4 md:flex-row md:items-center md:justify-between">
+            <div key={device.id} className="flex flex-col gap-3 rounded-2xl border border-primary-soft/15 bg-[#FFFAF4]/75 p-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="font-black text-[#2A1E17]">{device.device}</p>
-                <p className="mt-1 text-xs font-semibold text-[#9A8677]">{device.browser} · {device.location} · {device.lastActive}</p>
+                <p className="font-black text-text-primary">{device.device}</p>
+                <p className="mt-1 text-xs font-semibold text-text-secondary">{device.browser} · {device.location} · {device.lastActive}</p>
               </div>
               <Tag color={device.trusted ? 'green' : 'orange'} className="m-0 w-fit rounded-full px-3 py-1 text-xs font-black">
                 {device.trusted ? 'Tin cậy' : 'Cần rà soát'}

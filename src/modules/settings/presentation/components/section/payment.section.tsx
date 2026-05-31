@@ -1,11 +1,25 @@
 import { Col, Form, Input, Row, Upload } from "antd";
+import type { UploadFile } from "antd";
 import { CreditCard, UploadCloud } from "lucide-react";
-import { PremiumPanel } from "./PremiumPanel";
-import { SectionTitle } from "./SectionTitle";
-import { SwitchCard } from "../card/SwitchCard";
+import { PremiumPanel } from "./premium-panel";
+import { SectionTitle } from "./section-title";
+import { SwitchCard } from "../card/switch.card";
 import { normFile } from "@/modules/settings/utils/normFile";
 
-export function PaymentSection({ dirty, onReset }: { dirty: boolean; onReset: () => void }) {
+const getPendingFile = (fileList: UploadFile[]): File | undefined => {
+  const uploadFile = fileList.find((file) => file.originFileObj);
+  return uploadFile?.originFileObj;
+};
+
+export function PaymentSection({
+  dirty,
+  onReset,
+  onPaymentQrFileChange,
+}: {
+  dirty: boolean;
+  onReset: () => void;
+  onPaymentQrFileChange?: (file?: File) => void;
+}) {
   return (
     <PremiumPanel>
       <SectionTitle icon={CreditCard} title="Thanh toán" description="Cấu hình phương thức thanh toán, tài khoản ngân hàng và xác nhận tự động." dirty={dirty} onReset={onReset} />
@@ -33,8 +47,14 @@ export function PaymentSection({ dirty, onReset }: { dirty: boolean; onReset: ()
         </Col>
         <Col xs={24} lg={12}>
           <Form.Item name={['payment', 'paymentQr']} label="Mã QR thanh toán" valuePropName="fileList" getValueFromEvent={normFile}>
-            <Upload listType="picture-card" maxCount={1} beforeUpload={() => false} accept="image/*">
-               <div className="flex flex-col items-center gap-2 text-[#6F5A4A]">
+            <Upload
+              listType="picture-card"
+              maxCount={1}
+              beforeUpload={() => false}
+              accept="image/*"
+              onChange={({ fileList }) => onPaymentQrFileChange?.(getPendingFile(fileList))}
+            >
+              <div className="flex flex-col items-center gap-2 text-text-secondary">
                 <UploadCloud size={22} />
                 <span className="text-xs font-bold">Tải QR</span>
               </div>

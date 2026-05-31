@@ -37,12 +37,14 @@ import {
   Download,
   FileText,
   RefreshCcw,
+  CalendarDays,
+  TrendingUp,
+  Target,
+  AlertTriangle,
+  PackageCheck,
 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
-import { dailyReports } from '../../mocks/dailyReports.mock';
-import { TDataState, TRangeFilter } from '../../types/range-filter.type';
-import { topProductData } from '../../mocks/topProductData.mock';
-import { branchRevenueData } from '../../mocks/branchRevenueData.mock';
+import { TRangeFilter } from '../../types/range-filter.type';
 import { antdThemeReport } from '@/shared/utils/antdThemeReport';
 import { branchOptions } from '../../mocks/branchOptions.mock';
 import { categoryOptions } from '../../mocks/categoryOptions.mock';
@@ -50,87 +52,87 @@ import { renderLoading } from './render/renderLoading';
 import { renderEmpty } from './render/renderEmpty';
 import { renderError } from './render/renderError';
 import { kpiCards } from '../../mocks/kpiCards.mock';
-import ChartCard from './chart/ChartCard';
+import ChartCard from './chart/chart-card';
 import { CustomTooltip } from './tooltip/CustomTooltip';
 import { formatCompactVnd } from '../../utils/formatCompactVndReport';
-import { orderStatusData } from '../../mocks/orderStatusData.mock';
-import { aovTrendData } from '../../utils/aovTrendData';
-import { InsightsReport } from '../../mocks/insightsReport';
 import { columnsDailyReport } from '../../types/columnsDailyReport';
 import { formatPercentReport } from '../../utils/formatPercentReport';
-
-
-
-
+import { useReports } from '../hooks/useReports';
 
 const { RangePicker } = DatePicker;
 const DEFAULT_CHART_HEIGHT = 320;
 const COMPACT_CHART_HEIGHT = 220;
+
+const iconMap: Record<string, any> = {
+  CalendarDays,
+  TrendingUp,
+  Target,
+  AlertTriangle,
+  PackageCheck,
+};
 
 export default function ReportsPage() {
   const [rangeFilter, setRangeFilter] = useState<TRangeFilter>('7_DAYS');
   const [branchFilter, setBranchFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs('2026-05-11'), dayjs('2026-05-17')]);
-  const [dataState, setDataState] = useState<TDataState>('ready');
+
+  // Hook into our backend API
+  const { data, isLoading, isError, refetch } = useReports({
+    rangeFilter,
+    branchFilter,
+    categoryFilter,
+    dateRange,
+  });
 
   const isEmpty = categoryFilter === 'new-products';
+  const isDataEmpty = isEmpty || !data || (data.dailyReports && data.dailyReports.length === 0);
 
   const visibleProducts = useMemo(() => {
-    return topProductData
-      .filter((item) => categoryFilter === 'ALL' || item.category === categoryFilter)
-      .filter((item) => item.sold > 0)
-      .sort((a, b) => a.sold - b.sold);
-  }, [categoryFilter]);
+    const list = data?.topProducts ?? [];
+    return [...list].sort((a, b) => a.sold - b.sold);
+  }, [data?.topProducts]);
 
   const visibleBranchRevenue = useMemo(() => {
-    return branchRevenueData.filter((item) => branchFilter === 'ALL' || item.branchId === branchFilter);
-  }, [branchFilter]);
+    return data?.branchRevenue ?? [];
+  }, [data?.branchRevenue]);
 
   const visibleReports = useMemo(() => {
-    if (isEmpty) return [];
+    return data?.dailyReports ?? [];
+  }, [data?.dailyReports]);
 
-    const branchMultiplier = branchFilter === 'ALL' ? 1 : 0.22 + visibleBranchRevenue[0]?.orders / 6000;
-
-    return dailyReports.map((item) => ({
-      ...item,
-      revenue: Math.round(item.revenue * branchMultiplier),
-      orders: Math.round(item.orders * branchMultiplier),
-      completedOrders: Math.round(item.completedOrders * branchMultiplier),
-      canceledOrders: Math.max(1, Math.round(item.canceledOrders * branchMultiplier)),
-      newCustomers: Math.round(item.newCustomers * branchMultiplier),
-      aov: Math.round(item.aov * (branchFilter === 'ALL' ? 1 : 1.04)),
+  const revenueChartData = useMemo(() => {
+    return visibleReports.map((item) => ({
+      date: dayjs(item.date).format('DD/MM'),
+      revenue: item.revenue,
+      orders: item.orders,
     }));
-  }, [branchFilter, isEmpty, visibleBranchRevenue]);
+  }, [visibleReports]);
 
-  const revenueChartData = visibleReports.map((item) => ({
-    date: dayjs(item.date).format('DD/MM'),
-    revenue: item.revenue,
-    orders: item.orders,
-  }));
+  const orderStatusData = useMemo(() => {
+    return data?.orderStatus ?? [];
+  }, [data?.orderStatus]);
+
+  const aovTrendData = useMemo(() => {
+    return visibleReports.map((item) => ({
+      date: dayjs(item.date).format('DD/MM'),
+      aov: item.aov,
+    }));
+  }, [visibleReports]);
 
   const totals = useMemo(() => {
-    const today = visibleReports.at(-1);
-    const totalOrders = visibleReports.reduce((sum, item) => sum + item.orders, 0);
-    const canceledOrders = visibleReports.reduce((sum, item) => sum + item.canceledOrders, 0);
-    const totalRevenue = visibleReports.reduce((sum, item) => sum + item.revenue, 0);
-    const bestProduct = visibleProducts.at(-1);
-    const bestBranch = [...visibleBranchRevenue].sort((a, b) => b.revenue - a.revenue)[0];
-
-    return {
-      todayRevenue: today?.revenue ?? 0,
-      totalOrders,
-      aov: totalOrders ? Math.round(totalRevenue / totalOrders) : 0,
-      cancelRate: totalOrders ? (canceledOrders / totalOrders) * 100 : 0,
-      bestProduct,
-      bestBranch,
+    return data?.totals ?? {
+      todayRevenue: 0,
+      totalOrders: 0,
+      aov: 0,
+      cancelRate: 0,
+      bestProduct: null,
+      bestBranch: null,
     };
-  }, [visibleBranchRevenue, visibleProducts, visibleReports]);
-
+  }, [data?.totals]);
 
   const handleRefresh = () => {
-    setDataState('loading');
-    window.setTimeout(() => setDataState('ready'), 900);
+    refetch();
   };
 
   return (
@@ -183,17 +185,17 @@ export default function ReportsPage() {
             />
             <Select value={branchFilter} onChange={setBranchFilter} options={branchOptions} className="h-11" />
             <Select value={categoryFilter} onChange={setCategoryFilter} options={categoryOptions} className="h-11" />
-            <Button onClick={handleRefresh} icon={<RefreshCcw size={16} />} className="h-11! border-primary-soft/40! font-black!">
-              Tải lại
+            <Button onClick={handleRefresh} loading={isLoading} icon={!isLoading && <RefreshCcw size={16} />} className="h-11! border-primary-soft/40! font-black!">
+              {isLoading ? 'Đang tải...' : 'Tải lại'}
             </Button>
           </div>
         </Card>
 
-        {dataState === 'loading' ? (
+        {isLoading ? (
           renderLoading()
-        ) : dataState === 'error' ? (
+        ) : isError ? (
           renderError(handleRefresh)
-        ) : isEmpty ? (
+        ) : isDataEmpty ? (
           renderEmpty(setCategoryFilter)
         ) : (
           <>
@@ -310,7 +312,7 @@ export default function ReportsPage() {
             </ChartCard>
 
             <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-              {InsightsReport.map((item, index) => (
+              {(data?.insights ?? []).map((item, index) => (
                 <motion.div
                   key={item.title}
                   initial={{ opacity: 0, y: 12 }}
@@ -320,7 +322,10 @@ export default function ReportsPage() {
                   <Card className="h-full rounded-3xl! border-primary-soft/25! bg-white/70! shadow-[0_12px_32px_rgba(91,58,41,0.07)]!">
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div className={cn('flex h-10 w-10 items-center justify-center rounded-2xl border', item.color)}>
-                        <item.icon size={19} />
+                        {(() => {
+                          const IconComponent = iconMap[item.icon] || Target;
+                          return <IconComponent size={19} />;
+                        })()}
                       </div>
                       <Tag className="m-0 rounded-full border-primary-soft/30 bg-[#FFFAF4] px-2.5 py-0.5 text-[10px] font-black text-text-secondary">
                         {item.tag}

@@ -1,10 +1,17 @@
 import type { Dayjs } from 'dayjs';
 import type { UploadFile } from 'antd';
 
+export interface ISettingsPayload extends Omit<ISettingsData, 'operations'> {
+  operations: Omit<ISettingsData['operations'], 'openTime' | 'closeTime'> & {
+    openTime: string;
+    closeTime: string;
+  };
+}
+
 export interface ISettingsData {
   business: {
     brandName: string;
-    logo: UploadFile[];
+    logo: UploadFile;
     taxCode: string;
     contactEmail: string;
     phone: string;
@@ -38,7 +45,7 @@ export interface ISettingsData {
     bankName: string;
     bankAccountName: string;
     bankAccountNumber: string;
-    paymentQr: UploadFile[];
+    paymentQr: UploadFile | null;
     autoConfirmPayment: boolean;
   };
   notifications: {

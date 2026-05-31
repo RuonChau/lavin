@@ -1,8 +1,8 @@
 import { Switch, Table } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { ShieldCheck } from "lucide-react";
-import { PremiumPanel } from "./PremiumPanel";
-import { SectionTitle } from "./SectionTitle";
+import { PremiumPanel } from "./premium-panel";
+import { SectionTitle } from "./section-title";
 import type { IRolePermission as RolePermission } from "@/modules/settings/types/role-permission.type";
 import { TPermissionValues } from "@/modules/settings/domain/enum/permission-key.enum";
 
@@ -36,8 +36,8 @@ export function PermissionsSection({
       width: 210,
       render: (_, record) => (
         <div>
-          <p className="font-black text-[#2A1E17]">{record.role}</p>
-          <p className="mt-1 text-[11px] font-semibold text-[#9A8677]">{record.description}</p>
+          <p className="font-black text-text-primary">{record.role}</p>
+          <p className="mt-1 text-[11px] font-semibold text-text-muted">{record.description}</p>
         </div>
       ),
     },
@@ -59,8 +59,8 @@ export function PermissionsSection({
   return (
     <PremiumPanel>
       <SectionTitle icon={ShieldCheck} title="Phân quyền" description="Ma trận quyền truy cập theo vai trò trong hệ thống ERP." dirty={dirty} onReset={onReset} />
-      <div className="rounded-[24px] border border-[#D8B894]/25 bg-white/60 p-3">
-        <Table rowKey="key" columns={columns} dataSource={roles} pagination={false} scroll={{ x: 1260 }} className="settings-permission-table [&_.ant-table]:bg-transparent [&_.ant-table-thead>tr>th]:text-[10px] [&_.ant-table-thead>tr>th]:font-black [&_.ant-table-thead>tr>th]:tracking-[0.14em] [&_.ant-table-thead>tr>th]:uppercase [&_.ant-table-tbody>tr>td]:border-b-[#D8B894]/[0.14]" />
+      <div className="rounded-3xl border border-primary-soft/25 bg-white/60 p-3">
+        <Table rowKey="key" columns={columns} dataSource={roles} pagination={false} scroll={{ x: 1260 }} className="settings-permission-table [&_.ant-table]:bg-transparent [&_.ant-table-thead>tr>th]:text-[10px] [&_.ant-table-thead>tr>th]:font-black [&_.ant-table-thead>tr>th]:tracking-[0.14em] [&_.ant-table-thead>tr>th]:uppercase [&_.ant-table-tbody>tr>td]:border-b-primary-soft/[0.14]" />
       </div>
     </PremiumPanel>
   );

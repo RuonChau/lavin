@@ -21,27 +21,27 @@ export function ConfirmPaymentModal({ isOpen, onClose, order, onConfirm, isSubmi
       <GlassCard className="relative overflow-hidden p-8" radius="4xl">
         <div className="flex flex-col items-center text-center space-y-6">
           {/* Payment Icon */}
-          <div className="w-20 h-20 rounded-[32px] bg-green-50 flex items-center justify-center text-green-500 shadow-inner border border-green-100">
+          <div className="w-20 h-20 rounded-4xl bg-green-50 flex items-center justify-center text-green-500 shadow-inner border border-green-100">
             <CreditCard size={40} />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-bold text-[#2A1E17]">Xác nhận thanh toán</h2>
-            <p className="text-sm text-[#6F5A4A]">Vui lòng kiểm tra kỹ số tiền khách thanh toán trước khi hệ thống ghi nhận doanh thu.</p>
+            <h2 className="text-2xl font-bold text-text-primary">Xác nhận thanh toán</h2>
+            <p className="text-sm text-text-secondary">Vui lòng kiểm tra kỹ số tiền khách thanh toán trước khi hệ thống ghi nhận doanh thu.</p>
           </div>
 
           {/* Order Summary Box */}
-          <div className="w-full p-6 rounded-3xl bg-[#FFFAF4]/60 border border-[#D8B894]/20 space-y-3">
-            <div className="flex justify-between items-center text-xs font-bold text-[#9A8677] uppercase tracking-widest">
+          <div className="w-full p-6 rounded-3xl bg-[#FFFAF4]/60 border border-primary-soft/20 space-y-3">
+            <div className="flex justify-between items-center text-xs font-bold text-text-muted uppercase tracking-widest">
               <span>Mã đơn hàng</span>
-              <span className="text-[#2A1E17]">{order.orderNumber}</span>
+              <span className="text-text-primary">{order.orderNumber}</span>
             </div>
-            <div className="flex justify-between items-center text-xs font-bold text-[#9A8677] uppercase tracking-widest">
+            <div className="flex justify-between items-center text-xs font-bold text-text-muted uppercase tracking-widest">
               <span>Phương thức</span>
-              <span className="text-[#2A1E17]">{order.paymentMethod}</span>
+              <span className="text-text-primary">{order.paymentMethod}</span>
             </div>
-            <div className="pt-3 border-t border-[#D8B894]/10 flex justify-between items-end">
-              <span className="text-xs font-bold text-[#9A8677] uppercase tracking-widest">Tổng thanh toán</span>
+            <div className="pt-3 border-t border-primary-soft/10 flex justify-between items-end">
+              <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Tổng thanh toán</span>
               <span className="text-2xl font-black text-primary">₫{order.totalAmount.toLocaleString('vi-VN')}</span>
             </div>
           </div>
@@ -63,7 +63,7 @@ export function ConfirmPaymentModal({ isOpen, onClose, order, onConfirm, isSubmi
             <button
               onClick={onClose}
               disabled={isSubmitting}
-              className="w-full px-6 py-4 rounded-2xl border border-[#D8B894]/30 text-sm font-bold text-[#6F5A4A] hover:bg-white/60 transition-all font-medium"
+              className="w-full px-6 py-4 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-secondary hover:bg-white/60 transition-all"
             >
               Hủy bỏ
             </button>
@@ -72,7 +72,7 @@ export function ConfirmPaymentModal({ isOpen, onClose, order, onConfirm, isSubmi
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-[#9A8677] hover:bg-white/60 rounded-xl transition-all"
+          className="absolute top-4 right-4 p-2 text-text-muted hover:bg-white/60 rounded-xl transition-all"
         >
           <X size={20} />
         </button>

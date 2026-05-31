@@ -1,1 +1,1 @@
-export { default as SettingsPageClient } from './presentation/components/SettingsPageClient';
+export { default as SettingsPageClient } from './presentation/components/settings-page-client';

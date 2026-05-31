@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface SupplierInput {
   supplier_name: string;
@@ -14,22 +15,22 @@ export interface SupplierInput {
 export const supplierService = {
   getSuppliers: async (params?: { page?: number; limit?: number }): Promise<any[]> => {
     const response = await api.get('/suppliers', { params });
-    return response.data;
+    return unwrapList(response.data);
   },
   
   getSupplierDetail: async (id: string): Promise<any> => {
     const response = await api.get(`/supplier/${id}`);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   createSupplier: async (data: SupplierInput): Promise<any> => {
     const response = await api.post('/supplier', data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   updateSupplier: async (id: string, data: SupplierInput): Promise<any> => {
     const response = await api.patch(`/supplier/${id}`, data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   deleteSupplier: async (id: string): Promise<void> => {

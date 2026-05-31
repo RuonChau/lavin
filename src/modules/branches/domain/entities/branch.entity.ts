@@ -3,7 +3,9 @@ export interface Branch {
   name: string;
   address?: string;
   phone?: string;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  is_active: boolean;
+  is_warehouse: boolean;
+  is_headquarter: boolean;
+  created_at: string;
+  updated_at: string;
 }

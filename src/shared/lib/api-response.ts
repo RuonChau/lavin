@@ -6,6 +6,16 @@ export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   items?: T;
+  user?: T;
+  product?: T;
+  category?: T;
+  variant?: T;
+  banner?: T;
+  logo?: T;
+  promotion?: T;
+  order?: T;
+  file?: T;
+  resources?: T;
   categories?: T;
   products?: T;
   productVariants?: T;
@@ -40,6 +50,53 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface ServerPagination {
+  page?: number;
+  limit?: number;
+  total?: number;
+  totalItems?: number;
+  totalPages?: number;
+  hasNextPage?: boolean;
+  hasPrevPage?: boolean;
+}
+
+export interface NormalizedPaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  pagination?: ServerPagination;
+}
+
+const payloadKeys = [
+  'data',
+  'items',
+  'user',
+  'product',
+  'category',
+  'variant',
+  'banner',
+  'logo',
+  'promotion',
+  'order',
+  'file',
+  'resources',
+  'categories',
+  'products',
+  'productVariants',
+  'promotions',
+  'banners',
+  'logos',
+] as const;
+
+function getResponsePayload<T>(response: ApiResponse<T>): T | undefined {
+  for (const key of payloadKeys) {
+    const value = response[key as keyof ApiResponse<T>];
+    if (value !== undefined) return value as T;
+  }
+  return undefined;
+}
+
 /**
  * Extract the `data` field from an API response, or return the raw value
  * if the server sends the payload directly (fallback).
@@ -51,14 +108,8 @@ export function unwrapData<T>(responseData: ApiResponse<T> | T): T {
     'success' in (responseData as object)
   ) {
     const response = responseData as ApiResponse<T>;
-    if (response.data !== undefined) return response.data as T;
-    if (response.items !== undefined) return response.items as T;
-    if (response.categories !== undefined) return response.categories as T;
-    if (response.products !== undefined) return response.products as T;
-    if (response.productVariants !== undefined) return response.productVariants as T;
-    if (response.promotions !== undefined) return response.promotions as T;
-    if (response.banners !== undefined) return response.banners as T;
-    if (response.logos !== undefined) return response.logos as T;
+    const payload = getResponsePayload(response);
+    if (payload !== undefined) return payload as T;
   }
   return responseData as T;
 }
@@ -71,15 +122,7 @@ export function unwrapList<T>(responseData: unknown): T[] {
   // Shape: { success, data: { items: T[], ... } }
   if (responseData && typeof responseData === 'object' && 'success' in (responseData as object)) {
     const response = responseData as ApiResponse<unknown>;
-    const inner =
-      response.data ??
-      response.items ??
-      response.categories ??
-      response.products ??
-      response.productVariants ??
-      response.promotions ??
-      response.banners ??
-      response.logos;
+    const inner = getResponsePayload(response);
 
     if (Array.isArray(inner)) return inner as T[];
     if (inner && typeof inner === 'object' && 'items' in (inner as object)) {
@@ -93,4 +136,28 @@ export function unwrapList<T>(responseData: unknown): T[] {
   // Shape: T[] directly
   if (Array.isArray(responseData)) return responseData as T[];
   return [];
+}
+
+export function unwrapPaginated<T>(responseData: unknown): NormalizedPaginatedResponse<T> {
+  const data = unwrapList<T>(responseData);
+
+  if (responseData && typeof responseData === 'object' && 'success' in responseData) {
+    const response = responseData as ApiResponse<unknown>;
+    const pagination: ServerPagination | undefined = response.pagination ?? response.meta;
+
+    return {
+      data,
+      total: pagination?.totalItems ?? pagination?.total ?? data.length,
+      page: pagination?.page ?? 1,
+      limit: pagination?.limit ?? data.length,
+      pagination,
+    };
+  }
+
+  return {
+    data,
+    total: data.length,
+    page: 1,
+    limit: data.length,
+  };
 }

@@ -1,9 +1,9 @@
 import { Col, Form, Input, Row, Select } from "antd";
 import type { FormInstance } from "antd";
-import { SectionTitle } from "./SectionTitle";
-import { PremiumPanel } from "./PremiumPanel";
+import { SectionTitle } from "./section-title";
+import { PremiumPanel } from "./premium-panel";
 import { Paintbrush } from "lucide-react";
-import { SwitchCard } from "../card/SwitchCard";
+import { SwitchCard } from "../card/switch.card";
 import type { ISettingsData as SettingsData } from "@/modules/settings/types/settings-data.type";
 
 export function AppearanceSection({ dirty, onReset, form }: { dirty: boolean; onReset: () => void, form: FormInstance<SettingsData> }) {
@@ -23,7 +23,7 @@ export function AppearanceSection({ dirty, onReset, form }: { dirty: boolean; on
         </Col>
         <Col xs={24} lg={12}>
           <Form.Item name={['appearance', 'primaryColor']} label="Màu chủ đạo">
-            <Input type="color" className="!h-12 !p-1.5" />
+            <Input type="color" className="h-12! p-1.5!" />
           </Form.Item>
         </Col>
         <Col xs={24} lg={12}>
@@ -35,13 +35,13 @@ export function AppearanceSection({ dirty, onReset, form }: { dirty: boolean; on
           <SwitchCard name={['appearance', 'animationEnabled']} title="Bật/tắt animation" description="Hiệu ứng chuyển trạng thái nhẹ trên dashboard và modal." compact />
         </Col>
       </Row>
-      <div className="mt-3 rounded-3xl border border-[#D8B894]/25 bg-white/55 p-4">
-        <p className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#9A8677]">Xem trước</p>
+      <div className="mt-3 rounded-3xl border border-primary-soft/25 bg-white/55 p-4">
+        <p className="mb-3 text-[11px] font-black uppercase tracking-[0.16em] text-text-muted">Xem trước</p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           {['Doanh thu', 'Đơn hàng', 'Khuyến mãi'].map((item, index) => (
-            <div key={item} className="rounded-2xl border border-[#D8B894]/25 bg-[#FFFAF4] p-4 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-wider text-[#9A8677]">{item}</p>
-              <p className="mt-2 text-2xl font-black text-[#2A1E17]">{index === 0 ? '42.8tr' : index === 1 ? '486' : '12'}</p>
+            <div key={item} className="rounded-2xl border border-primary-soft/25 bg-[#FFFAF4] p-4 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-wider text-text-muted">{item}</p>
+              <p className="mt-2 text-2xl font-black text-text-primary">{index === 0 ? '42.8tr' : index === 1 ? '486' : '12'}</p>
             </div>
           ))}
         </div>

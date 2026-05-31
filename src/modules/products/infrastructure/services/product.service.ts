@@ -251,7 +251,7 @@ export const productService = {
 
   createProduct: async (data: ProductFormInput): Promise<Product> => {
     const response = await api.post('/product', toProductPayload(data));
-    const result = unwrapData<Record<string, unknown>>(response.data.product);
+    const result = unwrapData<Record<string, unknown>>(response.data);
     return mapServerProduct(result ?? {});
   },
 

@@ -65,7 +65,7 @@ function mapServerOrderItem(item: Record<string, unknown>, index: number): Order
     productId: String(item.product_id ?? product?.id ?? variant?.product_id ?? ''),
     productName: String(item.product_name ?? product?.name ?? variant?.variant_name ?? 'San pham'),
     quantity: toNumber(item.quantity, 1),
-    price: toNumber(item.price ?? item.unit_price ?? variant?.price),
+    price: toNumber(item.final_price ?? item.price ?? item.unit_price ?? variant?.final_price ?? variant?.price),
     size: item.size ? String(item.size) : undefined,
     note: item.note ? String(item.note) : undefined,
     image: item.image ? String(item.image) : undefined,
@@ -84,9 +84,9 @@ function mapServerOrder(order: Record<string, unknown>): Order {
     id: String(order.id ?? order._id ?? ''),
     orderNumber: String(order.order_code ?? order.orderNumber ?? order.code ?? order.id ?? ''),
     customerId: order.customer_id ? String(order.customer_id) : undefined,
-    customerName: String(order.customer_name ?? customer?.name ?? customer?.phone_number ?? 'Khach vang lai'),
+    customerName: String(order.customer_name ?? customer?.name ?? customer?.phone ?? 'Khach vang lai'),
     items,
-    totalAmount: toNumber(order.total_amount ?? order.totalAmount ?? order.final_amount ?? order.total),
+    totalAmount: toNumber(order.total_amount ?? order.totalAmount ?? order.final_total ?? order.finalTotal ?? order.final_amount ?? order.total),
     status: normalizeOrderStatus(order.order_status ?? order.status),
     paymentStatus: normalizePaymentStatus(order.payment_status),
     paymentMethod: String(order.payment_method ?? ''),
@@ -102,27 +102,27 @@ export const orderService = {
     const response = await api.get('/orders', { params });
     return unwrapList<Record<string, unknown>>(response.data).map(mapServerOrder);
   },
-  
+
   getOrderHistory: async (params?: { page?: number; limit?: number }): Promise<Order[]> => {
     const response = await api.get('/orders/history', { params });
     return unwrapList<Record<string, unknown>>(response.data).map(mapServerOrder);
   },
-  
+
   getOrderDetail: async (id: string): Promise<Order> => {
     const response = await api.get(`/order/${id}`);
     return mapServerOrder(unwrapData<Record<string, unknown>>(response.data) ?? {});
   },
-  
+
   createOrder: async (data: OrderInput): Promise<Order> => {
     const response = await api.post('/order', data);
     return mapServerOrder(unwrapData<Record<string, unknown>>(response.data) ?? {});
   },
-  
+
   updateOrderStatus: async (id: string, data: OrderStatusInput): Promise<Order> => {
     const response = await api.patch(`/order/${id}/status`, data);
     return mapServerOrder(unwrapData<Record<string, unknown>>(response.data) ?? {});
   },
-  
+
   cancelOrder: async (id: string): Promise<void> => {
     await api.patch(`/order/${id}/cancel`);
   }

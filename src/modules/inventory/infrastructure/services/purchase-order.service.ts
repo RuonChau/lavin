@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface PurchaseOrderInput {
   po_code: string;
@@ -15,22 +16,22 @@ export interface PurchaseOrderInput {
 export const purchaseOrderService = {
   getPurchaseOrders: async (params?: { page?: number; limit?: number }): Promise<any[]> => {
     const response = await api.get('/purchase-orders', { params });
-    return response.data;
+    return unwrapList(response.data);
   },
   
   getPurchaseOrderDetail: async (id: string): Promise<any> => {
     const response = await api.get(`/purchase-order/${id}`);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   createPurchaseOrder: async (data: PurchaseOrderInput): Promise<any> => {
     const response = await api.post('/purchase-order', data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   updatePurchaseOrder: async (id: string, data: PurchaseOrderInput): Promise<any> => {
     const response = await api.patch(`/purchase-order/${id}`, data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   deletePurchaseOrder: async (id: string): Promise<void> => {

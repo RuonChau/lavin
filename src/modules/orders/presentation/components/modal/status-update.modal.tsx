@@ -37,21 +37,21 @@ export function StatusUpdateModal({
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-xl font-bold text-[#2A1E17]">{title}</h2>
-            <p className="text-sm text-[#6F5A4A] leading-relaxed">{description}</p>
+            <h2 className="text-xl font-bold text-text-primary">{title}</h2>
+            <p className="text-sm text-text-secondary leading-relaxed">{description}</p>
           </div>
 
           <div className="w-full grid grid-cols-2 gap-3 pt-4">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 rounded-2xl border border-[#D8B894]/30 text-sm font-bold text-[#6F5A4A] hover:bg-white/60 transition-all"
+              className="px-6 py-2.5 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-secondary hover:bg-white/60 transition-all"
             >
               Hủy
             </button>
             <button
               onClick={onConfirm}
               disabled={isSubmitting}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl bg-[#8B5E3C] text-white text-sm font-bold shadow-lg shadow-[#8B5E3C]/20 hover:bg-[#5B3A29] transition-all disabled:opacity-70"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary-deep transition-all disabled:opacity-70"
             >
               {isSubmitting ? (
                 <Loader2 size={16} className="animate-spin" />
@@ -65,7 +65,7 @@ export function StatusUpdateModal({
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-[#9A8677] hover:bg-white/60 rounded-xl transition-all"
+          className="absolute top-4 right-4 p-2 text-text-muted hover:bg-white/60 rounded-xl transition-all"
         >
           <X size={18} />
         </button>

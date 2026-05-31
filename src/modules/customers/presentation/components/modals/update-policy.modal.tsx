@@ -3,8 +3,8 @@
 import { GlassCard } from '@/shared/components/GlassCard';
 import { X, Settings, Coins, CalendarClock, Bell, Save } from 'lucide-react';
 import { useState } from 'react';
-import { cn } from '@/shared/utils/cn';
 import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
+import { InputNumber, Select, Switch } from 'antd';
 
 interface UpdatePolicyModalProps {
   isOpen: boolean;
@@ -52,28 +52,40 @@ export function UpdatePolicyModal({ isOpen, onClose }: UpdatePolicyModalProps) {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-text-secondary">Tỷ lệ quy đổi (Dùng điểm)</label>
-                <div className="flex items-center">
-                  <span className="px-2 py-3 bg-white/50 border border-r-0 border-primary-soft/30 rounded-l-xl text-sm font-bold text-text-muted">1 Điểm =</span>
-                  <input
-                    type="number"
+                <div className="flex h-12 w-full border border-primary-soft/30 rounded-xl overflow-hidden bg-white/80">
+                  <span className="flex items-center px-3 bg-white/50 border-r border-primary-soft/30 text-sm font-bold text-text-muted whitespace-nowrap shrink-0">
+                    1 Điểm =
+                  </span>
+                  <InputNumber
                     value={formData.pointValue}
-                    onChange={(e) => setFormData({ ...formData, pointValue: Number(e.target.value) })}
-                    className="flex-1 px-4 py-3 bg-white/80 border border-primary-soft/30 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm font-black text-primary-deep"
+                    onChange={(val) => setFormData({ ...formData, pointValue: val ?? 0 })}
+                    min={0}
+                    controls={false}
+                    variant="borderless"
+                    className="flex-1 [&_.ant-input-number-input]:h-12 [&_.ant-input-number-input]:px-3 [&_.ant-input-number-input]:font-black [&_.ant-input-number-input]:text-primary-deep [&_.ant-input-number]:shadow-none!"
+                    style={{ flex: 1, background: 'transparent' }}
                   />
-                  <span className="px-2 py-3 bg-white/50 border border-l-0 border-primary-soft/30 rounded-r-xl text-sm font-bold text-text-muted">VNĐ</span>
+                  <span className="flex items-center px-3 bg-white/50 border-l border-primary-soft/30 text-sm font-bold text-text-muted whitespace-nowrap shrink-0">
+                    VNĐ
+                  </span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-text-secondary">Tỷ lệ tích lũy (Nhận điểm)</label>
-                <div className="flex items-center">
-                  <input
-                    type="number"
+                <div className="flex h-12 w-full border border-primary-soft/30 rounded-xl overflow-hidden bg-white/80">
+                  <InputNumber
                     value={formData.earnRate}
-                    onChange={(e) => setFormData({ ...formData, earnRate: Number(e.target.value) })}
-                    className="flex-1 px-4 py-3 bg-white/80 border border-primary-soft/30 border-r-0 rounded-l-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm font-black text-primary-deep"
+                    onChange={(val) => setFormData({ ...formData, earnRate: val ?? 0 })}
+                    min={0}
+                    controls={false}
+                    variant="borderless"
+                    className="flex-1 [&_.ant-input-number-input]:h-12 [&_.ant-input-number-input]:px-3 [&_.ant-input-number-input]:font-black [&_.ant-input-number-input]:text-primary-deep [&_.ant-input-number]:shadow-none!"
+                    style={{ flex: 1, background: 'transparent' }}
                   />
-                  <span className="px-4 py-3 bg-white/50 border border-primary-soft/30 rounded-r-xl text-sm font-bold text-text-muted">VNĐ = 1 Điểm</span>
+                  <span className="flex items-center px-4 bg-white/50 border-l border-primary-soft/30 text-sm font-bold text-text-muted whitespace-nowrap shrink-0">
+                    VNĐ = 1 Điểm
+                  </span>
                 </div>
               </div>
             </div>
@@ -90,37 +102,31 @@ export function UpdatePolicyModal({ isOpen, onClose }: UpdatePolicyModalProps) {
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-text-secondary">Hạn sử dụng điểm</label>
-                <select
+                <Select
                   value={formData.expiry}
-                  onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
-                  className="w-full px-4 py-3 bg-white/80 border border-primary-soft/30 rounded-xl focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm font-bold text-primary-deep appearance-none"
-                >
-                  <option value="none">Không bao giờ hết hạn</option>
-                  <option value="6">6 tháng kể từ ngày tích</option>
-                  <option value="12">12 tháng kể từ ngày tích</option>
-                  <option value="24">24 tháng kể từ ngày tích</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, expiry: val })}
+                  className="w-full h-12 [&_.ant-select-selector]:h-12! [&_.ant-select-selector]:border-primary-soft/30! [&_.ant-select-selector]:bg-white/80! [&_.ant-select-selector]:rounded-xl! [&_.ant-select-selection-item]:flex! [&_.ant-select-selection-item]:items-center! [&_.ant-select-selection-item]:font-bold! [&_.ant-select-selection-item]:text-primary-deep!"
+                  options={[
+                    { value: 'none', label: 'Không bao giờ hết hạn' },
+                    { value: '6', label: '6 tháng kể từ ngày tích' },
+                    { value: '12', label: '12 tháng kể từ ngày tích' },
+                    { value: '24', label: '24 tháng kể từ ngày tích' },
+                  ]}
+                  classNames={{ popup: { root: '!rounded-2xl' } }}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-text-secondary">Thông báo sắp hết hạn</label>
-                <div
-                  onClick={() => setFormData({ ...formData, notifyExpiry: !formData.notifyExpiry })}
-                  className="flex items-center justify-between p-3 bg-white/60 border border-primary-soft/30 rounded-xl cursor-pointer hover:bg-white/80 transition-all"
-                >
+                <div className="flex items-center justify-between h-12 px-4 bg-white/60 border border-primary-soft/30 rounded-xl">
                   <div className="flex items-center gap-2 text-sm font-bold text-text-secondary">
-                    <Bell size={16} className={formData.notifyExpiry ? "text-primary" : "text-text-muted"} />
+                    <Bell size={16} className={formData.notifyExpiry ? 'text-primary' : 'text-text-muted'} />
                     Nhắc nhở khách hàng
                   </div>
-                  <div className={cn(
-                    "w-10 h-5.5 rounded-full p-0.5 transition-colors duration-300 ease-in-out",
-                    formData.notifyExpiry ? "bg-primary" : "bg-text-muted/30"
-                  )}>
-                    <div className={cn(
-                      "w-4.5 h-4.5 bg-white rounded-full shadow-sm transform transition-transform duration-300 ease-in-out",
-                      formData.notifyExpiry ? "translate-x-4.5" : "translate-x-0"
-                    )} />
-                  </div>
+                  <Switch
+                    checked={formData.notifyExpiry}
+                    onChange={(checked) => setFormData({ ...formData, notifyExpiry: checked })}
+                  />
                 </div>
               </div>
             </div>

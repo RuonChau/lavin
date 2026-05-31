@@ -1,7 +1,7 @@
 import { Bell } from "lucide-react";
-import { SwitchCard } from "../card/SwitchCard";
-import { SectionTitle } from "./SectionTitle";
-import { PremiumPanel } from "./PremiumPanel";
+import { SwitchCard } from "../card/switch.card";
+import { SectionTitle } from "./section-title";
+import { PremiumPanel } from "./premium-panel";
 
 export function NotificationsSection({ dirty, onReset }: { dirty: boolean; onReset: () => void }) {
   return (

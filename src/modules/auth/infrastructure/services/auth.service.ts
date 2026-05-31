@@ -31,6 +31,16 @@ interface ServerUser {
   updatedAt?: string;
 }
 
+async function getMeWithToken(accessToken: string): Promise<User> {
+  const res = await api.get<{ success: boolean; user?: ServerUser; data?: ServerUser }>('/me', {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+  const payload = unwrapData<ServerUser>(res.data);
+  return mapServerUser(payload ?? {});
+}
+
 /** Map the server's user shape to our domain User */
 function mapServerUser(u: ServerUser): User {
   return {
@@ -45,27 +55,33 @@ function mapServerUser(u: ServerUser): User {
 
 export const authService = {
   login: async (data: LoginDto): Promise<AuthResponse> => {
-    const res = await api.post<{ success: boolean; data: ServerAuthData }>('/login', data);
+    const res = await api.post<{ success: boolean; data?: ServerAuthData; accessToken?: string; refreshToken?: string }>('/login', data);
     const payload = unwrapData(res.data) as ServerAuthData;
+    const accessToken = payload.accessToken ?? payload.access_token ?? '';
+    const user = payload.user ? mapServerUser(payload.user) : await getMeWithToken(accessToken);
+
     return {
-      user: mapServerUser(payload.user ?? {}),
-      access_token: payload.accessToken ?? payload.access_token ?? '',
+      user,
+      access_token: accessToken,
       refresh_token: payload.refreshToken ?? payload.refresh_token ?? '',
     };
   },
 
   register: async (data: RegisterDto): Promise<AuthResponse> => {
-    const res = await api.post<{ success: boolean; data: ServerAuthData }>('/register', data);
+    const res = await api.post<{ success: boolean; data?: ServerAuthData; accessToken?: string; refreshToken?: string }>('/register', data);
     const payload = unwrapData(res.data) as ServerAuthData;
+    const accessToken = payload.accessToken ?? payload.access_token ?? '';
+    const user = payload.user ? mapServerUser(payload.user) : await getMeWithToken(accessToken);
+
     return {
-      user: mapServerUser(payload.user ?? {}),
-      access_token: payload.accessToken ?? payload.access_token ?? '',
+      user,
+      access_token: accessToken,
       refresh_token: payload.refreshToken ?? payload.refresh_token ?? '',
     };
   },
 
   getMe: async (): Promise<User> => {
-    const res = await api.get<{ success: boolean; data: ServerUser }>('/me');
+    const res = await api.get<{ success: boolean; user?: ServerUser; data?: ServerUser }>('/me');
     const payload = unwrapData(res.data) as ServerUser;
     return mapServerUser(payload ?? {});
   },

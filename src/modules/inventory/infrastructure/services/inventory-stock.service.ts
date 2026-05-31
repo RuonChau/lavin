@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface InventoryStockInput {
   branch_id: string;
@@ -12,22 +13,22 @@ export interface InventoryStockInput {
 export const inventoryStockService = {
   getInventoryStocks: async (params?: { page?: number; limit?: number }): Promise<any[]> => {
     const response = await api.get('/inventory-stocks', { params });
-    return response.data;
+    return unwrapList(response.data);
   },
   
   getInventoryStockDetail: async (id: string): Promise<any> => {
     const response = await api.get(`/inventory-stock/${id}`);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   createInventoryStock: async (data: InventoryStockInput): Promise<any> => {
     const response = await api.post('/inventory-stock', data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   updateInventoryStock: async (id: string, data: InventoryStockInput): Promise<any> => {
     const response = await api.patch(`/inventory-stock/${id}`, data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   deleteInventoryStock: async (id: string): Promise<void> => {

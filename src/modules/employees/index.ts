@@ -1,1 +1,1 @@
-export { default as EmployeesPageClient } from './presentation/components/EmployeesPageClient';
+export { default as EmployeesPageClient } from './presentation/components/employees-page-client';

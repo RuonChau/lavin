@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface UserUpdateInput {
   email: string;
@@ -20,13 +21,13 @@ export interface UserItem {
 export const userService = {
   getUsers: async (params?: { page?: number; limit?: number; name?: string }): Promise<UserItem[]> => {
     const response = await api.get<{ success: boolean; data: UserItem[]; total: number }>('/users', { params });
-    return response.data?.data ?? [];
+    return unwrapList<UserItem>(response.data);
   },
 
   getUserDetail: async (id: string): Promise<UserItem | null> => {
     try {
       const response = await api.get<{ success: boolean; user: UserItem }>(`/user/${id}`);
-      return response.data?.user ?? null;
+      return unwrapData<UserItem>(response.data) ?? null;
     } catch {
       return null;
     }
@@ -34,7 +35,7 @@ export const userService = {
 
   updateUser: async (id: string, data: UserUpdateInput): Promise<any> => {
     const response = await api.patch(`/user/${id}`, data);
-    return response.data;
+    return unwrapData(response.data);
   },
 
   deleteUsers: async (): Promise<void> => {
@@ -45,4 +46,3 @@ export const userService = {
     await api.delete(`/user/${id}`);
   }
 };
-

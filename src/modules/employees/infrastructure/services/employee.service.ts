@@ -1,5 +1,6 @@
 import { api } from '@/shared/lib/axios';
 import { IEmployeeEntity } from '../../domain/entities/employee.entity';
+import { unwrapData, unwrapPaginated } from '@/shared/lib/api-response';
 
 export interface EmployeeCreateInput {
   user_id?: string;
@@ -34,18 +35,19 @@ export const employeeService = {
       '/employees',
       { params: { page, limit } }
     );
+    const paginated = unwrapPaginated<IEmployeeEntity>(res.data);
     return {
-      data: res.data.data,
-      total: res.data.total,
-      page: res.data.page,
-      limit: res.data.limit,
+      data: paginated.data,
+      total: paginated.total,
+      page: paginated.page,
+      limit: paginated.limit,
     };
   },
 
   getEmployeeDetail: async (id: string): Promise<IEmployeeEntity | null> => {
     try {
       const res = await api.get<{ success: boolean; data: IEmployeeEntity }>(`/employee/${id}`);
-      return res.data.data;
+      return unwrapData<IEmployeeEntity>(res.data);
     } catch {
       return null;
     }
@@ -53,16 +55,15 @@ export const employeeService = {
 
   createEmployee: async (data: EmployeeCreateInput): Promise<IEmployeeEntity> => {
     const res = await api.post<{ success: boolean; data: IEmployeeEntity }>('/employee', data);
-    return res.data.data;
+    return unwrapData<IEmployeeEntity>(res.data);
   },
 
   updateEmployee: async (id: string, data: EmployeeUpdateInput): Promise<IEmployeeEntity> => {
     const res = await api.patch<{ success: boolean; data: IEmployeeEntity }>(`/employee/${id}`, data);
-    return res.data.data;
+    return unwrapData<IEmployeeEntity>(res.data);
   },
 
   deleteEmployee: async (id: string): Promise<void> => {
     await api.delete(`/employee/${id}`);
   },
 };
-

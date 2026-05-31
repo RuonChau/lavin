@@ -1,15 +1,16 @@
 import { Material } from '../../domain/entities/material.entity';
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export const inventoryService = {
   getMaterials: async (): Promise<Material[]> => {
     const response = await api.get('/ingredients');
-    return response.data.data;
+    return unwrapList<Material>(response.data);
   },
 
   updateStock: async (id: string, newStock: number): Promise<Material> => {
     const response = await api.post('/ingredient/stock', { id, newStock });
-    return response.data.data;
+    return unwrapData<Material>(response.data);
   },
 
   createMaterial: async (data: Omit<Material, 'id' | 'lastUpdated' | 'status'>): Promise<Material> => {
@@ -23,23 +24,22 @@ export const inventoryService = {
       warehouse: data.warehouse,
       currentStock: data.currentStock,
     });
-    return response.data.data;
+    return unwrapData<Material>(response.data);
   },
 
   getStockHistory: async (materialId: string): Promise<any[]> => {
     const response = await api.get(`/ingredient/history/${materialId}`);
-    return response.data.data;
+    return unwrapList(response.data);
   },
 
   getAllStockHistory: async (): Promise<any[]> => {
     const response = await api.get('/ingredient/history');
-    return response.data.data;
+    return unwrapList(response.data);
   },
 
   getWarehouses: async (): Promise<any[]> => {
     const response = await api.get('/ingredient/warehouses');
-    console.log("🚀 ~ response:", response)
-    return response.data.data;
+    return unwrapList(response.data);
   },
 
   createWarehouse: async (data: any): Promise<any> => {
@@ -47,7 +47,7 @@ export const inventoryService = {
       name: data.name,
       location: data.location,
     });
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   updateWarehouse: async (id: string, data: any): Promise<any> => {
@@ -55,7 +55,7 @@ export const inventoryService = {
       name: data.name,
       location: data.location,
     });
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   deleteWarehouse: async (id: string): Promise<any> => {
@@ -65,21 +65,21 @@ export const inventoryService = {
 
   getWarehouseLayout: async (warehouseId: string): Promise<any[]> => {
     const response = await api.get(`/warehouse/${warehouseId}/layout`);
-    return response.data.data;
+    return unwrapList(response.data);
   },
 
   createShelf: async (data: { warehouse_id: string; name: string; code: string }): Promise<any> => {
     const response = await api.post('/warehouse/shelf', data);
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   createLocation: async (data: { shelf_id: string; name: string; code: string; ingredient_id?: string; max_capacity?: number; current_quantity?: number }): Promise<any> => {
     const response = await api.post('/warehouse/location', data);
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   assignIngredient: async (data: { location_id: string; ingredient_id: string | null; current_quantity: number }): Promise<any> => {
     const response = await api.post('/warehouse/location/assign', data);
-    return response.data.data;
+    return unwrapData(response.data);
   }
 };

@@ -1,9 +1,10 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export const purchaseService = {
   getPurchaseOrders: async (): Promise<any[]> => {
     const response = await api.get('/purchase-orders?limit=1000');
-    const orders = response.data.data || [];
+    const orders = unwrapList<any>(response.data);
 
     // Map backend response to UI format
     return orders.map((po: any) => ({
@@ -40,12 +41,12 @@ export const purchaseService = {
       status: "PENDING",
       note: data.note || "Nhập hàng tự động"
     });
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   updatePurchaseOrder: async (id: string, data: { status?: string; note?: string; total_value?: number }): Promise<any> => {
     const response = await api.patch(`/purchase-order/${id}`, data);
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   deletePurchaseOrder: async (id: string): Promise<any> => {
@@ -55,17 +56,16 @@ export const purchaseService = {
 
   getSuppliers: async (): Promise<any[]> => {
     const response = await api.get('/suppliers');
-    return response.data.data || [];
+    return unwrapList(response.data);
   },
 
   getTopSuppliers: async (): Promise<any[]> => {
     const response = await api.get('/purchase-orders/top-suppliers');
-    return response.data.data || [];
+    return unwrapList(response.data);
   },
 
   getSystemAlerts: async (): Promise<any[]> => {
     const response = await api.get('/purchase-orders/system-alerts');
-    return response.data.data || [];
+    return unwrapList(response.data);
   }
 };
-

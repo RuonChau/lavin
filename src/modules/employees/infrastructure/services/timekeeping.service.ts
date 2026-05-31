@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface TimekeepingInput {
   employee_id: string;
@@ -11,22 +12,22 @@ export interface TimekeepingInput {
 export const timekeepingService = {
   getTimekeepings: async (params?: { page?: number; limit?: number }): Promise<any[]> => {
     const response = await api.get('/timekeepings', { params });
-    return response.data;
+    return unwrapList(response.data);
   },
   
   getTimekeepingDetail: async (id: string): Promise<any> => {
     const response = await api.get(`/timekeeping/${id}`);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   createTimekeeping: async (data: TimekeepingInput): Promise<any> => {
     const response = await api.post('/timekeeping', data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   updateTimekeeping: async (id: string, data: TimekeepingInput): Promise<any> => {
     const response = await api.patch(`/timekeeping/${id}`, data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   deleteTimekeeping: async (id: string): Promise<void> => {

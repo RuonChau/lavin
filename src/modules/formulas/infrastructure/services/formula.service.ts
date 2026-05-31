@@ -1,10 +1,11 @@
 import { api } from '@/shared/lib/axios';
 import { Formula, FormulaIngredient } from '../../domain/entities/formula.entity';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export const formulaService = {
   getFormulas: async (): Promise<Formula[]> => {
     const response = await api.get('/recipes?limit=1000');
-    const recipeRows = response.data.data || [];
+    const recipeRows = unwrapList<any>(response.data);
 
     // Group recipes by variant_id
     const grouped: Record<string, Formula> = {};
@@ -56,7 +57,7 @@ export const formulaService = {
 
   createFormula: async (data: { variant_id: string; ingredients: { ingredient_id: string; quantity: number | string }[] }): Promise<any> => {
     const response = await api.post('/recipe/bulk', data);
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   updateFormula: async (id: string, data: { ingredients: { ingredient_id: string; quantity: number | string }[] }): Promise<any> => {
@@ -64,17 +65,16 @@ export const formulaService = {
       variant_id: id,
       ingredients: data.ingredients,
     });
-    return response.data.data;
+    return unwrapData(response.data);
   },
 
   getIngredients: async (): Promise<any[]> => {
     const response = await api.get('/ingredients');
-    return response.data.data || [];
+    return unwrapList(response.data);
   },
 
   getProductVariants: async (): Promise<any[]> => {
     const response = await api.get('/product-variants');
-    return response.data.data || [];
+    return unwrapList(response.data);
   }
 };
-

@@ -1,11 +1,24 @@
 import { Col, Form, Input, Row, Upload } from "antd";
-import { SectionTitle } from "./SectionTitle";
-import { PremiumPanel } from "./PremiumPanel";
+import type { UploadFile } from "antd";
+import { SectionTitle } from "./section-title";
+import { PremiumPanel } from "./premium-panel";
 import { Building2, UploadCloud } from "lucide-react";
 import { normFile } from "@/modules/settings/utils/normFile";
 
+const getPendingFile = (fileList: UploadFile[]): File | undefined => {
+  const uploadFile = fileList.find((file) => file.originFileObj);
+  return uploadFile?.originFileObj;
+};
 
-export function BusinessSection({ dirty, onReset }: { dirty: boolean; onReset: () => void }) {
+export function BusinessSection({
+  dirty,
+  onReset,
+  onLogoFileChange,
+}: {
+  dirty: boolean;
+  onReset: () => void;
+  onLogoFileChange?: (file?: File) => void;
+}) {
   return (
     <PremiumPanel>
       <SectionTitle icon={Building2} title="Thông tin doanh nghiệp" description="Cấu hình nhận diện, pháp lý và thông tin liên hệ chính của LaVin." dirty={dirty} onReset={onReset} />
@@ -42,8 +55,10 @@ export function BusinessSection({ dirty, onReset }: { dirty: boolean; onReset: (
         </Col>
         <Col xs={24} lg={12}>
           <Form.Item name={['business', 'logo']} label="Logo" valuePropName="fileList" getValueFromEvent={normFile}>
-            <Upload listType="picture-card" maxCount={1} beforeUpload={() => false} accept="image/*">
-              <div className="flex flex-col items-center gap-2 text-[#6F5A4A]">
+            <Upload listType="picture-card" maxCount={1} beforeUpload={() => false} accept="image/*"
+              onChange={({ fileList }) => onLogoFileChange?.(getPendingFile(fileList))}
+            >
+              <div className="flex flex-col items-center gap-2 text-text-secondary">
                 <UploadCloud size={22} />
                 <span className="text-xs font-bold">Tải logo</span>
               </div>

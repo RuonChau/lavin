@@ -1,4 +1,5 @@
 import { api } from '@/shared/lib/axios';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface StockTransactionInput {
   ingredient_id: string;
@@ -15,22 +16,22 @@ export interface StockTransactionInput {
 export const stockTransactionService = {
   getStockTransactions: async (params?: { page?: number; limit?: number }): Promise<any[]> => {
     const response = await api.get('/stock-transactions', { params });
-    return response.data;
+    return unwrapList(response.data);
   },
   
   getStockTransactionDetail: async (id: string): Promise<any> => {
     const response = await api.get(`/stock-transaction/${id}`);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   createStockTransaction: async (data: StockTransactionInput): Promise<any> => {
     const response = await api.post('/stock-transaction', data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   updateStockTransaction: async (id: string, data: StockTransactionInput): Promise<any> => {
     const response = await api.patch(`/stock-transaction/${id}`, data);
-    return response.data;
+    return unwrapData(response.data);
   },
   
   deleteStockTransaction: async (id: string): Promise<void> => {
