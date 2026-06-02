@@ -44,10 +44,10 @@ export default function DashboardPage() {
     <div className="space-y-8 pb-12">
       <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-[28px] font-bold text-[#2A1E17] tracking-tight">
+          <h1 className="text-[28px] font-bold text-text-primary tracking-tight">
             Xin chào, {user?.name ?? 'Quản trị viên'}
           </h1>
-          <p className="text-[#6F5A4A]">
+          <p className="text-text-secondary">
             Đây là báo cáo tổng quan của chuỗi BrewGlass hôm nay.
           </p>
         </div>
@@ -55,7 +55,7 @@ export default function DashboardPage() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-[#D8B894]/30 bg-white/60 px-4 text-sm font-bold text-[#6F5A4A] transition-all hover:bg-white"
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-primary-soft/30 bg-white/60 px-4 text-sm font-bold text-text-secondary transition-all hover:bg-white"
         >
           <RefreshCcw size={16} className={cn(isFetching && 'animate-spin')} />
           Tải lại
@@ -68,12 +68,12 @@ export default function DashboardPage() {
         <GlassCard className="p-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#D95F76]/10 text-[#D95F76]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-berry/10 text-berry">
                 <AlertTriangle size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-[#2A1E17]">Không thể tải dữ liệu tổng quan</h3>
-                <p className="mt-1 text-sm text-[#6F5A4A]">
+                <h3 className="font-bold text-text-primary">Không thể tải dữ liệu tổng quan</h3>
+                <p className="mt-1 text-sm text-text-secondary">
                   API dashboard hoặc các API tổng hợp đang chưa phản hồi. Hãy thử tải lại.
                 </p>
               </div>
@@ -81,7 +81,7 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={() => refetch()}
-              className="h-10 rounded-xl bg-[#8B5E3C] px-4 text-sm font-bold text-white transition-all hover:bg-[#6F4A31]"
+              className="h-10 rounded-xl bg-primary px-4 text-sm font-bold text-white transition-all hover:bg-[#6F4A31]"
             >
               Thử lại
             </button>
@@ -126,12 +126,12 @@ export default function DashboardPage() {
               <GlassCard className="p-6">
                 <div className="mb-6 flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-bold text-[#2A1E17]">Đơn hàng gần đây</h3>
-                    <p className="text-xs font-semibold text-[#9A8677]">
+                    <h3 className="text-lg font-bold text-text-primary">Đơn hàng gần đây</h3>
+                    <p className="text-xs font-semibold text-text-muted">
                       Cập nhật lúc {formatDate(data.generatedAt, 'HH:mm DD/MM/YYYY')}
                     </p>
                   </div>
-                  <button className="rounded-xl p-2 text-[#9A8677] transition-all hover:bg-white/40">
+                  <button className="rounded-xl p-2 text-text-muted transition-all hover:bg-white/40">
                     <MoreVertical size={20} />
                   </button>
                 </div>
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
-                      <tr className="border-b border-[#D8B894]/20 text-xs font-bold uppercase tracking-widest text-[#9A8677]">
+                      <tr className="border-b border-primary-soft/20 text-xs font-bold uppercase tracking-widest text-text-muted">
                         <th className="px-2 pb-4">Mã đơn</th>
                         <th className="px-2 pb-4">Khách hàng</th>
                         <th className="px-2 pb-4">Chi nhánh</th>
@@ -148,23 +148,23 @@ export default function DashboardPage() {
                         <th className="px-2 pb-4">Tổng tiền</th>
                       </tr>
                     </thead>
-                    <tbody className="text-sm text-[#6F5A4A]">
+                    <tbody className="text-sm text-text-secondary">
                       {data.recentOrders.length > 0 ? (
                         data.recentOrders.map((order) => {
                           const status = orderStatusMap[order.status] ?? orderStatusMap.pending;
 
                           return (
-                            <tr key={order.id} className="border-b border-[#D8B894]/10 transition-colors hover:bg-white/40">
-                              <td className="px-2 py-4 font-mono text-[#2A1E17]">#{order.orderNumber}</td>
+                            <tr key={order.id} className="border-b border-primary-soft/10 transition-colors hover:bg-white/40">
+                              <td className="px-2 py-4 font-mono text-text-primary">#{order.orderNumber}</td>
                               <td className="px-2 py-4">
-                                <div className="font-semibold text-[#2A1E17]">{order.customerName}</div>
-                                <div className="text-[11px] text-[#9A8677]">
+                                <div className="font-semibold text-text-primary">{order.customerName}</div>
+                                <div className="text-[11px] text-text-muted">
                                   {maskPhone(order.customerPhone) || formatDate(order.createdAt, 'HH:mm')}
                                 </div>
                               </td>
                               <td className="px-2 py-4 text-xs">{order.branchName}</td>
                               <td className="px-2 py-4">
-                                <span className="rounded-full bg-[#0FA7A0]/10 px-2 py-0.5 text-[10px] font-bold text-[#0FA7A0]">
+                                <span className="rounded-full bg-aqua/10 px-2 py-0.5 text-[10px] font-bold text-aqua">
                                   {formatPayment(order.paymentMethod, order.paymentStatus)}
                                 </span>
                               </td>
@@ -173,13 +173,13 @@ export default function DashboardPage() {
                                   {status.label}
                                 </span>
                               </td>
-                              <td className="px-2 py-4 font-bold text-[#2A1E17]">{formatCurrency(order.totalAmount)}</td>
+                              <td className="px-2 py-4 font-bold text-text-primary">{formatCurrency(order.totalAmount)}</td>
                             </tr>
                           );
                         })
                       ) : (
                         <tr>
-                          <td colSpan={6} className="py-10 text-center text-sm font-semibold text-[#9A8677]">
+                          <td colSpan={6} className="py-10 text-center text-sm font-semibold text-text-muted">
                             Chưa có đơn hàng để hiển thị.
                           </td>
                         </tr>
@@ -192,13 +192,13 @@ export default function DashboardPage() {
 
             <div className="space-y-6">
               <GlassCard className="p-6">
-                <h3 className="mb-6 text-lg font-bold text-[#2A1E17]">Top món bán chạy</h3>
+                <h3 className="mb-6 text-lg font-bold text-text-primary">Top món bán chạy</h3>
                 <div className="space-y-5">
                   {data.topProducts.length > 0 ? (
                     data.topProducts.map((item, index) => (
                       <div key={item.id || item.name} className="group flex cursor-pointer items-center gap-4">
                         <div
-                          className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#8B5E3C]/10 bg-cover bg-center text-sm font-black text-[#8B5E3C] shadow-sm transition-transform group-hover:scale-105"
+                          className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 bg-cover bg-center text-sm font-black text-primary shadow-sm transition-transform group-hover:scale-105"
                           style={item.image ? { backgroundImage: `url(${item.image})` } : undefined}
                           aria-label={item.name}
                         >
@@ -209,14 +209,14 @@ export default function DashboardPage() {
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h4 className="truncate text-sm font-bold text-[#2A1E17]">{item.name}</h4>
-                          <p className="text-xs text-[#9A8677]">{item.sold.toLocaleString('vi-VN')} đơn</p>
+                          <h4 className="truncate text-sm font-bold text-text-primary">{item.name}</h4>
+                          <p className="text-xs text-text-muted">{item.sold.toLocaleString('vi-VN')} đơn</p>
                         </div>
-                        <div className="text-sm font-bold text-[#8B5E3C]">{formatCurrency(item.price || item.revenue)}</div>
+                        <div className="text-sm font-bold text-primary">{formatCurrency(item.price || item.revenue)}</div>
                       </div>
                     ))
                   ) : (
-                    <p className="rounded-2xl bg-white/45 p-4 text-sm font-semibold text-[#9A8677]">
+                    <p className="rounded-2xl bg-white/45 p-4 text-sm font-semibold text-text-muted">
                       Chưa có dữ liệu sản phẩm bán chạy.
                     </p>
                   )}
@@ -224,8 +224,8 @@ export default function DashboardPage() {
               </GlassCard>
 
               <GlassCard className="border-primary/20 bg-primary/10 p-6">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-[#8B5E3C]">Mẹo vận hành</h3>
-                <p className="text-sm leading-relaxed text-[#6F5A4A]">{data.operationTip}</p>
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-primary">Mẹo vận hành</h3>
+                <p className="text-sm leading-relaxed text-text-secondary">{data.operationTip}</p>
               </GlassCard>
             </div>
           </div>
@@ -257,8 +257,8 @@ function KPIStatCard({
           className={cn(
             'flex h-10 w-10 items-center justify-center rounded-2xl border',
             variant === 'warning'
-              ? 'border-[#C9822B]/20 bg-[#C9822B]/10 text-[#C9822B]'
-              : 'border-[#8B5E3C]/20 bg-[#8B5E3C]/10 text-[#8B5E3C]',
+              ? 'border-caramel/20 bg-caramel/10 text-caramel'
+              : 'border-primary/20 bg-primary/10 text-primary',
           )}
         >
           {icon}
@@ -266,9 +266,9 @@ function KPIStatCard({
         <div
           className={cn(
             'flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold',
-            trend === 'up' && 'bg-[#21B57D]/10 text-[#21B57D]',
-            trend === 'down' && 'bg-[#D95F76]/10 text-[#D95F76]',
-            trend === 'neutral' && 'bg-[#8B5E3C]/10 text-[#8B5E3C]',
+            trend === 'up' && 'bg-mint/10 text-mint',
+            trend === 'down' && 'bg-berry/10 text-berry',
+            trend === 'neutral' && 'bg-primary/10 text-primary',
           )}
         >
           {trend === 'up' && <ArrowUpRight size={14} />}
@@ -277,8 +277,8 @@ function KPIStatCard({
         </div>
       </div>
 
-      <p className="text-xs font-bold uppercase tracking-widest text-[#9A8677]">{title}</p>
-      <h3 className="mt-1 text-[28px] font-bold tracking-tight text-[#2A1E17]">{value}</h3>
+      <p className="text-xs font-bold uppercase tracking-widest text-text-muted">{title}</p>
+      <h3 className="mt-1 text-[28px] font-bold tracking-tight text-text-primary">{value}</h3>
     </GlassCard>
   );
 }
