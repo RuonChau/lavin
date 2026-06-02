@@ -2,14 +2,38 @@
 
 import { useAuth } from '@/modules/auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { Sidebar } from '@/shared/components/layout/Sidebar';
 import { Topbar } from '@/shared/components/layout/Topbar';
+import { settingsService } from '@/modules/settings/infrastructure/services/settings.service';
+import {
+  canAccessPath,
+  getFirstAllowedPath,
+  getPermissionsForRole,
+} from '@/modules/settings/utils/access-control';
+import { defaultRolePermissions } from '@/modules/settings/mocks/default-role-permissions.mock';
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, logout, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const permissionsQuery = useQuery({
+    queryKey: ['settings', 'role-permissions'],
+    queryFn: () => settingsService.getSettings(),
+    enabled: isAuthenticated,
+    retry: false,
+  });
+
+  const permissions = useMemo(() => {
+    const roles = permissionsQuery.data?.roles?.length
+      ? permissionsQuery.data.roles
+      : defaultRolePermissions;
+
+    return getPermissionsForRole(user?.role, roles);
+  }, [permissionsQuery.data?.roles, user?.role]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -17,7 +41,14 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading) {
+  useEffect(() => {
+    if (!isAuthenticated || permissionsQuery.isLoading) return;
+    if (canAccessPath(pathname, permissions)) return;
+
+    router.replace(getFirstAllowedPath(permissions));
+  }, [isAuthenticated, pathname, permissions, permissionsQuery.isLoading, router]);
+
+  if (isLoading || (isAuthenticated && permissionsQuery.isLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-base">
         <div className="flex flex-col items-center gap-4">
@@ -29,10 +60,17 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }
 
   if (!isAuthenticated) return null;
+  if (!canAccessPath(pathname, permissions)) return null;
 
   return (
     <div className="min-h-screen">
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        onLogout={logout}
+        permissions={permissions}
+        user={user}
+      />
 
       <div className="flex flex-col min-h-screen transition-all duration-300 md:pl-70">
         <Topbar onMenuClick={() => setIsSidebarOpen(true)} />

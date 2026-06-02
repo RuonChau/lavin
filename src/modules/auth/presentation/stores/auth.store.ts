@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { User } from '../../domain/types/user.type';
+import { browserAuthSession } from '../../infrastructure/auth/browser-auth-session';
 
 interface AuthState {
   user: User | null;
@@ -16,10 +17,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
   setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
   logout: () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-    }
+    browserAuthSession.clear();
     set({ user: null, isAuthenticated: false, isLoading: false });
   },
   setLoading: (loading) => set({ isLoading: loading }),

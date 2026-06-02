@@ -1,6 +1,6 @@
 import { api } from '@/shared/lib/axios';
 import { LoginDto, RegisterDto, ResetPasswordDto } from '../../application/dto/login.dto';
-import { User, UserRole } from '../../domain/types/user.type';
+import { User, EUserRole } from '../../domain/types/user.type';
 import { unwrapData } from '@/shared/lib/api-response';
 
 export interface AuthResponse {
@@ -24,12 +24,21 @@ interface ServerUser {
   username?: string;
   name?: string;
   email?: string;
-  role?: string;
+  role?: string | { name?: string; key?: string; role?: string };
   created_at?: string;
   createdAt?: string;
   updated_at?: string;
   updatedAt?: string;
 }
+
+const getServerRole = (role: ServerUser['role']): EUserRole => {
+  if (typeof role === 'string') return role as EUserRole;
+  if (role && typeof role === 'object') {
+    return ((role.name ?? role.key ?? role.role) as EUserRole) ?? EUserRole.BARISTA;
+  }
+
+  return EUserRole.BARISTA;
+};
 
 async function getMeWithToken(accessToken: string): Promise<User> {
   const res = await api.get<{ success: boolean; user?: ServerUser; data?: ServerUser }>('/me', {
@@ -47,7 +56,7 @@ function mapServerUser(u: ServerUser): User {
     id: u.id ?? u._id ?? '',
     name: u.name ?? u.username ?? '',
     email: u.email ?? '',
-    role: (u.role as UserRole) ?? UserRole.STAFF,
+    role: getServerRole(u.role),
     createdAt: u.createdAt ? new Date(u.createdAt) : u.created_at ? new Date(u.created_at) : new Date(),
     updatedAt: u.updatedAt ? new Date(u.updatedAt) : u.updated_at ? new Date(u.updated_at) : new Date(),
   };

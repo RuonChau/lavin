@@ -39,23 +39,69 @@ import { antdThemeSetting } from '@/shared/utils/antdThemeSetting';
 import { defaultSettings } from '../../mocks/default-settings.mock';
 import { defaultRolePermissions } from '../../mocks/default-role-permissions.mock';
 import { settingsService } from '../../infrastructure/services/settings.service';
+import { queryClient } from '@/shared/lib/query-client';
 
-type SettingsServerData = Partial<Omit<SettingsData, 'operations'>> & {
+type SettingsServerData = Partial<Omit<SettingsData, 'business' | 'operations' | 'payment'>> & {
+  business?: Partial<Omit<SettingsData['business'], 'logo'>> & {
+    logo?: unknown;
+  };
   operations?: Partial<Omit<SettingsData['operations'], 'openTime' | 'closeTime'>> & {
     openTime?: SettingsData['operations']['openTime'] | string;
     closeTime?: SettingsData['operations']['closeTime'] | string;
   };
+  payment?: Partial<Omit<SettingsData['payment'], 'paymentQr'>> & {
+    paymentQr?: unknown;
+  };
+};
+
+type SettingsImageField = 'logo' | 'paymentQr';
+
+const toUploadFileArray = (value: unknown): UploadFile[] => {
+  const files = Array.isArray(value) ? value : value ? [value] : [];
+
+  return files
+    .filter((file): file is Record<string, unknown> => Boolean(file) && typeof file === 'object')
+    .map((file, index) => {
+      const url = String(file.url ?? file.secure_url ?? file.thumbUrl ?? '');
+      const uid = String(file.uid ?? file.public_id ?? (url || undefined) ?? `settings-file-${index}`);
+      const name = String(file.name ?? file.public_id ?? `settings-file-${index + 1}`);
+      const originFileObj = file.originFileObj as UploadFile['originFileObj'] | undefined;
+
+      return {
+        uid,
+        name,
+        status: (file.status as UploadFile['status'] | undefined) ?? 'done',
+        url,
+        thumbUrl: String(file.thumbUrl ?? url),
+        ...(originFileObj ? { originFileObj } : {}),
+        public_id: file.public_id,
+        response: file.response,
+      } as UploadFile;
+    });
+};
+
+const getUploadPublicId = (file: UploadFile): string | undefined => {
+  const fileWithPublicId = file as UploadFile & { public_id?: unknown };
+  const response = file.response as { public_id?: unknown } | undefined;
+  const publicId = fileWithPublicId.public_id ?? response?.public_id;
+
+  return typeof publicId === 'string' && publicId.trim() ? publicId : undefined;
+};
+
+const refreshPublicSettings = () => {
+  window.dispatchEvent(new Event('public-settings:refresh'));
+  queryClient.invalidateQueries({ queryKey: ['settings', 'role-permissions'] });
 };
 
 const cloneSettings = (settings: SettingsData): SettingsData => {
   return {
     ...settings,
-    business: { ...settings.business, logo: settings.business.logo },
+    business: { ...settings.business, logo: toUploadFileArray(settings.business.logo) },
     operations: { ...settings.operations },
     security: { ...settings.security },
     payment: settings.payment
-      ? { ...settings.payment, paymentQr: settings.payment.paymentQr ? settings.payment.paymentQr : null }
-      : { ...defaultSettings.payment, paymentQr: null },
+      ? { ...settings.payment, paymentQr: toUploadFileArray(settings.payment.paymentQr) }
+      : { ...defaultSettings.payment, paymentQr: [] },
     notifications: { ...settings.notifications },
     appearance: { ...settings.appearance },
   };
@@ -80,6 +126,7 @@ const normalizeSettingsForForm = (serverSettings?: SettingsServerData | null): S
     business: {
       ...base.business,
       ...(source.business ?? {}),
+      logo: toUploadFileArray(source.business?.logo ?? base.business.logo),
     },
     operations: {
       ...base.operations,
@@ -96,6 +143,7 @@ const normalizeSettingsForForm = (serverSettings?: SettingsServerData | null): S
     payment: {
       ...base.payment,
       ...(source.payment ?? {}),
+      paymentQr: toUploadFileArray(source.payment?.paymentQr ?? base.payment.paymentQr),
     },
     notifications: {
       ...base.notifications,
@@ -112,7 +160,7 @@ const mergeSettingsValues = (base: SettingsData, values: Partial<SettingsData>):
   business: {
     ...base.business,
     ...(values.business ?? {}),
-    logo: values.business?.logo ?? base.business.logo,
+    logo: toUploadFileArray(values.business?.logo ?? base.business.logo),
   },
   operations: {
     ...base.operations,
@@ -125,7 +173,7 @@ const mergeSettingsValues = (base: SettingsData, values: Partial<SettingsData>):
   payment: {
     ...base.payment,
     ...(values.payment ?? {}),
-    paymentQr: values.payment?.paymentQr ?? base.payment.paymentQr,
+    paymentQr: toUploadFileArray(values.payment?.paymentQr ?? base.payment.paymentQr),
   },
   notifications: {
     ...base.notifications,
@@ -155,13 +203,12 @@ type SettingsPayloadResult = {
 
 const buildSettingsPayload = (values: Partial<SettingsData>, baseSettings = defaultSettings): SettingsPayloadResult => {
   const mergedValues = mergeSettingsValues(baseSettings, values);
-  console.log('mergedValues: ', mergedValues);
 
   const settings = {
     ...mergedValues,
     business: {
       ...mergedValues.business,
-      logo: mergedValues.business.logo,
+      logo: toPersistedUploadFiles(mergedValues.business.logo),
     },
     operations: {
       ...mergedValues.operations,
@@ -179,6 +226,7 @@ const buildSettingsPayload = (values: Partial<SettingsData>, baseSettings = defa
     },
     payment: {
       ...mergedValues.payment,
+      paymentQr: toPersistedUploadFiles(mergedValues.payment.paymentQr),
     },
   };
 
@@ -198,6 +246,7 @@ export default function SettingsPage() {
   const [dirtySections, setDirtySections] = useState<Set<SectionKey>>(new Set());
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasStoredSettings, setHasStoredSettings] = useState(true);
 
   const hasUnsavedChanges = dirtySections.size > 0;
 
@@ -211,6 +260,7 @@ export default function SettingsPage() {
         setSavedSettings(formattedSettings);
         setRoles(nextRoles);
         setSavedRoles(nextRoles);
+        setHasStoredSettings(data?.exists ?? true);
         form.setFieldsValue(formattedSettings);
       } catch (error) {
         console.error('Lỗi khi tải cấu hình cài đặt:', error);
@@ -290,10 +340,14 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       const { settings: settingsPayload } = buildSettingsPayload(values, savedSettings);
-      const saved = await settingsService.updateSettings({
-        settings: settingsPayload,
-        roles,
-      }, { logo: pendingLogoFile, paymentQr: pendingPaymentQrFile });
+      const saveSettings = hasStoredSettings ? settingsService.updateSettings : settingsService.createSettings;
+      const saved = await saveSettings(
+        {
+          settings: settingsPayload,
+          roles,
+        },
+        { logo: pendingLogoFile, paymentQr: pendingPaymentQrFile },
+      );
 
       const nextSettings = normalizeSettingsForForm((saved?.settings as SettingsServerData | undefined) ?? settingsPayload);
       const nextRoles = saved?.roles?.length ? cloneRoles(saved.roles) : cloneRoles(roles);
@@ -303,8 +357,10 @@ export default function SettingsPage() {
       setSavedRoles(nextRoles);
       setPendingLogoFile(undefined);
       setPendingPaymentQrFile(undefined);
+      setHasStoredSettings(true);
       form.setFieldsValue(nextSettings);
       clearDirty();
+      refreshPublicSettings();
       toast.success('Đã lưu thay đổi cài đặt hệ thống.');
     } catch (error) {
       console.error('ỗi khi lưu cài đặt hệ thống:', error);
@@ -327,7 +383,8 @@ export default function SettingsPage() {
 
         try {
           const { settings: payload } = buildSettingsPayload(nextSettings);
-          await settingsService.updateSettings(
+          const saveSettings = hasStoredSettings ? settingsService.updateSettings : settingsService.createSettings;
+          await saveSettings(
             { settings: payload, roles: nextRoles },
             undefined,
           );
@@ -337,8 +394,10 @@ export default function SettingsPage() {
           setSavedRoles(nextRoles);
           setPendingLogoFile(undefined);
           setPendingPaymentQrFile(undefined);
+          setHasStoredSettings(true);
           form.setFieldsValue(nextSettings);
           clearDirty();
+          refreshPublicSettings();
           toast.info('Đã khôi phục cấu hình mặc định.');
         } catch (error) {
           console.error('ỗi khi khôi phục cài đặt mặc định:', error);
@@ -364,6 +423,35 @@ export default function SettingsPage() {
     clearDirty(section);
   };
 
+  const handleRemoveSettingsImage = async (field: SettingsImageField, file: UploadFile) => {
+    if (file.originFileObj) {
+      if (field === 'logo') setPendingLogoFile(undefined);
+      if (field === 'paymentQr') setPendingPaymentQrFile(undefined);
+      return true;
+    }
+
+    try {
+      const saved = await settingsService.deleteSettingsImage(field, getUploadPublicId(file));
+      const nextSettings = normalizeSettingsForForm((saved?.settings as SettingsServerData | undefined) ?? savedSettings);
+      const nextRoles = saved?.roles?.length ? cloneRoles(saved.roles) : cloneRoles(roles);
+
+      setSavedSettings(nextSettings);
+      setRoles(nextRoles);
+      setSavedRoles(nextRoles);
+      setHasStoredSettings(true);
+      if (field === 'logo') setPendingLogoFile(undefined);
+      if (field === 'paymentQr') setPendingPaymentQrFile(undefined);
+      form.setFieldsValue(nextSettings);
+      refreshPublicSettings();
+      toast.success('Đã xóa hình khỏi cài đặt.');
+      return true;
+    } catch (error) {
+      console.error('Lỗi khi xóa hình cài đặt:', error);
+      toast.error('Không thể xóa hình cài đặt.');
+      return false;
+    }
+  };
+
   const togglePermission = (roleKey: string, permission: PermissionKey, checked: boolean) => {
     setRoles((current) =>
       current.map((role) =>
@@ -379,6 +467,7 @@ export default function SettingsPage() {
         dirty={dirtySections.has('business')}
         onReset={() => resetSection('business')}
         onLogoFileChange={setPendingLogoFile}
+        onLogoRemove={(file) => handleRemoveSettingsImage('logo', file)}
       />
     ),
     operations: <OperationsSection dirty={dirtySections.has('operations')} onReset={() => resetSection('operations')} />,
@@ -396,6 +485,7 @@ export default function SettingsPage() {
         dirty={dirtySections.has('payment')}
         onReset={() => resetSection('payment')}
         onPaymentQrFileChange={setPendingPaymentQrFile}
+        onPaymentQrRemove={(file) => handleRemoveSettingsImage('paymentQr', file)}
       />
     ),
     notifications: <NotificationsSection dirty={dirtySections.has('notifications')} onReset={() => resetSection('notifications')} />,
@@ -441,7 +531,7 @@ export default function SettingsPage() {
                   <CheckCircle2 size={19} />
                 </div>
                 <div>
-                  <p className="font-black text-text-primary">LaVin ERP</p>
+                  <p className="font-black text-text-primary">{savedSettings.business.brandName}</p>
                   <p className="text-xs font-semibold text-text-muted">{hasUnsavedChanges ? `${dirtySections.size} phần chưa lưu` : 'Cấu hình đã đồng bộ'}</p>
                 </div>
               </div>
@@ -487,7 +577,7 @@ export default function SettingsPage() {
               className="[&_.ant-form-item-label>label]:text-[#8a7666]! [&_.ant-form-item-label>label]:text-[11px]! [&_.ant-form-item-label>label]:font-black! [&_.ant-form-item-label>label]:tracking-[0.12em]! [&_.ant-form-item-label>label]:uppercase!">
               {isLoading ? (
                 <div className="flex h-96 items-center justify-center rounded-[28px] border border-white/60 bg-[#FFFAF4]/70 shadow-[0_18px_48px_rgba(91,58,41,0.1)] backdrop-blur-xl">
-                  <Spin size="large" description="Äang táº£i cáº¥u hÃ¬nh cÃ i Ä‘áº·t..." className="text-primary! [&_.ant-spin-dot-item]:bg-primary!" />
+                  <Spin size="large" description="Đang tải cấu hình cài đặt..." className="text-primary! [&_.ant-spin-dot-item]:bg-primary!" />
                 </div>
               ) : (
                 sectionContent[activeSection]

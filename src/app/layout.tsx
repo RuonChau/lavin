@@ -21,9 +21,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const fallbackTitle = 'Lavin Coffee Chain Management System';
   const fallbackDescription = 'Premium High-End ERP for Coffee Shop Chains';
   const fallbackLogo = '/logo.svg';
+  const settingsUrl = `${process.env.API_PROXY_TARGET ?? 'http://localhost:8700/api/v1'}/settings/public`;
 
   try {
-    const res = await fetch('https://cafe-shop-server.onrender.com/api/v1/settings/public', {
+    const res = await fetch(settingsUrl, {
       next: { revalidate: 60 }, // Cache settings for 60 seconds
     });
 

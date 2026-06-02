@@ -14,10 +14,12 @@ export function BusinessSection({
   dirty,
   onReset,
   onLogoFileChange,
+  onLogoRemove,
 }: {
   dirty: boolean;
   onReset: () => void;
   onLogoFileChange?: (file?: File) => void;
+  onLogoRemove?: (file: UploadFile) => boolean | Promise<boolean>;
 }) {
   return (
     <PremiumPanel>
@@ -57,6 +59,7 @@ export function BusinessSection({
           <Form.Item name={['business', 'logo']} label="Logo" valuePropName="fileList" getValueFromEvent={normFile}>
             <Upload listType="picture-card" maxCount={1} beforeUpload={() => false} accept="image/*"
               onChange={({ fileList }) => onLogoFileChange?.(getPendingFile(fileList))}
+              onRemove={onLogoRemove}
             >
               <div className="flex flex-col items-center gap-2 text-text-secondary">
                 <UploadCloud size={22} />

@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/modules/auth/presentation/hooks/use-auth';
 import { Coffee } from 'lucide-react';
+import { usePublicSettings } from '@/modules/settings/presentation/providers/public-settings.provider';
 
 const loginSchema = z.object({
   username: z.string().min(3, 'Tên đăng nhập không hợp lệ'),
@@ -18,6 +19,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login, isLoggingIn } = useAuth();
+  const { settings, logoUrl } = usePublicSettings();
 
   const {
     register,
@@ -34,8 +36,12 @@ export default function LoginPage() {
   return (
     <GlassCard className="p-8 md:p-10" blur={32} radius="4xl">
       <div className="flex flex-col items-center mb-8">
-        <div className="w-14 h-14 bg-primary rounded-2xl mb-4 flex items-center justify-center shadow-xl shadow-primary/30">
-          <Coffee size={28} className="text-white" />
+        <div className="mb-4 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-primary shadow-xl shadow-primary/30">
+          {logoUrl ? (
+            <img src={logoUrl} alt={settings.brandName} className="h-full w-full object-cover" />
+          ) : (
+            <Coffee size={28} className="text-white" />
+          )}
         </div>
         <h1 className="text-2xl font-bold text-text-primary tracking-tight">Chào mừng trở lại</h1>
         <p className="text-sm text-text-secondary mt-1 font-medium">Hệ thống quản lý Lavin</p>

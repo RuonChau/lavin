@@ -11,7 +11,7 @@ export interface ISettingsPayload extends Omit<ISettingsData, 'operations'> {
 export interface ISettingsData {
   business: {
     brandName: string;
-    logo: UploadFile;
+    logo: UploadFile[];
     taxCode: string;
     contactEmail: string;
     phone: string;
@@ -45,7 +45,7 @@ export interface ISettingsData {
     bankName: string;
     bankAccountName: string;
     bankAccountNumber: string;
-    paymentQr: UploadFile | null;
+    paymentQr: UploadFile[];
     autoConfirmPayment: boolean;
   };
   notifications: {

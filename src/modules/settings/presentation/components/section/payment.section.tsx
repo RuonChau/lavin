@@ -15,10 +15,12 @@ export function PaymentSection({
   dirty,
   onReset,
   onPaymentQrFileChange,
+  onPaymentQrRemove,
 }: {
   dirty: boolean;
   onReset: () => void;
   onPaymentQrFileChange?: (file?: File) => void;
+  onPaymentQrRemove?: (file: UploadFile) => boolean | Promise<boolean>;
 }) {
   return (
     <PremiumPanel>
@@ -53,6 +55,7 @@ export function PaymentSection({
               beforeUpload={() => false}
               accept="image/*"
               onChange={({ fileList }) => onPaymentQrFileChange?.(getPendingFile(fileList))}
+              onRemove={onPaymentQrRemove}
             >
               <div className="flex flex-col items-center gap-2 text-text-secondary">
                 <UploadCloud size={22} />

@@ -1,176 +1,344 @@
 'use client';
 
-import { useAuth } from '@/modules/auth/presentation/hooks/use-auth';
-import { motion } from 'motion/react';
-import { 
+import { ReactNode } from 'react';
+import {
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  Box,
+  MoreVertical,
+  RefreshCcw,
+  ShoppingCart,
   TrendingUp,
   Users,
-  ShoppingCart,
-  Box,
-  ArrowUpRight,
-  ArrowDownRight,
-  MoreVertical
 } from 'lucide-react';
+import { useAuth } from '@/modules/auth/presentation/hooks/use-auth';
+import { useDashboardOverview } from '@/modules/dashboard/presentation/hooks/useDashboardOverview';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
+import { formatCurrency } from '@/shared/utils/format-currency';
+import { formatDate } from '@/shared/utils/format-date';
+
+type Trend = 'up' | 'down' | 'neutral';
+
+const orderStatusMap: Record<string, { label: string; className: string }> = {
+  completed: { label: 'Hoàn tất', className: 'bg-[#21B57D]/10 text-[#21B57D]' },
+  preparing: { label: 'Đang pha chế', className: 'bg-[#C9822B]/10 text-[#C9822B]' },
+  ready: { label: 'Sẵn sàng', className: 'bg-[#0FA7A0]/10 text-[#0FA7A0]' },
+  cancelled: { label: 'Đã hủy', className: 'bg-[#D95F76]/10 text-[#D95F76]' },
+  pending: { label: 'Chờ xử lý', className: 'bg-[#8B5E3C]/10 text-[#8B5E3C]' },
+};
+
+const paymentStatusMap: Record<string, string> = {
+  paid: 'Đã thanh toán',
+  unpaid: 'Chưa thanh toán',
+  refunded: 'Hoàn tiền',
+};
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  
+  const { data, isLoading, isError, isFetching, refetch } = useDashboardOverview();
+  const stats = data?.stats;
+
   return (
     <div className="space-y-8 pb-12">
-      <header>
-        <h1 className="text-[28px] font-bold text-[#2A1E17] tracking-tight">Xin chào, {user?.name}</h1>
-        <p className="text-[#6F5A4A]">Đây là báo cáo tổng quan của chuỗi BrewGlass hôm nay.</p>
+      <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h1 className="text-[28px] font-bold text-[#2A1E17] tracking-tight">
+            Xin chào, {user?.name ?? 'Quản trị viên'}
+          </h1>
+          <p className="text-[#6F5A4A]">
+            Đây là báo cáo tổng quan của chuỗi BrewGlass hôm nay.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => refetch()}
+          className="inline-flex h-10 w-fit items-center gap-2 rounded-xl border border-[#D8B894]/30 bg-white/60 px-4 text-sm font-bold text-[#6F5A4A] transition-all hover:bg-white"
+        >
+          <RefreshCcw size={16} className={cn(isFetching && 'animate-spin')} />
+          Tải lại
+        </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPIStatCard 
-          title="Doanh thu hôm nay" 
-          value="₫24.8M" 
-          change="+12.3%" 
-          trend="up" 
-          icon={<TrendingUp size={20} />} 
-        />
-        <KPIStatCard 
-          title="Số đơn hàng" 
-          value="384" 
-          change="+5.4%" 
-          trend="up" 
-          icon={<ShoppingCart size={20} />} 
-        />
-        <KPIStatCard 
-          title="Tồn kho cảnh báo" 
-          value="18" 
-          change="-2" 
-          trend="down" 
-          icon={<Box size={20} />} 
-          variant="warning"
-        />
-        <KPIStatCard 
-          title="Nhân viên đang trực" 
-          value="12" 
-          change="+1" 
-          trend="up" 
-          icon={<Users size={20} />} 
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <GlassCard className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-[#2A1E17]">Đơn hàng gần đây</h3>
-              <button className="p-2 text-[#9A8677] hover:bg-white/40 rounded-xl transition-all">
-                <MoreVertical size={20} />
-              </button>
+      {isLoading ? (
+        <DashboardSkeleton />
+      ) : isError || !data || !stats ? (
+        <GlassCard className="p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#D95F76]/10 text-[#D95F76]">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-[#2A1E17]">Không thể tải dữ liệu tổng quan</h3>
+                <p className="mt-1 text-sm text-[#6F5A4A]">
+                  API dashboard hoặc các API tổng hợp đang chưa phản hồi. Hãy thử tải lại.
+                </p>
+              </div>
             </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-[#D8B894]/20 text-[#9A8677] text-xs font-bold uppercase tracking-widest">
-                    <th className="pb-4 px-2">Mã đơn</th>
-                    <th className="pb-4 px-2">Khách hàng</th>
-                    <th className="pb-4 px-2">Chi nhánh</th>
-                    <th className="pb-4 px-2">Thanh toán</th>
-                    <th className="pb-4 px-2">Trạng thái</th>
-                    <th className="pb-4 px-2">Tổng tiền</th>
-                  </tr>
-                </thead>
-                <tbody className="text-[#6F5A4A] text-sm">
-                  {[1, 2, 3, 4, 5].map((idx) => (
-                    <tr key={idx} className="border-b border-[#D8B894]/10 hover:bg-white/40 transition-colors">
-                      <td className="py-4 px-2 font-mono text-[#2A1E17]">#ORD-BR{idx}04</td>
-                      <td className="py-4 px-2">
-                        <div className="font-semibold text-[#2A1E17]">Khách hàng {idx}</div>
-                        <div className="text-[11px] text-[#9A8677]">0912***{idx}45</div>
-                      </td>
-                      <td className="py-4 px-2 text-xs">Chi nhánh Quận 1</td>
-                      <td className="py-4 px-2">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#0FA7A0]/10 text-[#0FA7A0]">Momo</span>
-                      </td>
-                      <td className="py-4 px-2">
-                        <span className={cn(
-                          "px-3 py-1 rounded-full text-[11px] font-bold",
-                          idx === 1 ? "bg-[#21B57D]/10 text-[#21B57D]" : "bg-[#C9822B]/10 text-[#C9822B]"
-                        )}>
-                          {idx === 1 ? 'Hoàn tất' : 'Đang pha chế'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-2 font-bold text-[#2A1E17]">₫{65 * idx}.000</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </GlassCard>
-        </div>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="h-10 rounded-xl bg-[#8B5E3C] px-4 text-sm font-bold text-white transition-all hover:bg-[#6F4A31]"
+            >
+              Thử lại
+            </button>
+          </div>
+        </GlassCard>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <KPIStatCard
+              title="Doanh thu hôm nay"
+              value={formatCurrency(stats.todayRevenue)}
+              change={formatPercentChange(stats.revenueChangePercent)}
+              trend={getTrend(stats.revenueChangePercent)}
+              icon={<TrendingUp size={20} />}
+            />
+            <KPIStatCard
+              title="Số đơn hàng"
+              value={stats.todayOrders.toLocaleString('vi-VN')}
+              change={formatPercentChange(stats.orderChangePercent)}
+              trend={getTrend(stats.orderChangePercent)}
+              icon={<ShoppingCart size={20} />}
+            />
+            <KPIStatCard
+              title="Tồn kho cảnh báo"
+              value={stats.inventoryWarnings.toLocaleString('vi-VN')}
+              change={formatSignedNumber(stats.inventoryWarningsChange)}
+              trend={getInverseTrend(stats.inventoryWarningsChange)}
+              icon={<Box size={20} />}
+              variant="warning"
+            />
+            <KPIStatCard
+              title="Nhân viên đang trực"
+              value={stats.activeEmployees.toLocaleString('vi-VN')}
+              change={formatSignedNumber(stats.activeEmployeesChange)}
+              trend={getTrend(stats.activeEmployeesChange)}
+              icon={<Users size={20} />}
+            />
+          </div>
 
-        <div className="space-y-6">
-          <GlassCard className="p-6">
-            <h3 className="text-lg font-bold text-[#2A1E17] mb-6">Top món bán chạy</h3>
-            <div className="space-y-5">
-              {[
-                { name: 'Phê La Latte', sales: '142 đơn', price: '₫65.000', img: 'https://picsum.photos/seed/coffee1/100/100' },
-                { name: 'Trà Sữa Oolong', sales: '98 đơn', price: '₫55.000', img: 'https://picsum.photos/seed/coffee2/100/100' },
-                { name: 'Espresso', sales: '84 đơn', price: '₫45.000', img: 'https://picsum.photos/seed/coffee3/100/100' },
-                { name: 'Matcha Latte', sales: '76 đơn', price: '₫65.000', img: 'https://picsum.photos/seed/coffee4/100/100' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-4 group cursor-pointer">
-                  <div className="relative w-12 h-12 rounded-2xl overflow-hidden shadow-sm">
-                    <img src={item.img} alt={item.name} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <GlassCard className="p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#2A1E17]">Đơn hàng gần đây</h3>
+                    <p className="text-xs font-semibold text-[#9A8677]">
+                      Cập nhật lúc {formatDate(data.generatedAt, 'HH:mm DD/MM/YYYY')}
+                    </p>
                   </div>
-                  <div className="flex-1">
-                    <h4 className="text-sm font-bold text-[#2A1E17]">{item.name}</h4>
-                    <p className="text-xs text-[#9A8677]">{item.sales}</p>
-                  </div>
-                  <div className="text-sm font-bold text-[#8B5E3C]">{item.price}</div>
+                  <button className="rounded-xl p-2 text-[#9A8677] transition-all hover:bg-white/40">
+                    <MoreVertical size={20} />
+                  </button>
                 </div>
-              ))}
-            </div>
-          </GlassCard>
 
-          <GlassCard className="p-6 bg-primary/10 border-primary/20">
-            <h3 className="text-sm font-bold text-[#8B5E3C] uppercase tracking-widest mb-4">Mẹo vận hành</h3>
-            <p className="text-sm text-[#6F5A4A] leading-relaxed">
-              Chi nhánh Quận 1 đang có tỷ lệ khách vào khung giờ 16:00 - 18:00 tăng 15%. Hãy cân nhắc bổ sung 1 nhân viên pha chế cho khung giờ này.
-            </p>
-          </GlassCard>
-        </div>
-      </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="border-b border-[#D8B894]/20 text-xs font-bold uppercase tracking-widest text-[#9A8677]">
+                        <th className="px-2 pb-4">Mã đơn</th>
+                        <th className="px-2 pb-4">Khách hàng</th>
+                        <th className="px-2 pb-4">Chi nhánh</th>
+                        <th className="px-2 pb-4">Thanh toán</th>
+                        <th className="px-2 pb-4">Trạng thái</th>
+                        <th className="px-2 pb-4">Tổng tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm text-[#6F5A4A]">
+                      {data.recentOrders.length > 0 ? (
+                        data.recentOrders.map((order) => {
+                          const status = orderStatusMap[order.status] ?? orderStatusMap.pending;
+
+                          return (
+                            <tr key={order.id} className="border-b border-[#D8B894]/10 transition-colors hover:bg-white/40">
+                              <td className="px-2 py-4 font-mono text-[#2A1E17]">#{order.orderNumber}</td>
+                              <td className="px-2 py-4">
+                                <div className="font-semibold text-[#2A1E17]">{order.customerName}</div>
+                                <div className="text-[11px] text-[#9A8677]">
+                                  {maskPhone(order.customerPhone) || formatDate(order.createdAt, 'HH:mm')}
+                                </div>
+                              </td>
+                              <td className="px-2 py-4 text-xs">{order.branchName}</td>
+                              <td className="px-2 py-4">
+                                <span className="rounded-full bg-[#0FA7A0]/10 px-2 py-0.5 text-[10px] font-bold text-[#0FA7A0]">
+                                  {formatPayment(order.paymentMethod, order.paymentStatus)}
+                                </span>
+                              </td>
+                              <td className="px-2 py-4">
+                                <span className={cn('rounded-full px-3 py-1 text-[11px] font-bold', status.className)}>
+                                  {status.label}
+                                </span>
+                              </td>
+                              <td className="px-2 py-4 font-bold text-[#2A1E17]">{formatCurrency(order.totalAmount)}</td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="py-10 text-center text-sm font-semibold text-[#9A8677]">
+                            Chưa có đơn hàng để hiển thị.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </GlassCard>
+            </div>
+
+            <div className="space-y-6">
+              <GlassCard className="p-6">
+                <h3 className="mb-6 text-lg font-bold text-[#2A1E17]">Top món bán chạy</h3>
+                <div className="space-y-5">
+                  {data.topProducts.length > 0 ? (
+                    data.topProducts.map((item, index) => (
+                      <div key={item.id || item.name} className="group flex cursor-pointer items-center gap-4">
+                        <div
+                          className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#8B5E3C]/10 bg-cover bg-center text-sm font-black text-[#8B5E3C] shadow-sm transition-transform group-hover:scale-105"
+                          style={item.image ? { backgroundImage: `url(${item.image})` } : undefined}
+                          aria-label={item.name}
+                        >
+                          {item.image ? (
+                            <span className="sr-only">{item.name}</span>
+                          ) : (
+                            <span>{index + 1}</span>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="truncate text-sm font-bold text-[#2A1E17]">{item.name}</h4>
+                          <p className="text-xs text-[#9A8677]">{item.sold.toLocaleString('vi-VN')} đơn</p>
+                        </div>
+                        <div className="text-sm font-bold text-[#8B5E3C]">{formatCurrency(item.price || item.revenue)}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rounded-2xl bg-white/45 p-4 text-sm font-semibold text-[#9A8677]">
+                      Chưa có dữ liệu sản phẩm bán chạy.
+                    </p>
+                  )}
+                </div>
+              </GlassCard>
+
+              <GlassCard className="border-primary/20 bg-primary/10 p-6">
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-widest text-[#8B5E3C]">Mẹo vận hành</h3>
+                <p className="text-sm leading-relaxed text-[#6F5A4A]">{data.operationTip}</p>
+              </GlassCard>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-function KPIStatCard({ title, value, change, trend, icon, variant = 'default' }: { 
-  title: string, 
-  value: string, 
-  change: string, 
-  trend: 'up' | 'down', 
-  icon: React.ReactNode,
-  variant?: 'default' | 'warning'
+function KPIStatCard({
+  title,
+  value,
+  change,
+  trend,
+  icon,
+  variant = 'default',
+}: {
+  title: string;
+  value: string;
+  change: string;
+  trend: Trend;
+  icon: ReactNode;
+  variant?: 'default' | 'warning';
 }) {
   return (
     <GlassCard className="p-5">
-      <div className="flex justify-between items-start mb-4">
-        <div className={cn(
-          "w-10 h-10 rounded-2xl flex items-center justify-center border",
-          variant === 'warning' ? "bg-[#C9822B]/10 text-[#C9822B] border-[#C9822B]/20" : "bg-[#8B5E3C]/10 text-[#8B5E3C] border-[#8B5E3C]/20"
-        )}>
+      <div className="mb-4 flex items-start justify-between">
+        <div
+          className={cn(
+            'flex h-10 w-10 items-center justify-center rounded-2xl border',
+            variant === 'warning'
+              ? 'border-[#C9822B]/20 bg-[#C9822B]/10 text-[#C9822B]'
+              : 'border-[#8B5E3C]/20 bg-[#8B5E3C]/10 text-[#8B5E3C]',
+          )}
+        >
           {icon}
         </div>
-        <div className={cn(
-          "flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full",
-          trend === 'up' ? "bg-[#21B57D]/10 text-[#21B57D]" : "bg-[#D95F76]/10 text-[#D95F76]"
-        )}>
-          {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+        <div
+          className={cn(
+            'flex items-center gap-1 rounded-full px-2 py-1 text-xs font-bold',
+            trend === 'up' && 'bg-[#21B57D]/10 text-[#21B57D]',
+            trend === 'down' && 'bg-[#D95F76]/10 text-[#D95F76]',
+            trend === 'neutral' && 'bg-[#8B5E3C]/10 text-[#8B5E3C]',
+          )}
+        >
+          {trend === 'up' && <ArrowUpRight size={14} />}
+          {trend === 'down' && <ArrowDownRight size={14} />}
           {change}
         </div>
       </div>
-      
-      <p className="text-xs font-bold text-[#9A8677] uppercase tracking-widest">{title}</p>
-      <h3 className="text-[28px] font-bold text-[#2A1E17] mt-1 tracking-tight">{value}</h3>
+
+      <p className="text-xs font-bold uppercase tracking-widest text-[#9A8677]">{title}</p>
+      <h3 className="mt-1 text-[28px] font-bold tracking-tight text-[#2A1E17]">{value}</h3>
     </GlassCard>
   );
+}
+
+function DashboardSkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <GlassCard key={index} className="p-5">
+            <div className="mb-5 flex items-center justify-between">
+              <div className="h-10 w-10 animate-pulse rounded-2xl bg-white/60" />
+              <div className="h-6 w-16 animate-pulse rounded-full bg-white/60" />
+            </div>
+            <div className="h-3 w-28 animate-pulse rounded-full bg-white/60" />
+            <div className="mt-3 h-8 w-36 animate-pulse rounded-full bg-white/60" />
+          </GlassCard>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <GlassCard className="h-80 p-6 lg:col-span-2">
+          <div className="h-full animate-pulse rounded-2xl bg-white/45" />
+        </GlassCard>
+        <GlassCard className="h-80 p-6">
+          <div className="h-full animate-pulse rounded-2xl bg-white/45" />
+        </GlassCard>
+      </div>
+    </>
+  );
+}
+
+function getTrend(value: number): Trend {
+  if (value > 0) return 'up';
+  if (value < 0) return 'down';
+  return 'neutral';
+}
+
+function getInverseTrend(value: number): Trend {
+  if (value > 0) return 'down';
+  if (value < 0) return 'up';
+  return 'neutral';
+}
+
+function formatPercentChange(value: number): string {
+  if (value === 0) return '0%';
+  return `${value > 0 ? '+' : ''}${value.toLocaleString('vi-VN')}%`;
+}
+
+function formatSignedNumber(value: number): string {
+  if (value === 0) return '0';
+  return `${value > 0 ? '+' : ''}${value.toLocaleString('vi-VN')}`;
+}
+
+function maskPhone(phone?: string): string {
+  if (!phone) return '';
+  if (phone.length < 7) return phone;
+  return `${phone.slice(0, 4)}***${phone.slice(-3)}`;
+}
+
+function formatPayment(method: string, paymentStatus: string): string {
+  const normalizedMethod = method ? method.toUpperCase() : 'COD';
+  return paymentStatusMap[paymentStatus] ?? normalizedMethod;
 }
