@@ -18,6 +18,7 @@ export const routePermissionMap: Array<{ prefix: string; permission: RoutePermis
   { prefix: '/inventory', permission: 'products' },
   { prefix: '/purchases', permission: 'products' },
   { prefix: '/branches', permission: 'reports' },
+  { prefix: '/tables', permission: 'reports' },
   { prefix: '/', permission: 'dashboard' },
 ];
 

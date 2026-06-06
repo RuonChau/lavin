@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/modules/auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Sidebar } from '@/shared/components/layout/Sidebar';
@@ -15,10 +15,21 @@ import {
 } from '@/modules/settings/utils/access-control';
 import { defaultRolePermissions } from '@/modules/settings/mocks/default-role-permissions.mock';
 
+const subscribeToHydration = () => () => undefined;
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
+const useHasHydrated = () => useSyncExternalStore(
+  subscribeToHydration,
+  getClientSnapshot,
+  getServerSnapshot,
+);
+
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, logout, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const hasHydrated = useHasHydrated();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const permissionsQuery = useQuery({
     queryKey: ['settings', 'role-permissions'],
@@ -36,19 +47,24 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
   }, [permissionsQuery.data?.roles, user?.role]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!hasHydrated || isLoading || isAuthenticated) return;
+
+    if (pathname !== '/login') {
       router.push('/login');
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [hasHydrated, isAuthenticated, isLoading, pathname, router]);
 
   useEffect(() => {
-    if (!isAuthenticated || permissionsQuery.isLoading) return;
+    if (!hasHydrated || !isAuthenticated || permissionsQuery.isLoading) return;
     if (canAccessPath(pathname, permissions)) return;
 
-    router.replace(getFirstAllowedPath(permissions));
-  }, [isAuthenticated, pathname, permissions, permissionsQuery.isLoading, router]);
+    const targetPath = getFirstAllowedPath(permissions);
+    if (targetPath !== pathname) {
+      router.replace(targetPath);
+    }
+  }, [hasHydrated, isAuthenticated, pathname, permissions, permissionsQuery.isLoading, router]);
 
-  if (isLoading || (isAuthenticated && permissionsQuery.isLoading)) {
+  if (!hasHydrated || isLoading || (isAuthenticated && permissionsQuery.isLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-base">
         <div className="flex flex-col items-center gap-4">

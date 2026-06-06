@@ -13,6 +13,7 @@ import {
   Boxes,
   ClipboardList,
   Gift,
+  Grid3X3,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -92,6 +93,14 @@ const MENU_ITEMS: SidebarMenuItem[] = [
     icon: Store,
     href: '/branches',
     description: 'Quản lý mạng lưới kho và các điểm bán hàng',
+    permission: 'reports',
+  },
+  {
+    id: 'tables',
+    label: 'Sơ đồ bàn',
+    icon: Grid3X3,
+    href: '/tables',
+    description: 'Quản lý bàn, khu vực và trạng thái phục vụ theo thời gian thực',
     permission: 'reports',
   },
   {
