@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Sidebar } from '@/shared/components/layout/Sidebar';
-import { Topbar } from '@/shared/components/layout/Topbar';
+import { Sidebar } from '@/shared/components/layout/sidebar';
+import { Topbar } from '@/shared/components/layout/topbar';
 import { settingsService } from '@/modules/settings/infrastructure/services/settings.service';
 import {
   canAccessPath,

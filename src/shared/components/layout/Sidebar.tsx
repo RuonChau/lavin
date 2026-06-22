@@ -2,184 +2,26 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ComponentType } from 'react';
 import {
   AnimatePresence,
   motion,
 } from 'motion/react';
 import {
-  BarChart3,
-  BookOpenText,
-  Boxes,
-  ClipboardList,
-  Gift,
-  Grid3X3,
-  LayoutDashboard,
   LogOut,
-  Settings,
-  ShoppingCart,
-  Store,
-  Users,
-  UtensilsCrossed,
   X,
 } from 'lucide-react';
 import { usePublicSettings } from '@/modules/settings/presentation/providers/public-settings.provider';
-import type { User } from '@/modules/auth/domain/types/user.type';
-import type { TPermissionValues } from '@/modules/settings/domain/enum/permission-key.enum';
 import { cn } from '@/shared/utils/cn';
 import { isActivePath } from '@/shared/utils/isActivePath';
-
-type SidebarMenuItem = {
-  id: string;
-  label: string;
-  icon: ComponentType<{ size?: number; className?: string }>;
-  href: string;
-  description: string;
-  permission: TPermissionValues;
-};
-
-const MENU_ITEMS: SidebarMenuItem[] = [
-  {
-    id: 'dashboard',
-    label: 'Tổng quan',
-    icon: LayoutDashboard,
-    href: '/',
-    description: 'Tổng quan tình hình kinh doanh của cửa hàng',
-    permission: 'dashboard',
-  },
-  {
-    id: 'orders',
-    label: 'Đơn hàng',
-    icon: ClipboardList,
-    href: '/orders',
-    description: 'Theo dõi, xử lý và cập nhật trạng thái đơn hàng',
-    permission: 'orders',
-  },
-  {
-    id: 'products',
-    label: 'Menu sản phẩm',
-    icon: UtensilsCrossed,
-    href: '/products',
-    description: 'Menu cafe, giá bán và vòng đời sản phẩm',
-    permission: 'products',
-  },
-  {
-    id: 'formulas',
-    label: 'Công thức / BOM',
-    icon: BookOpenText,
-    href: '/formulas',
-    description: 'Công thức, giá vốn thành phần và định mức mẻ',
-    permission: 'products',
-  },
-  {
-    id: 'inventory',
-    label: 'Nguyên liệu & Tồn kho',
-    icon: Boxes,
-    href: '/inventory',
-    description: 'Kiểm soát kho, nguyên vật liệu và vị trí kho hàng',
-    permission: 'products',
-  },
-  {
-    id: 'purchases',
-    label: 'Đơn nhập hàng',
-    icon: ShoppingCart,
-    href: '/purchases',
-    description: 'Quản lý mua hàng, nhập kho và nhà cung cấp',
-    permission: 'products',
-  },
-  {
-    id: 'branches',
-    label: 'Chi nhánh',
-    icon: Store,
-    href: '/branches',
-    description: 'Quản lý mạng lưới kho và các điểm bán hàng',
-    permission: 'reports',
-  },
-  {
-    id: 'tables',
-    label: 'Sơ đồ bàn',
-    icon: Grid3X3,
-    href: '/tables',
-    description: 'Quản lý bàn, khu vực và trạng thái phục vụ theo thời gian thực',
-    permission: 'reports',
-  },
-  {
-    id: 'employees',
-    label: 'Nhân viên',
-    icon: Users,
-    href: '/employees',
-    description: 'Phân quyền, quản lý nhân viên, ca làm việc, chấm công',
-    permission: 'employees',
-  },
-  {
-    id: 'customers',
-    label: 'Khách hàng',
-    icon: Users,
-    href: '/customers',
-    description: 'Thông tin khách hàng, điểm tích lũy, lịch sử mua hàng',
-    permission: 'orders',
-  },
-  {
-    id: 'promotions',
-    label: 'Khuyến mãi',
-    icon: Gift,
-    href: '/promotions',
-    description: 'Quản lý chương trình khuyến mãi',
-    permission: 'promotions',
-  },
-  {
-    id: 'reports',
-    label: 'Báo cáo',
-    icon: BarChart3,
-    href: '/reports',
-    description: 'Xem các báo cáo về tình hình kinh doanh',
-    permission: 'reports',
-  },
-  {
-    id: 'settings',
-    label: 'Cài đặt',
-    icon: Settings,
-    href: '/settings',
-    description: 'Thay đổi các thiết lập trong ứng dụng',
-    permission: 'settings',
-  },
-];
-
-const ROLE_LABELS: Record<string, string> = {
-  BARISTA: 'Pha chế',
-  SERVER: 'Phục vụ',
-  CASHIER: 'Thu ngân',
-  SHIFT_LEADER: 'Quản lý ca',
-  STORE_MANAGER: 'Quản lý chi nhánh',
-  AREA_MANAGER: 'Quản lý khu vực',
-  ACCOUNTANT: 'Kế toán',
-  PURCHASING: 'Mua hàng',
-  ADMIN: 'Quản trị viên',
-  OWNER: 'Chủ cửa hàng',
-};
-
-const formatRoleLabel = (role?: string | null) => {
-  if (!role) return 'Nhân viên';
-
-  return ROLE_LABELS[role] ?? role
-    .toLowerCase()
-    .split(/[_\s-]+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onLogout: () => void | Promise<void>;
-  permissions: Record<TPermissionValues, boolean>;
-  user: User | null;
-}
+import { MENU_ITEMS } from './config/sidebar-menu-items.config';
+import type { SidebarProps } from './types/sidebar-props.type';
+import { formatRoleLabel } from './utils/format-role-label.util';
+import Image from 'next/image';
 
 export function Sidebar({ isOpen, onClose, onLogout, permissions, user }: SidebarProps) {
   const pathname = usePathname();
   const { settings, logoUrl } = usePublicSettings();
+  console.log('logoUrl: ', logoUrl);
   const brandName = settings.brandName || 'LaVin ERP';
   const menuItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
   const displayName = user?.name || user?.email || 'Admin User';
@@ -195,13 +37,21 @@ export function Sidebar({ isOpen, onClose, onLogout, permissions, user }: Sideba
     >
       <div className="flex h-19 items-center justify-between border-b border-primary-soft/20 px-8">
         <div className="flex min-w-0 items-center">
-          <div className="mr-3 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary shadow-lg shadow-primary/20">
+          <Image
+            alt="logo"
+            src="/logo.svg"
+            width={96}
+            height={96}
+            className="mr-3 h-9 w-9 shrink-0 object-contain"
+            // priority
+          />
+          {/* <div className="mr-3 flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-primary shadow-lg shadow-primary/20">
             {logoUrl ? (
               <img src={logoUrl} alt={brandName} className="h-full w-full object-cover" />
             ) : (
-              <div className="h-4 w-4 rotate-45 rounded-sm bg-white" />
+              <Image src="/path/to/default-logo.png" alt={brandName} className="h-4 w-4 rotate-45 rounded-sm bg-white" width={16} height={16} />
             )}
-          </div>
+          </div> */}
           <div className="min-w-0">
             <p className="truncate text-base font-black tracking-tight text-text-primary">{brandName}</p>
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-soft">ERP</p>

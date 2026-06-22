@@ -11,17 +11,17 @@ export function Topbar({ onMenuClick }: TopbarProps) {
   const { settings } = usePublicSettings();
 
   return (
-    <header className="fixed right-0 top-0 z-40 flex h-[76px] w-full items-center justify-between border-b border-[#D8B894]/20 px-4 !shadow-none glass-panel md:w-[calc(100%-280px)] md:px-8">
+    <header className="fixed right-0 top-0 z-40 flex h-19 w-full items-center justify-between border-b border-primary-soft/20 px-4 shadow-none! glass-panel md:w-[calc(100%-280px)] md:px-8">
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
-          className="rounded-xl p-2 text-[#6F5A4A] transition-colors hover:bg-white/40 md:hidden"
+          className="rounded-xl p-2 text-text-secondary transition-colors hover:bg-white/40 md:hidden"
         >
           <Menu size={24} />
         </button>
         <div className="flex flex-col">
-          <h1 className="text-sm font-bold tracking-tight text-[#2A1E17] md:text-xl">Dashboard Tổng Quan</h1>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-[#9A8677] md:text-[10px]">
+          <h1 className="text-sm font-bold tracking-tight text-text-primary md:text-xl">Dashboard Tổng Quan</h1>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-text-muted md:text-[10px]">
             {settings.brandName || 'LaVin ERP'}
           </p>
         </div>
@@ -29,16 +29,16 @@ export function Topbar({ onMenuClick }: TopbarProps) {
 
       <div className="flex items-center gap-3 md:gap-6">
         <div className="relative hidden w-48 sm:block lg:w-64">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D8B894]" size={16} />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-soft" size={16} />
           <input
             type="text"
             placeholder="Tìm kiếm..."
-            className="w-full rounded-full px-10 py-2 text-sm text-[#2A1E17] shadow-sm transition-all glass-control placeholder:text-[#9A8677] focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-full px-10 py-2 text-sm text-text-primary shadow-sm transition-all glass-control placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
-          <button className="flex h-9 w-9 items-center justify-center rounded-full border border-[#D8B894]/20 bg-white/80 shadow-sm backdrop-blur-md transition-colors hover:bg-white md:h-10 md:w-10">
+          <button className="flex h-9 w-9 items-center justify-center rounded-full border border-primary-soft/20 bg-white/80 shadow-sm backdrop-blur-md transition-colors hover:bg-white md:h-10 md:w-10">
             <Bell size={18} className="text-primary" />
           </button>
 
