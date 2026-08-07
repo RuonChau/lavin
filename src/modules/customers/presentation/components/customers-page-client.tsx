@@ -77,9 +77,9 @@ function CustomersPageInner() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex-1 min-w-[240px] text-left p-6 rounded-4xl border transition-all duration-500 group relative overflow-hidden",
+                "flex-1 min-w-60 text-left p-6 rounded-4xl border transition-all duration-500 group relative overflow-hidden",
                 isActive
-                  ? "bg-white border-primary/30 shadow-xl shadow-primary/5 translate-y-[-4px]"
+                  ? "bg-white border-primary/30 shadow-xl shadow-primary/5 -translate-y-1"
                   : "bg-white/40 border-primary-soft/20 hover:border-primary/20 hover:bg-white/60"
               )}
             >

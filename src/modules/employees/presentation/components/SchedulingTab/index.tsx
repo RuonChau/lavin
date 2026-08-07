@@ -26,7 +26,7 @@ export default function SchedulingTab() {
             >
               <ChevronLeft size={20} />
             </button>
-            <div className="relative flex flex-col items-center justify-center min-w-[180px] h-10 w-full overflow-hidden cursor-pointer hover:bg-white/40 transition-colors rounded-xl">
+            <div className="relative flex flex-col items-center justify-center min-w-45 h-10 w-full overflow-hidden cursor-pointer hover:bg-white/40 transition-colors rounded-xl">
               <DatePicker
                 picker="week"
                 className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20"
@@ -69,11 +69,11 @@ export default function SchedulingTab() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#FFFAF4]/40 border-b border-primary-soft/20">
-                <th className="py-6 px-8 text-left min-w-[200px]">
+                <th className="py-6 px-8 text-left min-w-50">
                   <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Nhân sự</span>
                 </th>
                 {days.map((day, idx) => (
-                  <th key={idx} className="py-6 px-4 text-center min-w-[120px]">
+                  <th key={idx} className="py-6 px-4 text-center min-w-30">
                     <div className="flex flex-col">
                       <span className="text-[10px] font-black text-primary-soft uppercase tracking-widest">{day}</span>
                       <span className="text-sm font-black text-text-primary">{dates[idx]}</span>
@@ -111,7 +111,7 @@ export default function SchedulingTab() {
                               reason: emp.id === 'EMP02' ? 'Việc gia đình đột xuất' : 'Nghỉ phép năm',
                               swapWith: emp.id === 'EMP02' ? 'Lê Minh Chiến (Ca Chiều)' : null
                             })}
-                            className="w-full h-full min-h-[60px] flex items-center justify-center border-2 border-dashed border-primary-soft/40 hover:border-primary/40 rounded-3xl text-[10px] font-black text-primary-soft hover:text-primary uppercase tracking-widest italic bg-[#FFFAF4]/30 hover:bg-primary/5 transition-all shadow-sm"
+                            className="w-full h-full min-h-15 flex items-center justify-center border-2 border-dashed border-primary-soft/40 hover:border-primary/40 rounded-3xl text-[10px] font-black text-primary-soft hover:text-primary uppercase tracking-widest italic bg-[#FFFAF4]/30 hover:bg-primary/5 transition-all shadow-sm"
                           >
                             NGHỈ
                           </button>
