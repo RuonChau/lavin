@@ -50,9 +50,13 @@ export interface ReportData {
   }>;
   totals: {
     todayRevenue: number;
+    todayRevenueGrowth: number;
     totalOrders: number;
+    totalOrdersGrowth: number;
     aov: number;
+    aovGrowth: number;
     cancelRate: number;
+    cancelRateGrowth: number;
     bestProduct: { name: string; category: string; sold: number; revenue: number; growth: number } | null;
     bestBranch: { branch: string; branchId: string; revenue: number; orders: number; growth: number } | null;
   };

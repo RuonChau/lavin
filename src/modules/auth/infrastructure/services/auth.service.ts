@@ -111,4 +111,8 @@ export const authService = {
   resetPassword: async (data: ResetPasswordDto): Promise<void> => {
     await api.post('/reset-password', data);
   },
+
+  changePassword: async (data: { currentPassword: string; newPassword: string }): Promise<void> => {
+    await api.post('/change-password', data);
+  },
 };

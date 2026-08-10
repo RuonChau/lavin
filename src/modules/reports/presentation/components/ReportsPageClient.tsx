@@ -46,8 +46,8 @@ import {
 import { cn } from '@/shared/utils/cn';
 import { TRangeFilter } from '../../types/range-filter.type';
 import { antdThemeReport } from '@/shared/utils/antdThemeReport';
-import { branchOptions } from '../../mocks/branchOptions.mock';
-import { categoryOptions } from '../../mocks/categoryOptions.mock';
+import { useBranches } from '@/modules/branches/presentation/hooks/useBranches';
+import { useCategories } from '@/modules/products/presentation/hooks/use-categories';
 import { renderLoading } from './render/renderLoading';
 import { renderEmpty } from './render/renderEmpty';
 import { renderError } from './render/renderError';
@@ -77,6 +77,17 @@ export default function ReportsPage() {
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>([dayjs('2026-05-11'), dayjs('2026-05-17')]);
 
+  const { branches } = useBranches();
+  const { categories } = useCategories();
+  const branchOptions = useMemo(() => [
+    { value: 'ALL', label: 'Tất cả chi nhánh' },
+    ...branches.map((b: any) => ({ value: b.id, label: b.name })),
+  ], [branches]);
+  const categoryOptions = useMemo(() => [
+    { value: 'ALL', label: 'Tất cả danh mục' },
+    ...categories.map((c: any) => ({ value: c.id, label: c.name })),
+  ], [categories]);
+
   // Hook into our backend API
   const { data, isLoading, isError, refetch } = useReports({
     rangeFilter,
@@ -85,8 +96,7 @@ export default function ReportsPage() {
     dateRange,
   });
 
-  const isEmpty = categoryFilter === 'new-products';
-  const isDataEmpty = isEmpty || !data || (data.dailyReports && data.dailyReports.length === 0);
+  const isDataEmpty = !data || (data.dailyReports && data.dailyReports.length === 0);
 
   const visibleProducts = useMemo(() => {
     const list = data?.topProducts ?? [];
@@ -123,9 +133,13 @@ export default function ReportsPage() {
   const totals = useMemo(() => {
     return data?.totals ?? {
       todayRevenue: 0,
+      todayRevenueGrowth: 0,
       totalOrders: 0,
+      totalOrdersGrowth: 0,
       aov: 0,
+      aovGrowth: 0,
       cancelRate: 0,
+      cancelRateGrowth: 0,
       bestProduct: null,
       bestBranch: null,
     };

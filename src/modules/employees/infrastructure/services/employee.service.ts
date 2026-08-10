@@ -20,6 +20,7 @@ export interface EmployeeUpdateInput {
   phone?: string;
   branch_id?: string;
   user_id?: string;
+  status?: 'ACTIVE' | 'INACTIVE';
 }
 
 export interface EmployeeListResponse {

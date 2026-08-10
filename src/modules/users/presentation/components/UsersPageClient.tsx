@@ -11,12 +11,12 @@ export default function UsersPageClient() {
           <UsersRound size={22} />
         </div>
         <div>
-          <h1 className="text-[28px] font-black tracking-tight text-[#2A1E17] md:text-3xl">Người dùng</h1>
-          <p className="mt-1 text-sm font-medium text-[#6F5A4A]">Quản lý tài khoản đăng nhập và quyền truy cập nội bộ.</p>
+          <h1 className="text-[28px] font-black tracking-tight text-text-primary md:text-3xl">Người dùng</h1>
+          <p className="mt-1 text-sm font-medium text-text-secondary">Quản lý tài khoản đăng nhập và quyền truy cập nội bộ.</p>
         </div>
       </div>
 
-      <Card className="!rounded-[28px] !border-[#D8B894]/25 !bg-white/70">
+      <Card className="rounded-[28px]! border-primary-soft/25! bg-white/70!">
         <Empty description="Module người dùng đã sẵn sàng để nối API và thiết kế chi tiết." />
       </Card>
     </div>

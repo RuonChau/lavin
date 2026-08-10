@@ -14,7 +14,8 @@ export const getCustomerTier = (points: number): string => {
 
 export const customerTableColumns = (
   onEdit?: (record: Customer) => void,
-  onDelete?: (record: Customer) => void
+  onDelete?: (record: Customer) => void,
+  canDelete = false
 ): ColumnsType<Customer> => [
     {
       title: 'KHÁCH HÀNG',
@@ -39,7 +40,7 @@ export const customerTableColumns = (
       title: 'HẠNG THÀNH VIÊN',
       key: 'tier',
       render: (_, record) => {
-        const tier = getCustomerTier(record.loyalty_points || 0);
+        const tier = record.tier?.name ?? getCustomerTier(record.loyalty_points || 0);
         let color = '';
         let bg = '';
         let iconColor = '';
@@ -81,7 +82,7 @@ export const customerTableColumns = (
       title: 'TỔNG CHI TIÊU',
       key: 'totalSpent',
       render: (_, record) => (
-        <p className="font-bold text-text-primary">{(0).toLocaleString()} ₫</p>
+        <p className="font-bold text-text-primary">{(record.total_spent || 0).toLocaleString()} ₫</p>
       ),
     },
     {
@@ -110,15 +111,17 @@ export const customerTableColumns = (
                 onClick={() => onEdit?.(record)}
               />
             </Tooltip>
-            <Tooltip title="Xoá">
-              <Button
-                type="text"
-                danger
-                icon={<Trash2 size={15} />}
-                className="flex items-center justify-center"
-                onClick={() => onDelete?.(record)}
-              />
-            </Tooltip>
+            {canDelete && (
+              <Tooltip title="Xoá">
+                <Button
+                  type="text"
+                  danger
+                  icon={<Trash2 size={15} />}
+                  className="flex items-center justify-center"
+                  onClick={() => onDelete?.(record)}
+                />
+              </Tooltip>
+            )}
           </Space>
         </div>
       ),

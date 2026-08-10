@@ -16,6 +16,7 @@ export interface IPromotion {
   usedCount: number;
   scope: TPromotionScope;
   appliedTargets: string[];
+  branchIds?: string[];
   startDate: string;
   endDate: string;
   status: TPromotionStatus;

@@ -12,11 +12,12 @@ import {
   User,
   CreditCard,
   Calendar,
-  MoreVertical
+  MoreVertical,
+  CheckCircle2
 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { cn } from '@/shared/utils/cn';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useOrders } from '@/modules/orders/presentation/hooks/useOrders';
 import { OrderStatus, Order } from '@/modules/orders/domain/entities/order.entity';
 import { OrderDetailsModal } from '@/modules/orders/presentation/components/modal/order-details.modal';
@@ -26,17 +27,19 @@ import { CancelOrderModal } from '@/modules/orders/presentation/components/modal
 import { toast } from 'react-toastify';
 import { getStatusConfig } from '../../config/order-status.config';
 import { getPaymentStatusConfig } from '../../config/payment-status.config';
-import { StatsOverviewOrder } from '../../mocks/stats-overview-order.mock';
+import { filterOrders } from '../../utils/filter-orders.util';
+import { OrderFilterStatus } from '../../types/order.type';
 
 export default function OrdersPage() {
   const { orders, isLoading, isMutating, refreshOrders, updateOrderStatus, cancelOrder } = useOrders();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<OrderFilterStatus>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitting = isSubmitting || isMutating;
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -71,12 +74,23 @@ export default function OrdersPage() {
     setOpenMenuId(orderId);
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredOrders = filterOrders({ orders, searchTerm, statusFilter });
+
+  const statsOverview = useMemo(() => {
+    const today = new Date().toDateString();
+    const todayOrders = orders.filter((o) => new Date(o.createdAt).toDateString() === today);
+    const pendingCount = todayOrders.filter((o) => o.status === OrderStatus.PENDING).length;
+    const preparingCount = todayOrders.filter((o) => o.status === OrderStatus.PREPARING).length;
+    const completedOrders = todayOrders.filter((o) => o.status === OrderStatus.COMPLETED);
+    const completedRevenue = completedOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+
+    return [
+      { label: 'Tổng đơn hôm nay', value: String(todayOrders.length), sub: `${todayOrders.length} đơn trong ngày`, color: 'bg-primary' },
+      { label: 'Đang chờ xử lý', value: String(pendingCount), sub: 'Cần xử lý ngay', color: 'bg-amber-500' },
+      { label: 'Đang pha chế', value: String(preparingCount), sub: 'Tại quầy Bar', color: 'bg-blue-500' },
+      { label: 'Hoàn thành', value: String(completedOrders.length), sub: `Doanh thu: ₫${completedRevenue.toLocaleString('vi-VN')}`, color: 'bg-green-500' },
+    ];
+  }, [orders]);
 
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
@@ -132,6 +146,27 @@ export default function OrdersPage() {
     refreshOrders();
   };
 
+  const handleConfirmComplete = async () => {
+    if (!selectedOrder) return;
+    setIsSubmitting(true);
+    const completed = await updateOrderStatus({
+      id: selectedOrder.id,
+      data: { order_status: 'DELIVERED' },
+    }).then(() => true).catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : 'Không thể hoàn thành đơn hàng!';
+      toast.error(message);
+      return false;
+    });
+    if (!completed) {
+      setIsSubmitting(false);
+      return;
+    }
+    toast.success('Đã hoàn thành phục vụ đơn hàng!');
+    setIsSubmitting(false);
+    setIsCompleteModalOpen(false);
+    refreshOrders();
+  };
+
   const handleConfirmCancel = async () => {
     if (!selectedOrder) return;
     setIsSubmitting(true);
@@ -172,6 +207,19 @@ export default function OrdersPage() {
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         order={selectedOrder}
+        onCancel={() => { setIsDetailsModalOpen(false); setIsCancelModalOpen(true); }}
+        onComplete={() => { setIsDetailsModalOpen(false); setIsCompleteModalOpen(true); }}
+      />
+
+      <StatusUpdateModal
+        isOpen={isCompleteModalOpen}
+        onClose={() => setIsCompleteModalOpen(false)}
+        order={selectedOrder}
+        onConfirm={handleConfirmComplete}
+        isSubmitting={submitting}
+        title="Hoàn thành phục vụ đơn hàng?"
+        description="Xác nhận đơn hàng đã được phục vụ và giao xong cho khách."
+        icon={<CheckCircle2 size={28} />}
       />
 
       <ConfirmPaymentModal
@@ -202,7 +250,7 @@ export default function OrdersPage() {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {StatsOverviewOrder.map((stat, i) => (
+        {statsOverview.map((stat, i) => (
           <GlassCard key={i} className="p-6" radius="3xl">
             <div className="flex items-start justify-between">
               <div>
@@ -239,7 +287,7 @@ export default function OrdersPage() {
               <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Trạng thái:</span>
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => setStatusFilter(e.target.value as OrderFilterStatus)}
                 className="bg-transparent text-sm font-bold text-text-primary focus:outline-none cursor-pointer"
               >
                 <option value="all">Tất cả</option>

@@ -9,8 +9,12 @@ import { Employee } from "@/modules/employees/application/interfaces/employee.in
 import { IEmployeeEntity } from "@/modules/employees/domain/entities/employee.entity";
 import { DeleteEmployeeModal } from "../modal/delete-employee.modal";
 import { EditEmployeeModal } from "../modal/edit-employee.modal";
+import { useAuth } from "@/modules/auth";
+import { isManagerRole } from "@/modules/settings/utils/access-control";
 
 export default function EmployeesListTab() {
+  const { user } = useAuth();
+  const canManage = isManagerRole(user?.role);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const {
@@ -47,6 +51,7 @@ export default function EmployeesListTab() {
   });
 
   const handleDelete = (employee: Employee) => {
+    if (!canManage) return;
     setSelectedEmployee(employee);
     setIsDeleteModalOpen(true);
   };
@@ -95,7 +100,18 @@ export default function EmployeesListTab() {
     }
   };
 
-  const columns = employeeTableColumns(handleEdit, handleDelete);
+  const handleToggleStatus = async (employee: Employee) => {
+    if (!canManage) return;
+    const nextStatus = employee.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await updateEmployee({ id: employee.id, data: { status: nextStatus } });
+      message.success(nextStatus === 'ACTIVE' ? 'Đã chuyển sang Đang làm việc' : 'Đã chuyển sang Đã nghỉ');
+    } catch (err: any) {
+      message.error(err?.response?.data?.message ?? 'Không thể cập nhật trạng thái');
+    }
+  };
+
+  const columns = employeeTableColumns(handleEdit, handleDelete, handleToggleStatus, canManage);
 
   return (
     <div className="space-y-6">

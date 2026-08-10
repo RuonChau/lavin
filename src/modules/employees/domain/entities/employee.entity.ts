@@ -12,6 +12,8 @@ export interface IEmployeeUser {
   branch?: IEmployeeBranch;
 }
 
+export type TEmployeeStatus = 'ACTIVE' | 'INACTIVE';
+
 export interface IEmployeeEntity {
   id: string;
   employee_code: string;
@@ -24,6 +26,7 @@ export interface IEmployeeEntity {
   phone?: string;
   branch_id?: string;
   branch?: IEmployeeBranch;
+  status?: TEmployeeStatus;
   createdAt: string;
   updatedAt: string;
 }

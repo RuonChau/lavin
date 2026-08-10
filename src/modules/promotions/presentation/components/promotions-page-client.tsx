@@ -24,6 +24,7 @@ import {
 } from 'antd';
 import type { MenuProps } from 'antd';
 import { usePromotions } from '../hooks/usePromotions';
+import { useBranches } from '@/modules/branches/presentation/hooks/useBranches';
 import {
   CirclePause,
   CirclePlay,
@@ -42,7 +43,6 @@ import { cn } from '@/shared/utils/cn';
 import { PromotionTypeOptions } from '../../mocks/promotion-type-options.mock';
 import { StatusOptions } from '../../mocks/status-options.type';
 import { ScopeOptions } from '../../mocks/scope-options.type';
-import { ListPromotions } from '../../mocks/list-promotions.type';
 import { IPromotion, TPromotionScope, TPromotionStatus, TPromotionType } from '../../types/promotion.type';
 import { promotionAntdTheme } from '@/shared/utils/promotionAntdTheme';
 import { getPromotionStatus } from '../../utils/promotion-status.util';
@@ -64,6 +64,7 @@ type PromotionFormValues = {
   minimumOrderValue?: number | string;
   maxUsage: number | string;
   scope: TPromotionScope;
+  branchIds?: string[];
   status?: TPromotionStatus;
   startDate: Dayjs;
   endDate: Dayjs;
@@ -81,6 +82,7 @@ function PromotionsPageContent() {
     deletePromotion,
     isDeleting,
   } = usePromotions();
+  const { branches } = useBranches();
 
   const { message } = App.useApp();
 
@@ -583,6 +585,25 @@ function PromotionsPageContent() {
               </Col>
             </Row>
 
+            <Form.Item noStyle dependencies={['scope']}>
+              {({ getFieldValue }) => {
+                if (getFieldValue('scope') !== 'BRANCH') return null;
+                return (
+                  <Form.Item
+                    name="branchIds"
+                    label="Chi nhánh áp dụng"
+                    rules={[{ required: true, message: 'Vui lòng chọn ít nhất một chi nhánh' }]}
+                  >
+                    <Select
+                      mode="multiple"
+                      placeholder="Chọn chi nhánh áp dụng khuyến mãi"
+                      options={branches.map((b: any) => ({ value: b.id, label: b.name }))}
+                    />
+                  </Form.Item>
+                );
+              }}
+            </Form.Item>
+
             <Form.Item name="description" label="Mô tả nội bộ">
               <Input.TextArea rows={3} placeholder="Ghi chú vận hành, mục tiêu chiến dịch, ngân sách..." className="rounded-2xl" />
             </Form.Item>
@@ -682,7 +703,7 @@ function PromotionsPageContent() {
                 <div className="mt-4 space-y-3 text-sm font-semibold text-text-secondary">
                   <p>Phạm vi: <span className="font-black text-text-primary">{getScopeLabel(selectedPromotion.scope)}</span></p>
                   <p>Giới hạn: <span className="font-black text-text-primary">{selectedPromotion.usedCount}/{selectedPromotion.maxUsage} lượt</span></p>
-                  <Progress percent={Math.min(Math.round((selectedPromotion.usedCount / selectedPromotion.maxUsage) * 100), 100)} strokeColor="#8B5E3C" />
+                  <Progress percent={selectedPromotion.maxUsage > 0 ? Math.min(Math.round((selectedPromotion.usedCount / selectedPromotion.maxUsage) * 100), 100) : 0} strokeColor="#8B5E3C" />
                 </div>
               </section>
 

@@ -129,22 +129,32 @@ export function CategoryManagementModal({
     const { active, over } = event;
     setActiveId(null);
 
-    if (over && active.id !== over.id) {
-      // Simple implementation: reorder at same level
-      // In a real hierarchical dnd, this is much more complex
-      const newArr = arrayMove(categories,
-        categories.findIndex(c => c.id === active.id),
-        categories.findIndex(c => c.id === over.id)
-      );
+    if (!over || active.id === over.id) return;
 
-      // Update display orders based on new array within respective parent
-      const updatedArr = newArr.map((cat, idx) => ({
-        ...cat,
-        display_order: idx
-      }));
+    const activeCategory = categories.find(c => c.id === active.id);
+    const overCategory = categories.find(c => c.id === over.id);
+    if (!activeCategory || !overCategory) return;
 
-      await onReorder(updatedArr);
-    }
+    // Only reorder within the same parent group — dragging across different
+    // parents/levels isn't supported here, so ignore rather than corrupt order.
+    if ((activeCategory.parent_id ?? null) !== (overCategory.parent_id ?? null)) return;
+
+    const siblings = categories
+      .filter(c => (c.parent_id ?? null) === (activeCategory.parent_id ?? null))
+      .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+    const reorderedSiblings = arrayMove(
+      siblings,
+      siblings.findIndex(c => c.id === active.id),
+      siblings.findIndex(c => c.id === over.id)
+    );
+
+    const updatedSiblings = reorderedSiblings.map((cat, idx) => ({
+      ...cat,
+      display_order: idx,
+    }));
+
+    await onReorder(updatedSiblings);
   };
 
   const handleSaveCategory = async () => {

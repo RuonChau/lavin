@@ -49,7 +49,7 @@ export function PermissionsSection({
       render: (_: unknown, record: RolePermission) => (
         <Switch
           checked={record.permissions[permission.key]}
-          disabled={record.key === 'owner'}
+          disabled={record.key === 'owner' || record.key === 'admin'}
           onChange={(checked) => onToggle(record.key, permission.key, checked)}
         />
       ),

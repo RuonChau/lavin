@@ -13,6 +13,7 @@ export interface Employee {
   status: 'ACTIVE' | 'INACTIVE';
   hire_date: string;
   branch: string;
+  branch_id?: string;
   base_salary: number;
 }
 
@@ -44,11 +45,12 @@ export function mapEmployeeToDisplay(e: IEmployeeEntity): Employee {
     role: e.position,
     email: e.user?.email ?? '—',
     phone: e.user?.phone ?? e.phone ?? '—',
-    status: 'ACTIVE',
+    status: e.status ?? 'ACTIVE',
     hire_date: e.hire_date
       ? new Date(e.hire_date).toLocaleDateString('vi-VN')
       : '—',
     branch: e.user?.branch?.name ?? e.branch?.name ?? '—',
+    branch_id: e.user?.branch_id ?? e.branch_id,
     base_salary: e.base_salary,
   };
 }

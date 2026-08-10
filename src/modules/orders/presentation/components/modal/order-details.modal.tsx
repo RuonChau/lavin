@@ -21,9 +21,11 @@ interface OrderDetailsModalProps {
    isOpen: boolean;
    onClose: () => void;
    order: Order | null;
+   onCancel: () => void;
+   onComplete: () => void;
 }
 
-export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalProps) {
+export function OrderDetailsModal({ isOpen, onClose, order, onCancel, onComplete }: OrderDetailsModalProps) {
    if (!order) return null;
 
 
@@ -202,12 +204,14 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
             {/* Footer Actions */}
             <div className="p-6 border-t border-primary-soft/20 bg-white/40 flex items-center justify-between gap-3">
                <div className="flex gap-2">
-                  <button className="px-4 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-all border border-red-100">
-                     Hủy đơn
-                  </button>
-                  <button className="px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:bg-white/60 transition-all border border-primary-soft/30">
-                     Chỉnh sửa
-                  </button>
+                  {order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.COMPLETED && (
+                     <button
+                        onClick={onCancel}
+                        className="px-4 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-all border border-red-100"
+                     >
+                        Hủy đơn
+                     </button>
+                  )}
                </div>
                <div className="flex gap-3">
                   <button
@@ -216,8 +220,9 @@ export function OrderDetailsModal({ isOpen, onClose, order }: OrderDetailsModalP
                   >
                      Đóng
                   </button>
-                  {order.status !== OrderStatus.COMPLETED && (
+                  {order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED && (
                      <button
+                        onClick={onComplete}
                         className="px-8 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary-deep transition-all flex items-center gap-2"
                      >
                         <CheckCircle2 size={18} />

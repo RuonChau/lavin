@@ -59,11 +59,11 @@ function toProductPayload(data: ProductFormInput): Partial<ProductInput> {
   return {
     category_id: data.category_id ?? data.categoryId,
     name: data.name,
-    base_price: data.base_price ?? data.base_price,
-    currency: data.currency ?? toCurrencyPayload(data.currency),
+    base_price: data.base_price !== undefined ? toNumber(data.base_price) : undefined,
+    currency: toCurrencyPayload(data.currency),
     star: data.star,
     description: data.description,
-    is_active: data.is_active ?? data.is_active,
+    is_active: data.is_active,
     is_featured: data.is_featured,
     is_draft: data.is_draft,
   };

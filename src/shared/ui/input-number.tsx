@@ -43,7 +43,7 @@ export default function InputNumberCustom({
         return Number(cleaned);
       }}
       className={cn(
-        "w-full! h-[46px]! rounded-2xl! p-0!",
+        "w-full! h-11.5! rounded-2xl! p-0!",
         "bg-[rgba(255,250,244,0.82)]!",
         "backdrop-blur-[14px]!",
         "border! border-[rgba(216,184,148,0.32)]!",
@@ -53,7 +53,7 @@ export default function InputNumberCustom({
         "focus-within:shadow-[0_0_0_2px_rgba(216,184,148,0.18)]!",
         "[&_.ant-input-number-input-wrap]:w-full!",
         "[&_.ant-input-number-input-wrap]:h-full!",
-        "[&_.ant-input-number-input]:h-[44px]!",
+        "[&_.ant-input-number-input]:h-11!",
         "[&_.ant-input-number-input]:px-4!",
         "[&_.ant-input-number-input]:text-sm!",
         "[&_.ant-input-number-input]:bg-transparent!",

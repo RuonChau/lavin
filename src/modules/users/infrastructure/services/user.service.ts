@@ -38,10 +38,6 @@ export const userService = {
     return unwrapData(response.data);
   },
 
-  deleteUsers: async (): Promise<void> => {
-    await api.delete('/users');
-  },
-
   deleteUser: async (id: string): Promise<void> => {
     await api.delete(`/user/${id}`);
   }

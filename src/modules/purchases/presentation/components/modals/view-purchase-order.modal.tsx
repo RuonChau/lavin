@@ -1,5 +1,4 @@
 import { STATUS_CONFIG } from "@/modules/purchases/configs/status-pos.config";
-import { ItemOrderList } from "@/modules/purchases/mocks/item-order-list.mock";
 import { ViewPurchaseOrderModalProps } from "@/modules/purchases/types/ViewPurchaseOrderModalProps";
 import { GlassCard } from "@/shared/components/GlassCard";
 import { AntdModalShell } from "@/shared/ui/antd-modal-shell";
@@ -76,23 +75,27 @@ export default function ViewPurchaseOrderModal({ order, onClose }: ViewPurchaseO
 
         <div className="px-8 py-6 bg-[#FFFAF4]/30 border-y border-primary-soft/10">
           <h4 className="text-[10px] font-black text-text-primary uppercase tracking-[0.2em] mb-4">Danh sách mặt hàng ({order.itemsCount})</h4>
-          <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-            {ItemOrderList.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4 bg-white/60 border border-primary-soft/10 rounded-3xl p-4">
-                <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
-                  <Package size={18} />
+          {order.items?.length > 0 ? (
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+              {order.items.map((item: any) => (
+                <div key={item.id} className="flex items-center gap-4 bg-white/60 border border-primary-soft/10 rounded-3xl p-4">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary">
+                    <Package size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-text-primary">{item.name}</p>
+                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{item.sku}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-black text-text-primary">{item.quantity} {item.unit} x ₫{item.price.toLocaleString('vi-VN')}</p>
+                    <p className="text-sm font-black text-primary">₫{(item.quantity * item.price).toLocaleString('vi-VN')}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-text-primary">{item.name}</p>
-                  <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">{item.sku}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-black text-text-primary">{item.qty} x ₫{item.price.toLocaleString('vi-VN')}</p>
-                  <p className="text-sm font-black text-primary">₫{(item.qty * item.price).toLocaleString('vi-VN')}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs font-bold text-text-muted py-6 text-center">Đơn hàng chưa có chi tiết mặt hàng.</p>
+          )}
         </div>
 
         <div className="p-8 border-t border-primary-soft/20 bg-white/40 flex items-center justify-between">

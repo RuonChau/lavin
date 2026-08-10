@@ -27,6 +27,7 @@ export const mapBackendToFrontend = (item: any): IPromotion => {
   else if (item.promotion_scope === 'CATEGORY') scope = 'CATEGORY';
   else if (item.promotion_scope === 'PRODUCT') scope = 'PRODUCT';
   else if (item.promotion_scope === 'VARIANT') scope = 'PRODUCT';
+  else if (item.promotion_scope === 'BRANCH') scope = 'BRANCH';
 
   let appliedTargets: string[] = [];
   if (item.promotion_scope === 'ORDER') {
@@ -37,9 +38,15 @@ export const mapBackendToFrontend = (item: any): IPromotion => {
     appliedTargets = item.categories.map((c: any) => c.name || c.id);
   } else if (item.promotion_scope === 'VARIANT' && item.variants) {
     appliedTargets = item.variants.map((v: any) => v.variant_name || v.id);
+  } else if (item.promotion_scope === 'BRANCH' && item.branches) {
+    appliedTargets = item.branches.map((b: any) => b.name || b.id);
   } else {
     appliedTargets = ['Tất cả'];
   }
+
+  const branchIds: string[] = item.promotion_scope === 'BRANCH' && item.branches
+    ? item.branches.map((b: any) => b.id)
+    : [];
 
   return {
     id: item.id,
@@ -52,6 +59,7 @@ export const mapBackendToFrontend = (item: any): IPromotion => {
     usedCount: Number(item.used_count || 0),
     scope,
     appliedTargets: appliedTargets.length > 0 ? appliedTargets : ['Tất cả'],
+    branchIds,
     startDate: item.start_at ? dayjs(item.start_at).format('YYYY-MM-DD') : '',
     endDate: item.end_at ? dayjs(item.end_at).format('YYYY-MM-DD') : '',
     status,
@@ -64,11 +72,11 @@ export const mapBackendToFrontend = (item: any): IPromotion => {
 };
 
 export const mapFrontendToBackend = (values: any): VoucherInput => {
-  let promotion_scope: 'ORDER' | 'PRODUCT' | 'VARIANT' | 'CATEGORY' = 'ORDER';
+  let promotion_scope: 'ORDER' | 'PRODUCT' | 'VARIANT' | 'CATEGORY' | 'BRANCH' = 'ORDER';
   if (values.scope === 'ALL_ORDER') promotion_scope = 'ORDER';
   else if (values.scope === 'CATEGORY') promotion_scope = 'CATEGORY';
   else if (values.scope === 'PRODUCT') promotion_scope = 'PRODUCT';
-  else if (values.scope === 'BRANCH') promotion_scope = 'ORDER';
+  else if (values.scope === 'BRANCH') promotion_scope = 'BRANCH';
 
   let discount_type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'BUY_X_GET_Y' = 'PERCENTAGE';
   if (values.type === 'PERCENTAGE' || values.type === 'FIXED_AMOUNT' || values.type === 'BUY_X_GET_Y') {
@@ -87,6 +95,9 @@ export const mapFrontendToBackend = (values: any): VoucherInput => {
     end_at: values.endDate ? dayjs(values.endDate).toISOString() : undefined,
     is_active: values.isActive ?? true,
     description: values.description || '',
+    ...(promotion_scope === 'BRANCH'
+      ? { targets: { branch_ids: values.branchIds || [] } }
+      : {}),
   };
 };
 

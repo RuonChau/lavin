@@ -24,11 +24,14 @@ export const InventoryHistory = () => {
   const { data: history, isLoading } = useAllInventoryHistory();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredHistory = history?.filter(log =>
-    log.materialName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.user.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = history?.filter(log => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (log.materialName || '').toLowerCase().includes(search) ||
+      (log.reason || '').toLowerCase().includes(search) ||
+      (log.user || '').toLowerCase().includes(search)
+    );
+  });
 
   return (
     <div className="space-y-8 pb-12">
@@ -136,7 +139,7 @@ export const InventoryHistory = () => {
                   </div>
 
                   {/* Metadata */}
-                  <div className="flex items-center md:flex-col md:items-end gap-6 md:gap-2 px-6 md:border-l border-primary-soft/20 min-w-[180px]">
+                  <div className="flex items-center md:flex-col md:items-end gap-6 md:gap-2 px-6 md:border-l border-primary-soft/20 min-w-45">
                     <div className="flex items-center gap-2 text-sm font-bold text-text-primary">
                       <User size={16} className="text-primary" />
                       <span>{log.user}</span>

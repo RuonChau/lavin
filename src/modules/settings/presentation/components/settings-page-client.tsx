@@ -39,6 +39,7 @@ import { antdThemeSetting } from '@/shared/utils/antdThemeSetting';
 import { defaultSettings } from '../../mocks/default-settings.mock';
 import { defaultRolePermissions } from '../../mocks/default-role-permissions.mock';
 import { settingsService } from '../../infrastructure/services/settings.service';
+import { authService } from '@/modules/auth/infrastructure/services/auth.service';
 import { queryClient } from '@/shared/lib/query-client';
 
 type SettingsServerData = Partial<Omit<SettingsData, 'business' | 'operations' | 'payment'>> & {
@@ -339,6 +340,18 @@ export default function SettingsPage() {
     const values = form.getFieldsValue(true) as Partial<SettingsData>;
     setIsSaving(true);
     try {
+      const currentPassword = values.security?.currentPassword?.trim();
+      const newPassword = values.security?.newPassword?.trim();
+      if (newPassword) {
+        if (!currentPassword) {
+          toast.error('Vui lòng nhập mật khẩu hiện tại để đổi mật khẩu.');
+          setIsSaving(false);
+          return;
+        }
+        await authService.changePassword({ currentPassword, newPassword });
+        toast.success('Đã đổi mật khẩu thành công.');
+      }
+
       const { settings: settingsPayload } = buildSettingsPayload(values, savedSettings);
       const saveSettings = hasStoredSettings ? settingsService.updateSettings : settingsService.createSettings;
       const saved = await saveSettings(
@@ -362,9 +375,9 @@ export default function SettingsPage() {
       clearDirty();
       refreshPublicSettings();
       toast.success('Đã lưu thay đổi cài đặt hệ thống.');
-    } catch (error) {
+    } catch (error: any) {
       console.error('ỗi khi lưu cài đặt hệ thống:', error);
-      toast.error('Không thể lưu cài đặt hệ thống.');
+      toast.error(error?.response?.data?.message || 'Không thể lưu cài đặt hệ thống.');
     } finally {
       setIsSaving(false);
     }

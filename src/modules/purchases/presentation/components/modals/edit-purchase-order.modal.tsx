@@ -28,13 +28,14 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
       setStatus(order.status || "PENDING");
       setNote(order.note || "");
 
-      // Populate demo materials if available
-      if (materials.length >= 2) {
-        setSelectedItems([
-          { material: materials[0], quantity: 5, price: materials[0].pricePerUnit || 250000 },
-          { material: materials[1], quantity: 10, price: materials[1].pricePerUnit || 35000 }
-        ]);
-      }
+      // Populate real line items from the order, matched against the loaded materials list
+      const realItems = ((order.items || []) as { ingredientId: string; quantity: number; price: number }[])
+        .map((item) => {
+          const material = materials.find((m) => m.id === item.ingredientId);
+          return material ? { material, quantity: item.quantity, price: item.price } : null;
+        })
+        .filter((item): item is { material: Material; quantity: number; price: number } => item !== null);
+      setSelectedItems(realItems);
     }
   }, [order, materials]);
 
@@ -78,7 +79,12 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
         data: {
           status,
           note,
-          total_value: totalPrice
+          total_value: totalPrice,
+          items: selectedItems.map((item) => ({
+            ingredient_id: item.material.id,
+            quantity: item.quantity,
+            unit_price: item.price,
+          })),
         }
       });
       onClose();
@@ -156,7 +162,7 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
                   placeholder="Nội dung ghi chú..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="w-full bg-white/60 border border-primary-soft/20 rounded-2xl py-4 px-6 text-sm font-bold h-[54px] resize-none"
+                  className="w-full bg-white/60 border border-primary-soft/20 rounded-2xl py-4 px-6 text-sm font-bold h-13.5 resize-none"
                 />
               </div>
             </div>
@@ -180,7 +186,7 @@ export default function EditPurchaseOrderModal({ order, onClose }: EditPurchaseO
             </div>
 
             {selectedItems.length > 0 ? (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-3 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
                 {selectedItems.map((item, idx) => (
                   <div key={item.material.id} className="flex items-center gap-4 bg-white/60 border border-primary-soft/20 rounded-3xl p-4 group transition-all hover:border-primary/30">
                     <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">

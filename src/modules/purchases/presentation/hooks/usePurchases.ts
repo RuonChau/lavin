@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { purchaseService } from '../../infrastructure/services/purchase.service';
+import { purchaseService, PurchaseOrderItemInput } from '../../infrastructure/services/purchase.service';
 
 export const usePurchases = () => {
   const queryClient = useQueryClient();
@@ -25,7 +25,7 @@ export const usePurchases = () => {
   });
 
   const createPOMutation = useMutation({
-    mutationFn: (data: { supplier_id: string; total_value: number; note?: string; branch_id?: string }) => 
+    mutationFn: (data: { supplier_id: string; total_value: number; note?: string; branch_id: string; items?: PurchaseOrderItemInput[] }) =>
       purchaseService.createPurchaseOrder(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
@@ -35,7 +35,7 @@ export const usePurchases = () => {
   });
 
   const updatePOMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { status?: string; note?: string; total_value?: number } }) => 
+    mutationFn: ({ id, data }: { id: string; data: { status?: string; note?: string; total_value?: number; items?: PurchaseOrderItemInput[] } }) =>
       purchaseService.updatePurchaseOrder(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });

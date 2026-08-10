@@ -245,7 +245,7 @@ export function EditProductModal({
                     name="currency.currency"
                     control={control}
                     render={({ field }) => (
-                      <div className="w-full glass-control rounded-2xl h-[46px] flex items-center px-1.5 focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-white/40">
+                      <div className="w-full glass-control rounded-2xl h-11.5 flex items-center px-1.5 focus-within:ring-2 focus-within:ring-primary/20 transition-all bg-white/40">
                         <Select
                           variant="borderless"
                           value={field.value}

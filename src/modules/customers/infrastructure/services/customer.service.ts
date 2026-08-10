@@ -1,12 +1,22 @@
 import { api } from '@/shared/lib/axios';
 import { unwrapData, unwrapPaginated } from '@/shared/lib/api-response';
 
+export interface CustomerTier {
+  id: string;
+  name: string;
+  min_points: number;
+  benefits: string[];
+  color: string | null;
+}
+
 export interface Customer {
   id: string;
   name: string;
   phone: string;
   email: string;
   loyalty_points: number;
+  total_spent?: number;
+  tier?: CustomerTier | null;
   created_at?: string;
   updated_at?: string;
 }

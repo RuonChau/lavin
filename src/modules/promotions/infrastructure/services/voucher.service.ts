@@ -6,7 +6,7 @@ export interface VoucherInput {
   code?: string;
   discount_type: "PERCENTAGE" | "FIXED_AMOUNT" | "BUY_X_GET_Y";
   discount_value: number;
-  promotion_scope: "ORDER" | "PRODUCT" | "VARIANT" | "CATEGORY";
+  promotion_scope: "ORDER" | "PRODUCT" | "VARIANT" | "CATEGORY" | "BRANCH";
   min_order_value?: number;
   max_discount_amount?: number;
   usage_limit?: number;
@@ -14,6 +14,9 @@ export interface VoucherInput {
   end_at?: string;
   is_active?: boolean;
   description?: string;
+  targets?: {
+    branch_ids?: string[];
+  };
 }
 
 export const voucherService = {
@@ -35,10 +38,6 @@ export const voucherService = {
   updateVoucher: async (id: string, data: Partial<VoucherInput>): Promise<Record<string, unknown>> => {
     const response = await api.patch(`/promotion/${id}`, data);
     return unwrapData<Record<string, unknown>>(response.data);
-  },
-  
-  deleteVouchers: async (): Promise<void> => {
-    await api.delete('/promotions');
   },
   
   deleteVoucher: async (id: string): Promise<void> => {

@@ -5,8 +5,12 @@ import { customerTableColumns } from "../../../config/customer-table-columns.con
 import { useCustomers } from "../../hooks/useCustomers";
 import { useState } from "react";
 import { Customer } from "../../../infrastructure/services/customer.service";
+import { useAuth } from "@/modules/auth";
+import { isManagerRole } from "@/modules/settings/utils/access-control";
 
 export default function CustomersListTab() {
+  const { user } = useAuth();
+  const canManage = isManagerRole(user?.role);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const { message } = App.useApp();
@@ -51,6 +55,7 @@ export default function CustomersListTab() {
   };
 
   const handleDelete = (customer: Customer) => {
+    if (!canManage) return;
     setSelectedCustomer(customer);
     setIsDeleteModalOpen(true);
   };
@@ -87,7 +92,7 @@ export default function CustomersListTab() {
     }
   };
 
-  const columns = customerTableColumns(handleEdit, handleDelete);
+  const columns = customerTableColumns(handleEdit, handleDelete, canManage);
 
   return (
     <div className="space-y-6">

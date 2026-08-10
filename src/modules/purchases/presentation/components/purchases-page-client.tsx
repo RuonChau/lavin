@@ -359,6 +359,7 @@ export default function PurchaseOrdersPage() {
 
       <SupplierHistoryModal
         supplier={viewingSupplier}
+        orders={purchaseOrders}
         onClose={() => setViewingSupplier(null)}
         onViewOrder={(id) => {
           const order = purchaseOrders.find(p => p.id === id);

@@ -66,7 +66,12 @@ export default function CreatePurchaseOrderModal({ isOpen, onClose }: CreatePurc
         supplier_id: selectedSupplierId,
         branch_id: selectedWarehouseId,
         total_value: totalPrice,
-        note: note || "Nhập hàng tự động"
+        note: note || "Nhập hàng tự động",
+        items: selectedItems.map((item) => ({
+          ingredient_id: item.material.id,
+          quantity: item.quantity,
+          unit_price: item.price,
+        })),
       });
 
       // Reset form states
@@ -152,7 +157,7 @@ export default function CreatePurchaseOrderModal({ isOpen, onClose }: CreatePurc
                   placeholder="Nội dung ghi chú..."
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  className="w-full bg-white/60 border border-primary-soft/20 rounded-2xl py-4 px-6 text-sm font-bold h-[54px] resize-none"
+                  className="w-full bg-white/60 border border-primary-soft/20 rounded-2xl py-4 px-6 text-sm font-bold h-13.5 resize-none"
                 />
               </div>
             </div>
@@ -176,7 +181,7 @@ export default function CreatePurchaseOrderModal({ isOpen, onClose }: CreatePurc
             </div>
 
             {selectedItems.length > 0 ? (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-3 max-h-75 overflow-y-auto pr-2 custom-scrollbar">
                 {selectedItems.map((item, idx) => (
                   <div key={item.material.id} className="flex items-center gap-4 bg-white/60 border border-primary-soft/20 rounded-3xl p-4 group transition-all hover:border-primary/30">
                     <div className="w-10 h-10 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all">

@@ -7,10 +7,14 @@ export interface ShiftInput {
   end_time: string;
 }
 
+export interface ShiftItem extends ShiftInput {
+  id: string;
+}
+
 export const shiftService = {
-  getShifts: async (params?: { page?: number; limit?: number }): Promise<any[]> => {
+  getShifts: async (params?: { page?: number; limit?: number }): Promise<ShiftItem[]> => {
     const response = await api.get('/shifts', { params });
-    return unwrapList(response.data);
+    return unwrapList<ShiftItem>(response.data);
   },
   
   getShiftDetail: async (id: string): Promise<any> => {
