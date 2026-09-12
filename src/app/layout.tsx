@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const fallbackTitle = 'Lavin Coffee Chain Management System';
   const fallbackDescription = 'Premium High-End ERP for Coffee Shop Chains';
   const fallbackLogo = '/logo.svg';
-  const settingsUrl = `${process.env.API_PROXY_TARGET ?? 'http://localhost:8700/api/v1'}/settings/public`;
+  const settingsUrl = `${process.env.NEXT_PUBLIC_URL_API}/settings/public`;
 
   try {
     const res = await fetch(settingsUrl, {

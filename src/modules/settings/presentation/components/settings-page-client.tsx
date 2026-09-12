@@ -63,7 +63,7 @@ const toUploadFileArray = (value: unknown): UploadFile[] => {
   return files
     .filter((file): file is Record<string, unknown> => Boolean(file) && typeof file === 'object')
     .map((file, index) => {
-      const url = String(file.url ?? file.secure_url ?? file.thumbUrl ?? '');
+      const url = String(file.url ?? file.secure_url ?? '');
       const uid = String(file.uid ?? file.public_id ?? (url || undefined) ?? `settings-file-${index}`);
       const name = String(file.name ?? file.public_id ?? `settings-file-${index + 1}`);
       const originFileObj = file.originFileObj as UploadFile['originFileObj'] | undefined;
@@ -73,7 +73,6 @@ const toUploadFileArray = (value: unknown): UploadFile[] => {
         name,
         status: (file.status as UploadFile['status'] | undefined) ?? 'done',
         url,
-        thumbUrl: String(file.thumbUrl ?? url),
         ...(originFileObj ? { originFileObj } : {}),
         public_id: file.public_id,
         response: file.response,
@@ -194,7 +193,6 @@ const toPersistedUploadFiles = (files: UploadFile[] = []): UploadFile[] =>
       name: file.name,
       status: file.status ?? 'done',
       url: file.url,
-      thumbUrl: file.thumbUrl ?? file.url,
       response: file.response,
     }));
 
@@ -544,7 +542,7 @@ export default function SettingsPage() {
                   <CheckCircle2 size={19} />
                 </div>
                 <div>
-                  <p className="font-black text-text-primary">{savedSettings.business.brandName}</p>
+                  <p className="font-black text-text-primary text-base">{savedSettings.business.brandName}</p>
                   <p className="text-xs font-semibold text-text-muted">{hasUnsavedChanges ? `${dirtySections.size} phần chưa lưu` : 'Cấu hình đã đồng bộ'}</p>
                 </div>
               </div>

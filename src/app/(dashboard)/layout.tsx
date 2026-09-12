@@ -91,7 +91,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
       <div className="flex flex-col min-h-screen transition-all duration-300 md:pl-70">
         <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
 
-        <main className="flex-1 p-4 md:p-8 mt-19 overflow-x-hidden">
+        <main className="flex-1 p-4 mt-19 overflow-x-hidden">
           {children}
         </main>
       </div>

@@ -63,13 +63,13 @@ export default function ForgotPasswordPage() {
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-xl shadow-primary/30">
           <Mail size={26} />
         </div>
-        <h1 className="mt-5 text-2xl font-bold tracking-tight text-[#2A1E17]">Quen mat khau</h1>
-        <p className="mt-1 text-sm font-medium text-[#6F5A4A]">Nhan OTP qua email va tao mat khau moi.</p>
+        <h1 className="mt-5 text-2xl font-bold tracking-tight text-text-primary">Quen mat khau</h1>
+        <p className="mt-1 text-sm font-medium text-text-secondary">Nhan OTP qua email va tao mat khau moi.</p>
       </div>
 
       <form className="space-y-4" onSubmit={resetPassword}>
         <div className="space-y-2">
-          <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-[#9A8677]">Email</label>
+          <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-text-muted">Email</label>
           <div className="flex gap-2">
             <input
               type="email"
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-[#9A8677]">OTP</label>
+          <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-text-muted">OTP</label>
           <input
             value={otp}
             onChange={(event) => setOtp(event.target.value)}
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div className="space-y-2">
-          <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-[#9A8677]">Mat khau moi</label>
+          <label className="ml-1 text-[11px] font-bold uppercase tracking-widest text-text-muted">Mật khẩu mới</label>
           <input
             type="password"
             value={newPassword}

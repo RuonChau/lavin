@@ -1,16 +1,25 @@
-import { Col, Form, Input, Row, Select, Tag } from "antd";
+import { Button, Col, Empty, Form, Input, Popconfirm, Row, Select, Spin, Tag } from "antd";
 import { LockKeyhole, Smartphone } from "lucide-react";
+import { toast } from "react-toastify";
+import { useLoginDevices } from "@/modules/auth";
+import dayjs from "@/shared/lib/dayjs";
 import { PremiumPanel } from "./premium-panel";
 import { SectionTitle } from "./section-title";
 import { SwitchCard } from "../card/switch.card";
 
-const recentDevices = [
-  { id: 'd1', device: 'MacBook Pro 14"', browser: 'Chrome 125', location: 'TP. Hồ Chí Minh', lastActive: 'Hôm nay, 14:12', trusted: true },
-  { id: 'd2', device: 'iPhone 15 Pro', browser: 'Safari Mobile', location: 'TP. Hồ Chí Minh', lastActive: 'Hôm qua, 21:48', trusted: true },
-  { id: 'd3', device: 'Windows Workstation', browser: 'Edge 124', location: 'LaVin Nguyễn Huệ', lastActive: '15/05/2026, 09:04', trusted: false },
-];
-
 export function SecuritySection({ dirty, onReset }: { dirty: boolean; onReset: () => void }) {
+  const { devices, isLoadingDevices, isErrorDevices, revokeDevice, isRevokingDevice, revokingDeviceId } =
+    useLoginDevices();
+
+  const handleRevoke = async (sessionId: string) => {
+    try {
+      await revokeDevice(sessionId);
+      toast.success("Đã thu hồi thiết bị đăng nhập");
+    } catch {
+      toast.error("Không thể thu hồi thiết bị đăng nhập");
+    }
+  };
+
   return (
     <PremiumPanel>
       <SectionTitle icon={LockKeyhole} title="Tài khoản & bảo mật" description="Quản lý tài khoản quản trị, xác thực hai lớp và thiết bị đăng nhập." dirty={dirty} onReset={onReset} />
@@ -49,19 +58,48 @@ export function SecuritySection({ dirty, onReset }: { dirty: boolean; onReset: (
           <Smartphone size={18} className="text-primary" />
           <h3 className="font-black text-text-primary">Thiết bị đăng nhập gần đây</h3>
         </div>
-        <div className="space-y-3">
-          {recentDevices.map((device) => (
-            <div key={device.id} className="flex flex-col gap-3 rounded-2xl border border-primary-soft/15 bg-[#FFFAF4]/75 p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="font-black text-text-primary">{device.device}</p>
-                <p className="mt-1 text-xs font-semibold text-text-secondary">{device.browser} · {device.location} · {device.lastActive}</p>
+
+        {isLoadingDevices ? (
+          <div className="flex justify-center py-8">
+            <Spin size="small" />
+          </div>
+        ) : isErrorDevices ? (
+          <p className="rounded-2xl bg-white/45 p-4 text-sm font-semibold text-text-muted">
+            Không thể tải danh sách thiết bị đăng nhập.
+          </p>
+        ) : devices.length === 0 ? (
+          <Empty description="Chưa có thiết bị đăng nhập nào." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <div className="space-y-3">
+            {devices.map((device) => (
+              <div key={device.id} className="flex flex-col gap-3 rounded-2xl border border-primary-soft/15 bg-[#FFFAF4]/75 p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-black text-text-primary">{device.device}</p>
+                  <p className="mt-1 text-xs font-semibold text-text-secondary">
+                    {device.browser} · {device.ip || 'Không rõ IP'} · {dayjs(device.lastActiveAt).format('HH:mm DD/MM/YYYY')}
+                  </p>
+                </div>
+                {device.isCurrent ? (
+                  <Tag color="green" className="m-0 w-fit rounded-full px-3 py-1 text-xs font-black">
+                    Phiên hiện tại
+                  </Tag>
+                ) : (
+                  <Popconfirm
+                    title="Thu hồi thiết bị này?"
+                    description="Thiết bị sẽ bị đăng xuất và cần đăng nhập lại."
+                    okText="Thu hồi"
+                    cancelText="Hủy"
+                    onConfirm={() => handleRevoke(device.id)}
+                  >
+                    <Button size="small" danger loading={isRevokingDevice && revokingDeviceId === device.id}>
+                      Thu hồi
+                    </Button>
+                  </Popconfirm>
+                )}
               </div>
-              <Tag color={device.trusted ? 'green' : 'orange'} className="m-0 w-fit rounded-full px-3 py-1 text-xs font-black">
-                {device.trusted ? 'Tin cậy' : 'Cần rà soát'}
-              </Tag>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </PremiumPanel>
   );

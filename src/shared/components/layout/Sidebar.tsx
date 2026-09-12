@@ -20,14 +20,14 @@ import Image from 'next/image';
 
 export function Sidebar({ isOpen, onClose, onLogout, permissions, user }: SidebarProps) {
   const pathname = usePathname();
-  const { settings, logoUrl } = usePublicSettings();
-  console.log('logoUrl: ', logoUrl);
+  const { settings } = usePublicSettings();
+  console.log('settings Sidebar: ', settings);
   const brandName = settings.brandName || 'LaVin ERP';
   const menuItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
   const displayName = user?.name || user?.email || 'Admin User';
   const displayInitial = displayName.charAt(0).toUpperCase();
   const displayRole = formatRoleLabel(user?.role);
-
+console.log('logo Sidebar: ', settings.logo[0]?.url);
   const sidebarContent = (
     <aside
       className={cn(
@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onClose, onLogout, permissions, user }: Sideba
         <div className="flex min-w-0 items-center">
           <Image
             alt="logo"
-            src="/logo.svg"
+            src={ settings.logo[0]?.url || '/logo.svg' }
             width={96}
             height={96}
             className="mr-3 h-9 w-9 shrink-0 object-contain"

@@ -1,7 +1,8 @@
 import { api } from '@/shared/lib/axios';
 import { LoginDto, RegisterDto, ResetPasswordDto } from '../../application/dto/login.dto';
 import { User, EUserRole } from '../../domain/types/user.type';
-import { unwrapData } from '@/shared/lib/api-response';
+import { LoginDevice } from '../../domain/types/login-device.type';
+import { unwrapData, unwrapList } from '@/shared/lib/api-response';
 
 export interface AuthResponse {
   user: User;
@@ -29,6 +30,30 @@ interface ServerUser {
   createdAt?: string;
   updated_at?: string;
   updatedAt?: string;
+}
+
+interface ServerLoginDevice {
+  id: string;
+  device: string;
+  browser: string;
+  os: string;
+  ip: string;
+  createdAt: string;
+  lastActiveAt: string;
+  isCurrent: boolean;
+}
+
+function mapServerLoginDevice(d: ServerLoginDevice): LoginDevice {
+  return {
+    id: d.id,
+    device: d.device,
+    browser: d.browser,
+    os: d.os,
+    ip: d.ip,
+    createdAt: new Date(d.createdAt),
+    lastActiveAt: new Date(d.lastActiveAt),
+    isCurrent: d.isCurrent,
+  };
 }
 
 const getServerRole = (role: ServerUser['role']): EUserRole => {
@@ -114,5 +139,15 @@ export const authService = {
 
   changePassword: async (data: { currentPassword: string; newPassword: string }): Promise<void> => {
     await api.post('/change-password', data);
+  },
+
+  getLoginDevices: async (): Promise<LoginDevice[]> => {
+    const res = await api.get('/devices');
+    const items = unwrapList<ServerLoginDevice>(res.data);
+    return items.map(mapServerLoginDevice);
+  },
+
+  revokeLoginDevice: async (sessionId: string): Promise<void> => {
+    await api.delete(`/devices/${sessionId}`);
   },
 };

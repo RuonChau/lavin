@@ -12,7 +12,7 @@ export function DashboardHeader({ userName, isFetching, onRefresh }: DashboardHe
           Xin chào, {userName ?? 'Quản trị viên'}
         </h1>
         <p className="text-text-secondary">
-          Đây là báo cáo tổng quan của chuỗi BrewGlass hôm nay.
+          Đây là báo cáo tổng quan của chuỗi Lavin Coffee hôm nay.
         </p>
       </div>
 
