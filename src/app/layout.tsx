@@ -29,11 +29,14 @@ export async function generateMetadata(): Promise<Metadata> {
   const fallbackTitle = 'Hệ thống Quản lý Chuỗi Cà phê Lavin';
   const fallbackDescription = 'Lavin — Nền tảng ERP quản lý quán cà phê thông minh, giúp chủ quán kiểm soát đơn hàng, kho nguyên liệu, nhân sự và doanh thu trên cùng một hệ thống. Vận hành đơn giản, số liệu chính xác theo thời gian thực — để bạn tập trung vào điều quan trọng nhất: chất lượng đồ uống và trải nghiệm khách hàng.';
   const fallbackLogo = '/logo.svg';
+  const siteUrl = "https://web-admin-cafe-shop.vercel.app";
 
   try {
     const response = await api.get('/settings/public');
     const { brandName, description, logo } = unwrapData<PublicSettingsMetadata>(response.data);
     const logoUrl = logo[0]?.url || fallbackLogo;
+    const ogImage = `${siteUrl}/og/lavin-og.png`;
+
 
     return {
       title: brandName ? `${brandName} - Management System` : fallbackTitle,
@@ -42,6 +45,28 @@ export async function generateMetadata(): Promise<Metadata> {
         icon: logoUrl,
         shortcut: logoUrl,
         apple: logoUrl,
+      },
+      openGraph: {
+        title: brandName ? `${brandName} - Management System` : fallbackTitle,
+        description: description || fallbackDescription,
+        url: `${siteUrl}/login`,
+        siteName: "Lavin Cafe",
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: "Lavin Cafe ERP",
+          },
+        ],
+        locale: "vi_VN",
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: brandName ? `${brandName} - Management System` : fallbackTitle,
+        description: description || fallbackDescription,
+        images: [ogImage],
       },
     };
   } catch (error) {
