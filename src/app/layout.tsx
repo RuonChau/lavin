@@ -3,6 +3,14 @@ import { Be_Vietnam_Pro, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { Providers } from '@/shared/components/Providers';
+import { api } from '@/shared/lib/axios';
+import { unwrapData } from '@/shared/lib/api-response';
+
+type PublicSettingsMetadata = {
+  brandName?: string;
+  description?: string;
+  logo: { url?: string }[];
+};
 
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -21,30 +29,21 @@ export async function generateMetadata(): Promise<Metadata> {
   const fallbackTitle = 'Lavin Coffee Chain Management System';
   const fallbackDescription = 'Premium High-End ERP for Coffee Shop Chains';
   const fallbackLogo = '/logo.svg';
-  const settingsUrl = `${process.env.NEXT_PUBLIC_URL_API}/settings/public`;
 
   try {
-    const res = await fetch(settingsUrl, {
-      next: { revalidate: 60 }, // Cache settings for 60 seconds
-    });
+    const response = await api.get('/settings/public');
+    const { brandName, description, logo } = unwrapData<PublicSettingsMetadata>(response.data);
+    const logoUrl = logo[0]?.url || fallbackLogo;
 
-    if (res.ok) {
-      const body = await res.json();
-      if (body?.success && body?.data) {
-        const { brandName, description, logo } = body.data;
-        const logoUrl = logo?.[0]?.url || fallbackLogo;
-
-        return {
-          title: brandName ? `${brandName} - Management System` : fallbackTitle,
-          description: description || fallbackDescription,
-          icons: {
-            icon: logoUrl,
-            shortcut: logoUrl,
-            apple: logoUrl,
-          },
-        };
-      }
-    }
+    return {
+      title: brandName ? `${brandName} - Management System` : fallbackTitle,
+      description: description || fallbackDescription,
+      icons: {
+        icon: logoUrl,
+        shortcut: logoUrl,
+        apple: logoUrl,
+      },
+    };
   } catch (error) {
     console.warn('Unable to load public settings for metadata, using fallback:', error);
   }

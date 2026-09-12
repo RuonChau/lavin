@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 const siteUrl = "https://web-admin-cafe-shop.vercel.app";
 const title = "Lavin Cafe ERP";
 const description =
-  "He thong ERP danh cho chuoi cafe, giup quan ly ban hang, don hang, thuc don, kho hang, chi nhanh, nhan vien, khach hang va bao cao.";
+  "Lavin — Nền tảng ERP quản lý quán cà phê thông minh, giúp chủ quán kiểm soát đơn hàng, kho nguyên liệu, nhân sự và doanh thu trên cùng một hệ thống. Vận hành đơn giản, số liệu chính xác theo thời gian thực — để bạn tập trung vào điều quan trọng nhất: chất lượng đồ uống và trải nghiệm khách hàng.";
 const ogImage = `${siteUrl}/og/lavin-og.png`;
 
 export const metadata: Metadata = {
