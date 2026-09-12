@@ -26,8 +26,8 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const fallbackTitle = 'Lavin Coffee Chain Management System';
-  const fallbackDescription = 'Premium High-End ERP for Coffee Shop Chains';
+  const fallbackTitle = 'Hệ thống Quản lý Chuỗi Cà phê Lavin';
+  const fallbackDescription = 'Lavin — Nền tảng ERP quản lý quán cà phê thông minh, giúp chủ quán kiểm soát đơn hàng, kho nguyên liệu, nhân sự và doanh thu trên cùng một hệ thống. Vận hành đơn giản, số liệu chính xác theo thời gian thực — để bạn tập trung vào điều quan trọng nhất: chất lượng đồ uống và trải nghiệm khách hàng.';
   const fallbackLogo = '/logo.svg';
 
   try {
