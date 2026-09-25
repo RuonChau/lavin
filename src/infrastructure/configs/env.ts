@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-console.log('process.env.NEXT_PUBLIC_URL_API: ', process.env.NEXT_PUBLIC_URL_API);
 const envSchema = z.object({
   NEXT_PUBLIC_URL_API: z.string().default('/api/v1'),
 });
