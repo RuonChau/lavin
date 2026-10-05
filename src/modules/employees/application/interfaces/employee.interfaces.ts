@@ -15,6 +15,9 @@ export interface Employee {
   branch: string;
   branch_id?: string;
   base_salary: number;
+  /** Nhân viên đã có tài khoản đăng nhập hay chưa */
+  has_account: boolean;
+  username?: string;
 }
 
 /** Response pagination từ server */
@@ -35,8 +38,8 @@ export interface EmployeeInterface {
 
 /** Helper: map IEmployeeEntity từ server → Employee hiển thị trên table */
 export function mapEmployeeToDisplay(e: IEmployeeEntity): Employee {
-  // Ưu tiên tên từ user account; fallback sang full_name khi không có tài khoản liên kết
-  const displayName = e.user?.username ?? e.full_name ?? '—';
+  // Ưu tiên full_name của hồ sơ (tài khoản tạo từ mã NV có username = mã NV); fallback sang username
+  const displayName = e.full_name || e.user?.username || '—';
   return {
     key: e.id,
     id: e.id,
@@ -52,5 +55,7 @@ export function mapEmployeeToDisplay(e: IEmployeeEntity): Employee {
     branch: e.user?.branch?.name ?? e.branch?.name ?? '—',
     branch_id: e.user?.branch_id ?? e.branch_id,
     base_salary: e.base_salary,
+    has_account: Boolean(e.user_id),
+    username: e.user?.username,
   };
 }

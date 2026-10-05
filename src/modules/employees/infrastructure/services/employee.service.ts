@@ -23,6 +23,13 @@ export interface EmployeeUpdateInput {
   status?: 'ACTIVE' | 'INACTIVE';
 }
 
+export interface EmployeeAccountCredentials {
+  employee_id: string;
+  user_id?: string;
+  username: string;
+  password: string;
+}
+
 export interface EmployeeListResponse {
   data: IEmployeeEntity[];
   total: number;
@@ -66,5 +73,23 @@ export const employeeService = {
 
   deleteEmployee: async (id: string): Promise<void> => {
     await api.delete(`/employee/${id}`);
+  },
+
+  /** Tạo tài khoản đăng nhập (username = mã nhân viên). Bỏ trống password để server sinh mật khẩu tạm. */
+  createAccount: async (id: string, password?: string): Promise<EmployeeAccountCredentials> => {
+    const res = await api.post<{ success: boolean; data: EmployeeAccountCredentials }>(
+      `/employee/${id}/account`,
+      { password: password || undefined }
+    );
+    return unwrapData<EmployeeAccountCredentials>(res.data);
+  },
+
+  /** Reset mật khẩu tài khoản nhân viên. Bỏ trống password để server sinh mật khẩu tạm. */
+  resetPassword: async (id: string, password?: string): Promise<EmployeeAccountCredentials> => {
+    const res = await api.post<{ success: boolean; data: EmployeeAccountCredentials }>(
+      `/employee/${id}/account/reset-password`,
+      { password: password || undefined }
+    );
+    return unwrapData<EmployeeAccountCredentials>(res.data);
   },
 };

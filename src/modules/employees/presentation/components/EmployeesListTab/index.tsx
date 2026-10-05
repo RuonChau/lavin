@@ -9,6 +9,8 @@ import { Employee } from "@/modules/employees/application/interfaces/employee.in
 import { IEmployeeEntity } from "@/modules/employees/domain/entities/employee.entity";
 import { DeleteEmployeeModal } from "../modal/delete-employee.modal";
 import { EditEmployeeModal } from "../modal/edit-employee.modal";
+import { EmployeeAccountModal } from "../modal/employee-account.modal";
+import { canManageAccountOf } from "@/modules/employees/config/account-permission.config";
 import { useAuth } from "@/modules/auth";
 import { isManagerRole } from "@/modules/settings/utils/access-control";
 
@@ -30,6 +32,10 @@ export default function EmployeesListTab() {
     isLoadingUsers,
     branches,
     isLoadingBranches,
+    createAccount,
+    isCreatingAccount,
+    resetPassword,
+    isResettingPassword,
   } = useEmployees(page, 10);
   const { message } = App.useApp();
 
@@ -38,6 +44,8 @@ export default function EmployeesListTab() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedEditEmployee, setSelectedEditEmployee] = useState<IEmployeeEntity | null>(null);
+
+  const [accountEmployee, setAccountEmployee] = useState<Employee | null>(null);
 
   const filtered = employees.filter((emp: Employee) => {
     if (!searchTerm) return true;
@@ -111,7 +119,23 @@ export default function EmployeesListTab() {
     }
   };
 
-  const columns = employeeTableColumns(handleEdit, handleDelete, handleToggleStatus, canManage);
+  // STORE_MANAGER / AREA_MANAGER (và cấp cao hơn) chỉ quản lý tài khoản cho chức vụ cấp dưới
+  const canManageAccount = (record: Employee) => canManageAccountOf(user?.role, record.role);
+
+  const handleSubmitAccount = (password?: string) => {
+    if (!accountEmployee) return Promise.reject(new Error('Chưa chọn nhân viên'));
+    const payload = { id: accountEmployee.id, password };
+    return accountEmployee.has_account ? resetPassword(payload) : createAccount(payload);
+  };
+
+  const columns = employeeTableColumns(
+    handleEdit,
+    handleDelete,
+    handleToggleStatus,
+    canManage,
+    setAccountEmployee,
+    canManageAccount,
+  );
 
   return (
     <div className="space-y-6">
@@ -179,6 +203,14 @@ export default function EmployeesListTab() {
         employee={selectedEmployee}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      <EmployeeAccountModal
+        isOpen={!!accountEmployee}
+        onClose={() => setAccountEmployee(null)}
+        employee={accountEmployee}
+        onSubmit={handleSubmitAccount}
+        isSubmitting={isCreatingAccount || isResettingPassword}
       />
 
       <EditEmployeeModal

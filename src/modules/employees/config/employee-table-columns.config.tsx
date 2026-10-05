@@ -1,6 +1,6 @@
 import { ColumnsType } from "antd/es/table";
 import { Employee } from "../application/interfaces/employee.interfaces";
-import { CircleDot, Edit2, Trash2 } from "lucide-react";
+import { CircleDot, Edit2, KeyRound, Trash2, UserPlus } from "lucide-react";
 import { Button, Space, Tooltip } from "antd";
 import { cn } from "@/shared/utils/cn";
 
@@ -8,7 +8,9 @@ export const employeeTableColumns = (
   onEdit?: (record: Employee) => void,
   onDelete?: (record: Employee) => void,
   onToggleStatus?: (record: Employee) => void,
-  canManage = false
+  canManage = false,
+  onManageAccount?: (record: Employee) => void,
+  canManageAccount?: (record: Employee) => boolean
 ): ColumnsType<Employee> => [
     {
       title: 'MÃ NHÂN VIÊN',
@@ -18,6 +20,12 @@ export const employeeTableColumns = (
         <div>
           <p className="text-sm font-black text-text-primary tracking-tight">{code}</p>
           <p className="text-[10px] font-bold text-text-muted uppercase mt-0.5">{record.role}</p>
+          <p className={cn(
+            "text-[9px] font-bold mt-0.5",
+            record.has_account ? "text-green-600" : "text-text-muted/70"
+          )}>
+            {record.has_account ? `TK: ${record.username ?? code}` : 'Chưa có tài khoản'}
+          </p>
         </div>
       ),
     },
@@ -113,6 +121,16 @@ export const employeeTableColumns = (
           )}
 
           <Space size="small">
+            {canManageAccount?.(record) && (
+              <Tooltip title={record.has_account ? 'Reset mật khẩu' : 'Tạo tài khoản đăng nhập'}>
+                <Button
+                  type="text"
+                  icon={record.has_account ? <KeyRound size={16} /> : <UserPlus size={16} />}
+                  className="text-text-muted hover:text-primary!"
+                  onClick={() => onManageAccount?.(record)}
+                />
+              </Tooltip>
+            )}
             <Tooltip title="Chỉnh sửa">
               <Button
                 type="text"

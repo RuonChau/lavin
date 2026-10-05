@@ -64,7 +64,7 @@ export function EditEmployeeModal({
     if (isOpen && employee) {
       form.setFieldsValue({
         user_id: employee.user_id || undefined,
-        full_name: employee.user?.username ?? employee.full_name,
+        full_name: employee.full_name || employee.user?.username,
         phone: employee.user?.phone ?? employee.phone,
         branch_id: employee.user?.branch_id ?? employee.branch_id,
         position: employee.position,
