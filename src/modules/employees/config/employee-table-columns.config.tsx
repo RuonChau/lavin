@@ -1,6 +1,6 @@
 import { ColumnsType } from "antd/es/table";
 import { Employee } from "../application/interfaces/employee.interfaces";
-import { CircleDot, Edit2, KeyRound, Trash2, UserPlus } from "lucide-react";
+import { CircleDot, Edit2, KeyRound, Trash2 } from "lucide-react";
 import { Button, Space, Tooltip } from "antd";
 import { cn } from "@/shared/utils/cn";
 
@@ -9,8 +9,8 @@ export const employeeTableColumns = (
   onDelete?: (record: Employee) => void,
   onToggleStatus?: (record: Employee) => void,
   canManage = false,
-  onManageAccount?: (record: Employee) => void,
-  canManageAccount?: (record: Employee) => boolean
+  onResetPassword?: (record: Employee) => void,
+  canResetPassword?: (record: Employee) => boolean
 ): ColumnsType<Employee> => [
     {
       title: 'MÃ NHÂN VIÊN',
@@ -121,13 +121,13 @@ export const employeeTableColumns = (
           )}
 
           <Space size="small">
-            {canManageAccount?.(record) && (
-              <Tooltip title={record.has_account ? 'Reset mật khẩu' : 'Tạo tài khoản đăng nhập'}>
+            {record.has_account && canResetPassword?.(record) && (
+              <Tooltip title="Reset mật khẩu">
                 <Button
                   type="text"
-                  icon={record.has_account ? <KeyRound size={16} /> : <UserPlus size={16} />}
+                  icon={<KeyRound size={16} />}
                   className="text-text-muted hover:text-primary!"
-                  onClick={() => onManageAccount?.(record)}
+                  onClick={() => onResetPassword?.(record)}
                 />
               </Tooltip>
             )}

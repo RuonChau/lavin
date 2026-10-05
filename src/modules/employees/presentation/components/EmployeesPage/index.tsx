@@ -20,6 +20,10 @@ import EmployeesListTab from "../EmployeesListTab";
 import SchedulingTab from "../SchedulingTab";
 import AttendanceTab from "../AttendanceTab";
 import { TabType } from "@/modules/employees/types/tab.type";
+import { useAuth } from "@/modules/auth";
+import { canManageAccountOf } from "@/modules/employees/config/account-permission.config";
+import { EmployeeAccountModal, EmployeeAccountTarget } from "../modal/employee-account.modal";
+import { EmployeeAccountCredentials } from "@/modules/employees/infrastructure/services/employee.service";
 const { Option } = Select;
 
 
@@ -45,6 +49,16 @@ export default function EmployeesPageInner() {
 
   const { users, isLoadingUsers, branches, isLoadingBranches, createEmployee, isCreating } = useEmployees();
   const { message } = App.useApp();
+  const { user } = useAuth();
+
+  // Chỉ được thêm nhân viên có chức vụ cấp dưới (server cũng kiểm tra lại)
+  const positionOptions = POSITION_OPTIONS.filter(opt => canManageAccountOf(user?.role, opt.value));
+
+  // Thông tin đăng nhập của tài khoản vừa được tạo tự động cùng nhân viên
+  const [createdAccount, setCreatedAccount] = useState<{
+    employee: EmployeeAccountTarget;
+    credentials: EmployeeAccountCredentials;
+  } | null>(null);
 
   // Watch user_id để show/hide field full_name
   const selectedUserId = Form.useWatch('user_id', form);
@@ -69,7 +83,7 @@ export default function EmployeesPageInner() {
 
   const handleAddEmployee = async (values: any) => {
     try {
-      await createEmployee({
+      const created = await createEmployee({
         user_id: values.user_id || undefined,
         full_name: values.full_name?.trim(),
         position: values.position,
@@ -82,6 +96,13 @@ export default function EmployeesPageInner() {
       message.success('Thêm nhân viên thành công!');
       setIsAddModalOpen(false);
       form.resetFields();
+
+      if (created.account) {
+        setCreatedAccount({
+          employee: { name: created.full_name ?? created.account.username, role: created.position },
+          credentials: created.account,
+        });
+      }
     } catch (err: any) {
       message.error(err?.response?.data?.message ?? 'Có lỗi xảy ra, vui lòng thử lại.');
     }
@@ -220,6 +241,11 @@ export default function EmployeesPageInner() {
               }))}
             />
           </Form.Item>
+          {!selectedUserId && (
+            <p className="-mt-3 mb-5 text-xs text-text-muted">
+              Bỏ trống để hệ thống tự tạo tài khoản đăng nhập: tên đăng nhập là mã nhân viên, mật khẩu ngẫu nhiên.
+            </p>
+          )}
 
           {/* Tên nhân viên — bắt buộc khi không có tài khoản; tự điền khi có tài khoản */}
           <Form.Item
@@ -311,7 +337,7 @@ export default function EmployeesPageInner() {
                 rules={[{ required: true, message: 'Vui lòng chọn chức vụ' }]}
               >
                 <Select placeholder="Chọn chức vụ" className="h-12" classNames={{ popup: { root: '!rounded-2xl' } }}>
-                  {POSITION_OPTIONS.map(opt => (
+                  {positionOptions.map(opt => (
                     <Option key={opt.value} value={opt.value}>{opt.label}</Option>
                   ))}
                 </Select>
@@ -372,6 +398,13 @@ export default function EmployeesPageInner() {
           </div>
         </Form>
       </Modal>
+
+      <EmployeeAccountModal
+        isOpen={!!createdAccount}
+        onClose={() => setCreatedAccount(null)}
+        employee={createdAccount?.employee ?? null}
+        createdCredentials={createdAccount?.credentials}
+      />
     </div>
   );
 }

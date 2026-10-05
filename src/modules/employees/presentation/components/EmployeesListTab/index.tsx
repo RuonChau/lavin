@@ -32,8 +32,6 @@ export default function EmployeesListTab() {
     isLoadingUsers,
     branches,
     isLoadingBranches,
-    createAccount,
-    isCreatingAccount,
     resetPassword,
     isResettingPassword,
   } = useEmployees(page, 10);
@@ -119,13 +117,12 @@ export default function EmployeesListTab() {
     }
   };
 
-  // STORE_MANAGER / AREA_MANAGER (và cấp cao hơn) chỉ quản lý tài khoản cho chức vụ cấp dưới
-  const canManageAccount = (record: Employee) => canManageAccountOf(user?.role, record.role);
+  // STORE_MANAGER / AREA_MANAGER (và cấp cao hơn) chỉ reset mật khẩu cho chức vụ cấp dưới
+  const canResetPassword = (record: Employee) => canManageAccountOf(user?.role, record.role);
 
-  const handleSubmitAccount = (password?: string) => {
+  const handleResetPassword = (password?: string) => {
     if (!accountEmployee) return Promise.reject(new Error('Chưa chọn nhân viên'));
-    const payload = { id: accountEmployee.id, password };
-    return accountEmployee.has_account ? resetPassword(payload) : createAccount(payload);
+    return resetPassword({ id: accountEmployee.id, password });
   };
 
   const columns = employeeTableColumns(
@@ -134,7 +131,7 @@ export default function EmployeesListTab() {
     handleToggleStatus,
     canManage,
     setAccountEmployee,
-    canManageAccount,
+    canResetPassword,
   );
 
   return (
@@ -208,9 +205,13 @@ export default function EmployeesListTab() {
       <EmployeeAccountModal
         isOpen={!!accountEmployee}
         onClose={() => setAccountEmployee(null)}
-        employee={accountEmployee}
-        onSubmit={handleSubmitAccount}
-        isSubmitting={isCreatingAccount || isResettingPassword}
+        employee={accountEmployee && {
+          name: accountEmployee.name,
+          role: accountEmployee.role,
+          username: accountEmployee.username ?? accountEmployee.employee_code,
+        }}
+        onResetPassword={handleResetPassword}
+        isSubmitting={isResettingPassword}
       />
 
       <EditEmployeeModal

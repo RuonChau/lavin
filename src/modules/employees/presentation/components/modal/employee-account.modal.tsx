@@ -2,19 +2,28 @@
 
 import { useState } from 'react';
 import { App, Input } from 'antd';
-import { X, KeyRound, UserPlus, Loader2, Copy, CheckCircle2 } from 'lucide-react';
+import { X, KeyRound, Loader2, Copy, CheckCircle2 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { AntdModalShell } from '@/shared/ui/antd-modal-shell';
-import { Employee } from '@/modules/employees/application/interfaces/employee.interfaces';
 import { EmployeeAccountCredentials } from '@/modules/employees/infrastructure/services/employee.service';
+
+export interface EmployeeAccountTarget {
+  name: string;
+  role: string;
+  username?: string;
+}
 
 export interface EmployeeAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
-  employee: Employee | null;
-  /** Gọi API tạo tài khoản hoặc reset mật khẩu tuỳ theo employee.has_account */
-  onSubmit: (password?: string) => Promise<EmployeeAccountCredentials>;
-  isSubmitting: boolean;
+  employee: EmployeeAccountTarget | null;
+  /**
+   * Có giá trị → chỉ hiển thị thông tin đăng nhập (dùng ngay sau khi thêm nhân viên).
+   * Không có → form reset mật khẩu.
+   */
+  createdCredentials?: EmployeeAccountCredentials | null;
+  onResetPassword?: (password?: string) => Promise<EmployeeAccountCredentials>;
+  isSubmitting?: boolean;
 }
 
 const MIN_PASSWORD_LENGTH = 6;
@@ -23,27 +32,28 @@ export function EmployeeAccountModal({
   isOpen,
   onClose,
   employee,
-  onSubmit,
-  isSubmitting,
+  createdCredentials,
+  onResetPassword,
+  isSubmitting = false,
 }: EmployeeAccountModalProps) {
   const { message } = App.useApp();
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [credentials, setCredentials] = useState<EmployeeAccountCredentials | null>(null);
+  const [resetCredentials, setResetCredentials] = useState<EmployeeAccountCredentials | null>(null);
 
   if (!employee) return null;
+
+  const credentials = createdCredentials ?? resetCredentials;
 
   const handleClose = () => {
     setPassword('');
     setError(null);
-    setCredentials(null);
+    setResetCredentials(null);
     onClose();
   };
 
-  const isReset = employee.has_account;
-  const username = employee.username ?? employee.employee_code;
-
   const handleSubmit = async () => {
+    if (!onResetPassword) return;
     const value = password.trim();
     if (value && value.length < MIN_PASSWORD_LENGTH) {
       setError(`Mật khẩu phải có ít nhất ${MIN_PASSWORD_LENGTH} ký tự`);
@@ -51,11 +61,10 @@ export function EmployeeAccountModal({
     }
     setError(null);
     try {
-      const result = await onSubmit(value || undefined);
-      setCredentials(result);
-      message.success(isReset ? 'Đã reset mật khẩu thành công!' : 'Đã tạo tài khoản đăng nhập thành công!');
+      setResetCredentials(await onResetPassword(value || undefined));
+      message.success('Đã reset mật khẩu thành công!');
     } catch (err) {
-      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isReset ? 'Không thể reset mật khẩu' : 'Không thể tạo tài khoản'));
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Không thể reset mật khẩu');
     }
   };
 
@@ -69,20 +78,20 @@ export function EmployeeAccountModal({
     }
   };
 
+  const title = createdCredentials
+    ? 'Đã tạo tài khoản đăng nhập'
+    : credentials ? 'Thông tin đăng nhập mới' : 'Reset mật khẩu';
+
   return (
     <AntdModalShell open={isOpen} onClose={handleClose} width={448} zIndex={1000} maskClosable={!isSubmitting}>
       <GlassCard className="relative overflow-hidden p-8" radius="4xl">
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary-soft/30">
-            {credentials ? <CheckCircle2 size={32} /> : isReset ? <KeyRound size={32} /> : <UserPlus size={32} />}
+            {credentials ? <CheckCircle2 size={32} /> : <KeyRound size={32} />}
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-xl font-bold text-text-primary">
-              {credentials
-                ? 'Thông tin đăng nhập'
-                : isReset ? 'Reset mật khẩu' : 'Tạo tài khoản đăng nhập'}
-            </h2>
+            <h2 className="text-xl font-bold text-text-primary">{title}</h2>
             <p className="text-sm text-text-secondary leading-relaxed">
               Nhân viên <span className="font-bold text-primary">{employee.name}</span> — {employee.role}
             </p>
@@ -108,13 +117,11 @@ export function EmployeeAccountModal({
             <div className="w-full space-y-3 text-left">
               <div>
                 <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Tên đăng nhập</span>
-                <Input value={username} readOnly className="mt-1 h-12 rounded-xl bg-gray-50 text-text-muted" />
+                <Input value={employee.username} readOnly className="mt-1 h-12 rounded-xl bg-gray-50 text-text-muted" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">
-                    {isReset ? 'Mật khẩu mới' : 'Mật khẩu'}
-                  </span>
+                  <span className="text-[10px] font-black text-[#968271] uppercase tracking-[0.2em]">Mật khẩu mới</span>
                   <span className="text-[10px] font-medium text-text-muted bg-gray-100 px-2 py-0.5 rounded-full">Tuỳ chọn</span>
                 </div>
                 <Input.Password
@@ -125,57 +132,39 @@ export function EmployeeAccountModal({
                   className="mt-1 h-12 rounded-xl bg-white/60 border-primary-soft/30"
                 />
               </div>
-              {isReset && (
-                <p className="text-xs text-text-muted">
-                  Sau khi reset, nhân viên sẽ bị đăng xuất khỏi tất cả thiết bị.
-                </p>
-              )}
+              <p className="text-xs text-text-muted">
+                Sau khi reset, nhân viên sẽ bị đăng xuất khỏi tất cả thiết bị.
+              </p>
               {error && <p className="text-xs font-medium text-red-500">{error}</p>}
             </div>
           )}
 
           <div className="flex flex-col w-full gap-3 pt-2">
             {credentials ? (
-              <>
-                <button
-                  onClick={handleCopy}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-                >
-                  <Copy size={18} />
-                  Sao chép thông tin
-                </button>
-                <button
-                  onClick={handleClose}
-                  className="w-full px-6 py-3 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-secondary hover:bg-white/60 transition-all"
-                >
-                  Đóng
-                </button>
-              </>
+              <button
+                onClick={handleCopy}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+              >
+                <Copy size={18} />
+                Sao chép thông tin
+              </button>
             ) : (
-              <>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:scale-100"
-                >
-                  {isSubmitting ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : isReset ? (
-                    <KeyRound size={18} />
-                  ) : (
-                    <UserPlus size={18} />
-                  )}
-                  {isReset ? 'Reset mật khẩu' : 'Tạo tài khoản'}
-                </button>
-                <button
-                  onClick={handleClose}
-                  disabled={isSubmitting}
-                  className="w-full px-6 py-3 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-secondary hover:bg-white/60 transition-all"
-                >
-                  Hủy bỏ
-                </button>
-              </>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-70 disabled:scale-100"
+              >
+                {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <KeyRound size={18} />}
+                Reset mật khẩu
+              </button>
             )}
+            <button
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="w-full px-6 py-3 rounded-2xl border border-primary-soft/30 text-sm font-bold text-text-secondary hover:bg-white/60 transition-all"
+            >
+              {credentials ? 'Đóng' : 'Hủy bỏ'}
+            </button>
           </div>
         </div>
 

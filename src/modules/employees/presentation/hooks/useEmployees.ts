@@ -37,6 +37,7 @@ export const useEmployees = (page = 1, limit = 10) => {
       employeeService.createEmployee(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['users-list'] });
     },
   });
 
@@ -54,16 +55,6 @@ export const useEmployees = (page = 1, limit = 10) => {
     mutationFn: (id: string) => employeeService.deleteEmployee(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-    },
-  });
-
-  // Mutation tạo tài khoản đăng nhập cho nhân viên
-  const createAccountMutation = useMutation({
-    mutationFn: ({ id, password }: { id: string; password?: string }) =>
-      employeeService.createAccount(id, password),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
-      queryClient.invalidateQueries({ queryKey: ['users-list'] });
     },
   });
 
@@ -97,9 +88,6 @@ export const useEmployees = (page = 1, limit = 10) => {
 
     deleteEmployee: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
-
-    createAccount: createAccountMutation.mutateAsync,
-    isCreatingAccount: createAccountMutation.isPending,
 
     resetPassword: resetPasswordMutation.mutateAsync,
     isResettingPassword: resetPasswordMutation.isPending,

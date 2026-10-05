@@ -24,10 +24,13 @@ export interface EmployeeUpdateInput {
 }
 
 export interface EmployeeAccountCredentials {
-  employee_id: string;
-  user_id?: string;
   username: string;
   password: string;
+}
+
+export interface EmployeeCreateResponse extends IEmployeeEntity {
+  /** Thông tin đăng nhập của tài khoản vừa tạo tự động */
+  account?: EmployeeAccountCredentials;
 }
 
 export interface EmployeeListResponse {
@@ -61,9 +64,10 @@ export const employeeService = {
     }
   },
 
-  createEmployee: async (data: EmployeeCreateInput): Promise<IEmployeeEntity> => {
-    const res = await api.post<{ success: boolean; data: IEmployeeEntity }>('/employee', data);
-    return unwrapData<IEmployeeEntity>(res.data);
+  /** Tạo nhân viên. Nếu không liên kết user_id, server tạo luôn tài khoản và trả về `account` (chỉ một lần). */
+  createEmployee: async (data: EmployeeCreateInput): Promise<EmployeeCreateResponse> => {
+    const res = await api.post<{ success: boolean; data: EmployeeCreateResponse }>('/employee', data);
+    return unwrapData<EmployeeCreateResponse>(res.data);
   },
 
   updateEmployee: async (id: string, data: EmployeeUpdateInput): Promise<IEmployeeEntity> => {
@@ -73,15 +77,6 @@ export const employeeService = {
 
   deleteEmployee: async (id: string): Promise<void> => {
     await api.delete(`/employee/${id}`);
-  },
-
-  /** Tạo tài khoản đăng nhập (username = mã nhân viên). Bỏ trống password để server sinh mật khẩu tạm. */
-  createAccount: async (id: string, password?: string): Promise<EmployeeAccountCredentials> => {
-    const res = await api.post<{ success: boolean; data: EmployeeAccountCredentials }>(
-      `/employee/${id}/account`,
-      { password: password || undefined }
-    );
-    return unwrapData<EmployeeAccountCredentials>(res.data);
   },
 
   /** Reset mật khẩu tài khoản nhân viên. Bỏ trống password để server sinh mật khẩu tạm. */
