@@ -1,5 +1,6 @@
 import { api } from '@/shared/lib/axios';
 import { unwrapData, unwrapList } from '@/shared/lib/api-response';
+import type { TStockStatus } from '@/modules/products/domain/enum/stock-status.enum';
 
 export interface ProductVariantInput {
   product_id: string;
@@ -8,7 +9,7 @@ export interface ProductVariantInput {
   // images: File[];
   price: number;
   discounted_price: number;
-  quantity: number;
+  quantity?: number;
   stock_status: string;
   is_active: boolean;
   imagesBySize?: Record<string, File[]>;
@@ -68,6 +69,11 @@ export const productVariantService = {
     return unwrapData<ProductVariant>(response.data);
   },
 
+
+  /** Cập nhật nhanh trạng thái kho (VD: đánh dấu hết hàng) — POS sẽ chặn order khi OUT_OF_STOCK */
+  updateStockStatus: async (id: string, stockStatus: TStockStatus): Promise<void> => {
+    await api.patch(`/product-variant/${id}/stock-status`, { stock_status: stockStatus });
+  },
 
   updateVariant: async (id: string, data: FormData | ProductVariantInput): Promise<ProductVariant> => {
     const headers = data instanceof FormData ? { "Content-Type": "multipart/form-data" } : undefined;

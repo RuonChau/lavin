@@ -18,7 +18,7 @@ import { DeleteProductModal } from '@/modules/products/presentation/components/m
 import { CategoryManagementModal } from '@/modules/products/presentation/components/modal/category-management.modal';
 import { useCategories } from '@/modules/products/presentation/hooks/use-categories';
 import { toast } from 'react-toastify';
-import { Product } from '@/modules/products/domain/entities/product.entity';
+import { Product, ProductVariant } from '@/modules/products/domain/entities/product.entity';
 import type { ProductFormData } from '@/modules/products/validations/add-product.schema';
 import type { EditProductFormData } from '@/modules/products/validations/edit-product.schema';
 import type { EditProductSubmitOptions } from '@/modules/products/types/edit-product-modal-props.type';
@@ -62,6 +62,7 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingEditDetail, setIsLoadingEditDetail] = useState(false);
+  const [updatingVariantId, setUpdatingVariantId] = useState<string | null>(null);
   const submitting = isSubmitting || isMutatingProduct;
 
   const filteredProducts = products.filter(product => {
@@ -150,7 +151,6 @@ export default function ProductsPage() {
             imagesBySize: sizeImages,
             price,
             discounted_price: 0,
-            quantity: 0,
             stock_status: 'IN_STOCK',
             is_active: data.is_active,
           });
@@ -293,7 +293,6 @@ export default function ProductsPage() {
             imagesBySize,
             price: data.sizeConfigs?.[size]?.price ?? data.base_price,
             discounted_price: 0,
-            quantity: 0,
             stock_status: 'IN_STOCK',
             is_active: data.is_active,
           });
@@ -340,8 +339,30 @@ export default function ProductsPage() {
     refreshProducts();
   };
 
+  // Không quản lý tồn kho theo số lượng — chỉ bật/tắt trạng thái hết hàng cho từng size
+  const handleToggleVariantStock = async (variant: ProductVariant, product: Product) => {
+    const nextStatus = variant.stock_status === 'OUT_OF_STOCK' ? 'IN_STOCK' : 'OUT_OF_STOCK';
+    setUpdatingVariantId(variant.id);
+    try {
+      await productVariantService.updateStockStatus(variant.id, nextStatus);
+      toast.success(
+        nextStatus === 'OUT_OF_STOCK'
+          ? `${product.name} size ${variant.size}: đã đánh dấu hết hàng`
+          : `${product.name} size ${variant.size}: đã mở bán lại`,
+      );
+      await refreshProducts();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái kho';
+      toast.error(message);
+    } finally {
+      setUpdatingVariantId(null);
+    }
+  };
+
   const columns = getProductTableColumns({
     categories,
+    onToggleVariantStock: handleToggleVariantStock,
+    updatingVariantId,
     onViewProduct: handleViewProduct,
     onEditProduct: handleEditProduct,
     onPrefetchEditProduct: handlePrefetchEditProduct,
