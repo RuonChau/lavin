@@ -1,7 +1,7 @@
-import type { EUserRole } from '@/modules/auth/domain/types/user.type';
 import type { TPermissionValues } from '@/modules/settings/domain/enum/permission-key.enum';
 import type { IRolePermission as RolePermission } from '@/modules/settings/types/role-permission.type';
 import { defaultRolePermissions } from '@/modules/settings/mocks/default-role-permissions.mock';
+import type { EUserRole } from '@/shared/constants/roles';
 
 export type RoutePermission = TPermissionValues;
 

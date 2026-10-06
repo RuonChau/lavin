@@ -18,13 +18,14 @@ import { DeleteProductModal } from '@/modules/products/presentation/components/m
 import { CategoryManagementModal } from '@/modules/products/presentation/components/modal/category-management.modal';
 import { useCategories } from '@/modules/products/presentation/hooks/use-categories';
 import { toast } from 'react-toastify';
-import { Product, ProductVariant } from '@/modules/products/domain/entities/product.entity';
+import { Product } from '@/modules/products/domain/entities/product.entity';
 import type { ProductFormData } from '@/modules/products/validations/add-product.schema';
 import type { EditProductFormData } from '@/modules/products/validations/edit-product.schema';
 import type { EditProductSubmitOptions } from '@/modules/products/types/edit-product-modal-props.type';
 import { productVariantService } from '@/modules/products/infrastructure/services/product-variant.service';
+import { productService } from '@/modules/products/infrastructure/services/product.service';
 import type { AddProductSubmitOptions } from '@/modules/products/types/product-modal-props.type';
-import { getProductTableColumns } from '@/modules/products/config/product-table-columns.config';
+import { getProductTableColumns, isProductOutOfStock } from '@/modules/products/config/product-table-columns.config';
 import { styleTable } from '../../utils/style-table';
 import { exportProductsToExcel } from '../../utils/export-products-excel';
 
@@ -62,7 +63,7 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingEditDetail, setIsLoadingEditDetail] = useState(false);
-  const [updatingVariantId, setUpdatingVariantId] = useState<string | null>(null);
+  const [updatingProductId, setUpdatingProductId] = useState<string | null>(null);
   const submitting = isSubmitting || isMutatingProduct;
 
   const filteredProducts = products.filter(product => {
@@ -339,30 +340,30 @@ export default function ProductsPage() {
     refreshProducts();
   };
 
-  // Không quản lý tồn kho theo số lượng — chỉ bật/tắt trạng thái hết hàng cho từng size
-  const handleToggleVariantStock = async (variant: ProductVariant, product: Product) => {
-    const nextStatus = variant.stock_status === 'OUT_OF_STOCK' ? 'IN_STOCK' : 'OUT_OF_STOCK';
-    setUpdatingVariantId(variant.id);
+  // Không quản lý tồn kho theo số lượng — bật/tắt hết hàng cho cả sản phẩm (mọi size đổi theo)
+  const handleToggleProductStock = async (product: Product) => {
+    const nextStatus = isProductOutOfStock(product) ? 'IN_STOCK' : 'OUT_OF_STOCK';
+    setUpdatingProductId(product.id);
     try {
-      await productVariantService.updateStockStatus(variant.id, nextStatus);
+      await productService.updateStockStatus(product.id, nextStatus);
       toast.success(
         nextStatus === 'OUT_OF_STOCK'
-          ? `${product.name} size ${variant.size}: đã đánh dấu hết hàng`
-          : `${product.name} size ${variant.size}: đã mở bán lại`,
+          ? `${product.name}: đã đánh dấu hết hàng`
+          : `${product.name}: đã mở bán lại`,
       );
       await refreshProducts();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Không thể cập nhật trạng thái kho';
       toast.error(message);
     } finally {
-      setUpdatingVariantId(null);
+      setUpdatingProductId(null);
     }
   };
 
   const columns = getProductTableColumns({
     categories,
-    onToggleVariantStock: handleToggleVariantStock,
-    updatingVariantId,
+    onToggleProductStock: handleToggleProductStock,
+    updatingProductId,
     onViewProduct: handleViewProduct,
     onEditProduct: handleEditProduct,
     onPrefetchEditProduct: handlePrefetchEditProduct,

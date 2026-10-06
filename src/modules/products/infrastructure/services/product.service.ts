@@ -261,6 +261,11 @@ export const productService = {
     return mapServerProduct(result ?? {});
   },
 
+  /** Đánh dấu hết hàng / mở bán lại cho cả sản phẩm (mọi size đổi theo) */
+  updateStockStatus: async (id: string, stockStatus: ProductVariant['stock_status']): Promise<void> => {
+    await api.patch(`/product/${id}/stock-status`, { stock_status: stockStatus });
+  },
+
   deleteProduct: async (id: string): Promise<void> => {
     await api.delete(`/product/${id}`);
   },

@@ -62,7 +62,7 @@ console.log('logo Sidebar: ', settings.logo[0]?.url);
         </button>
       </div>
 
-      <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-4 py-6">
+      <nav className="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-4 py-2">
         {menuItems.map((item) => {
           const isActive = isActivePath(pathname, item.href);
           const Icon = item.icon;

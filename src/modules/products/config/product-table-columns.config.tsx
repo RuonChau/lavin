@@ -1,17 +1,19 @@
 import type { ColumnsType } from 'antd/es/table';
 import { CheckCircle2, Coffee, Edit2, Eye, Loader2, Trash2, XCircle } from 'lucide-react';
 
-import type { Category, Product, ProductVariant } from '@/modules/products/domain/entities/product.entity';
+import type { Category, Product } from '@/modules/products/domain/entities/product.entity';
 import { cn } from '@/shared/utils/cn';
 
-const SIZE_ORDER = ['S', 'M', 'L'];
+/** Hết hàng tính theo cả sản phẩm: chỉ cần 1 size hết là coi như sản phẩm hết */
+export const isProductOutOfStock = (product: Product) =>
+  (product.variants ?? []).some((variant) => variant.stock_status === 'OUT_OF_STOCK');
 
 type GetProductTableColumnsParams = {
   categories: Category[];
-  /** Bấm vào size để chuyển Còn hàng ⇄ Hết hàng */
-  onToggleVariantStock?: (variant: ProductVariant, product: Product) => void;
-  /** ID biến thể đang được cập nhật trạng thái kho */
-  updatingVariantId?: string | null;
+  /** Bấm vào trạng thái để chuyển Đang bán ⇄ Hết hàng (áp dụng cho cả sản phẩm) */
+  onToggleProductStock?: (product: Product) => void;
+  /** ID sản phẩm đang được cập nhật trạng thái kho */
+  updatingProductId?: string | null;
   onViewProduct: (product: Product) => void;
   onEditProduct: (product: Product) => void;
   onPrefetchEditProduct?: (product: Product) => void;
@@ -20,8 +22,8 @@ type GetProductTableColumnsParams = {
 
 export function getProductTableColumns({
   categories,
-  onToggleVariantStock,
-  updatingVariantId,
+  onToggleProductStock,
+  updatingProductId,
   onViewProduct,
   onEditProduct,
   onPrefetchEditProduct,
@@ -78,52 +80,38 @@ export function getProductTableColumns({
       title: 'Trạng thái',
       dataIndex: 'is_active',
       key: 'is_active',
-      render: (isActive: boolean) => (
-        <div
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold',
-            isActive ? 'bg-mint/10 text-mint' : 'bg-[#F56B7A]/10 text-[#F56B7A]',
-          )}
-        >
-          {isActive ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
-          {isActive ? 'Đang bán' : 'Ngưng bán'}
-        </div>
-      ),
-    },
-    {
-      title: 'Tình trạng kho',
-      key: 'stock',
-      render: (_, product) => {
-        const variants = [...(product.variants ?? [])].sort(
-          (a, b) => SIZE_ORDER.indexOf(a.size) - SIZE_ORDER.indexOf(b.size),
-        );
-        if (variants.length === 0) return <span className="text-xs text-text-muted">—</span>;
+      render: (isActive: boolean, product) => {
+        if (!isActive) {
+          return (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-[#F56B7A]/10 px-3 py-1 text-[11px] font-bold text-[#F56B7A]">
+              <XCircle size={12} />
+              Ngưng bán
+            </div>
+          );
+        }
 
+        const isOut = isProductOutOfStock(product);
+        const isUpdating = updatingProductId === product.id;
         return (
-          <div className="flex flex-wrap items-center gap-1.5">
-            {variants.map((variant) => {
-              const isOut = variant.stock_status === 'OUT_OF_STOCK';
-              const isUpdating = updatingVariantId === variant.id;
-              return (
-                <button
-                  key={variant.id}
-                  type="button"
-                  disabled={!onToggleVariantStock || isUpdating}
-                  onClick={() => onToggleVariantStock?.(variant, product)}
-                  title={isOut ? `Size ${variant.size}: Hết hàng — bấm để mở bán lại` : `Size ${variant.size}: Còn hàng — bấm để đánh dấu hết hàng`}
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-bold transition-all hover:opacity-80 disabled:cursor-wait disabled:opacity-60',
-                    isOut
-                      ? 'border-[#F56B7A]/30 bg-[#F56B7A]/10 text-[#F56B7A] line-through'
-                      : 'border-mint/30 bg-mint/10 text-mint',
-                  )}
-                >
-                  {isUpdating ? <Loader2 size={11} className="animate-spin" /> : null}
-                  {variant.size}
-                </button>
-              );
-            })}
-          </div>
+          <button
+            type="button"
+            disabled={!onToggleProductStock || isUpdating}
+            onClick={() => onToggleProductStock?.(product)}
+            title={isOut ? 'Hết hàng — bấm để mở bán lại' : 'Đang bán — bấm để đánh dấu hết hàng'}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold transition-all hover:opacity-80 disabled:cursor-wait disabled:opacity-60',
+              isOut ? 'bg-[#F56B7A]/10 text-[#F56B7A]' : 'bg-mint/10 text-mint',
+            )}
+          >
+            {isUpdating ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : isOut ? (
+              <XCircle size={12} />
+            ) : (
+              <CheckCircle2 size={12} />
+            )}
+            {isOut ? 'Hết hàng' : 'Đang bán'}
+          </button>
         );
       },
     },

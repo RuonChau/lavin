@@ -1,5 +1,15 @@
-// export const ROLES = ['OWNER', 'Admin', 'Area Manager', 'Store Manager', 'Staff', 'Cashier'] as const;
-export const ROLES = ['OWNER', 'ADMIN', 'PURCHASING', 'ACCOUNTANT', 'AREA_MANAGER', 'STORE_MANAGER', 'SHIFT_LEADER', 'CASHIER', 'SERVER', 'BARISTA'] as const;
+export const ROLES = [
+  'OWNER',
+  'ADMIN',
+  'PURCHASING',
+  'ACCOUNTANT',
+  'AREA_MANAGER',
+  'STORE_MANAGER',
+  'SHIFT_LEADER',
+  'CASHIER',
+  'SERVER',
+  'BARISTA'
+] as const;
 
 export type AppRole = (typeof ROLES)[number];
 

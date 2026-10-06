@@ -1,8 +1,9 @@
 import { api } from '@/shared/lib/axios';
 import { LoginDto, RegisterDto, ResetPasswordDto } from '../../application/dto/login.dto';
-import { User, EUserRole } from '../../domain/types/user.type';
+import { User } from '../../domain/types/user.type';
 import { LoginDevice } from '../../domain/types/login-device.type';
 import { unwrapData, unwrapList } from '@/shared/lib/api-response';
+import { EUserRole } from '@/shared/constants/roles';
 
 export interface AuthResponse {
   user: User;
