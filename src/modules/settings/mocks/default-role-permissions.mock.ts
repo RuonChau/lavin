@@ -23,7 +23,13 @@ export const defaultRolePermissions: IRolePermission[] = [
     key: 'store-manager',
     role: 'Store Manager',
     description: 'Quản lý chi nhánh',
-    permissions: { dashboard: true, products: true, orders: true, promotions: false, reports: true, employees: true, settings: false },
+    permissions: { dashboard: true, products: true, orders: true, promotions: true, reports: true, employees: true, settings: false },
+  },
+  {
+    key: 'shift-leader',
+    role: 'Shift Leader',
+    description: 'Quản lý ca làm việc',
+    permissions: { dashboard: false, products: true, orders: true, promotions: false, reports: false, employees: true, settings: false },
   },
   {
     key: 'staff',

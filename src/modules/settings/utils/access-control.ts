@@ -71,9 +71,10 @@ export const getPermissionsForRole = (
   return rolePermission?.permissions ?? defaultRolePermissions.find((item) => item.key === 'staff')!.permissions;
 };
 
-/** Admin/owner bypass full permissions everywhere else in this file — reuse that same
- * boundary to gate sensitive per-row actions (salary visibility, hard deletes) that
- * aren't modeled as a distinct permission key. */
+/** Ở mọi chỗ khác trong file này, admin/owner đều được bỏ qua kiểm tra 
+ * quyền (có toàn quyền) — tái sử dụng chính ranh giới đó để chặn các thao tác
+ * nhạy cảm trên từng dòng (xem lương, xóa vĩnh viễn) vốn không được
+ * mô hình hóa thành một permission key riêng. */
 export const isManagerRole = (role?: EUserRole | string | null) => {
   const roleKey = normalizeRoleKey(role);
   return roleKey === 'admin' || roleKey === 'owner';
