@@ -21,13 +21,11 @@ import Image from 'next/image';
 export function Sidebar({ isOpen, onClose, onLogout, permissions, user }: SidebarProps) {
   const pathname = usePathname();
   const { settings } = usePublicSettings();
-  console.log('settings Sidebar: ', settings);
   const brandName = settings.brandName || 'LaVin ERP';
   const menuItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
   const displayName = user?.name || user?.email || 'Admin User';
   const displayInitial = displayName.charAt(0).toUpperCase();
   const displayRole = formatRoleLabel(user?.role);
-console.log('logo Sidebar: ', settings.logo[0]?.url);
   const sidebarContent = (
     <aside
       className={cn(

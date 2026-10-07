@@ -548,13 +548,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <Select
-              value={activeSection}
-              onChange={(value) => setActiveSection(value as SectionKey)}
-              options={sectionMeta.map((section) => ({ value: section.key, label: section.label }))}
-              className="mb-4 w-full xl:hidden"
-            />
-
             <div className="hidden xl:block">
               <p className="mb-3 px-2 text-[10px] font-black uppercase tracking-[0.18em] text-text-muted">Nhóm cài đặt</p>
               <div className="space-y-1">
