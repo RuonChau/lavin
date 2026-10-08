@@ -26,14 +26,22 @@ import { cn } from "@/shared/utils/cn";
 import { STATUS_CONFIG } from "@/modules/employees/config/status.config";
 import { useTimekeeping } from "@/modules/employees/presentation/hooks/useTimekeeping";
 import { useEmployees } from "@/modules/employees/presentation/hooks/useEmployees";
+import { usePagePermission } from "@/modules/settings/presentation/providers/access-control.provider";
 
 const { Option } = Select;
 
 const getEmployeeName = (employee: any) => employee?.user?.username ?? employee?.full_name ?? 'Không rõ';
 
 export default function AttendanceTab() {
-  const { timekeepings, isLoading, createTimekeeping, isCreating } = useTimekeeping();
+  const { timekeepings: allTimekeepings, isLoading, createTimekeeping, isCreating } = useTimekeeping();
   const { employees, isLoading: isLoadingEmployees } = useEmployees(1, 200);
+  const { canCreate, isBranchScoped } = usePagePermission('employees');
+  // Role phạm vi chi nhánh chỉ thấy chấm công của nhân viên mình quản lý
+  const timekeepings = useMemo(() => {
+    if (!isBranchScoped) return allTimekeepings;
+    const employeeIds = new Set(employees.map((e) => e.id));
+    return (allTimekeepings as any[]).filter((r) => employeeIds.has(r.employee_id ?? r.employee?.id));
+  }, [allTimekeepings, employees, isBranchScoped]);
   const { message } = App.useApp();
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -125,12 +133,14 @@ export default function AttendanceTab() {
           />
         </div>
 
+        {canCreate && (
         <button
           onClick={() => setIsManualModalOpen(true)}
           className="flex items-center gap-2 px-6 py-3 bg-white border border-primary-soft/30 rounded-2xl text-[10px] font-black text-text-secondary uppercase tracking-wider hover:bg-gray-50 transition-all shadow-sm"
         >
           Chấm công thủ công
         </button>
+        )}
       </div>
 
       <GlassCard className="overflow-hidden" radius="4xl">

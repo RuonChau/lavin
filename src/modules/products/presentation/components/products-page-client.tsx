@@ -28,6 +28,7 @@ import type { AddProductSubmitOptions } from '@/modules/products/types/product-m
 import { getProductTableColumns, isProductOutOfStock } from '@/modules/products/config/product-table-columns.config';
 import { styleTable } from '../../utils/style-table';
 import { exportProductsToExcel } from '../../utils/export-products-excel';
+import { usePagePermission } from '@/modules/settings/presentation/providers/access-control.provider';
 
 export default function ProductsPage() {
   const {
@@ -51,6 +52,14 @@ export default function ProductsPage() {
     isMutating: isCategoryMutating
   } = useCategories();
 
+  const { canCreate, canUpdate, canDelete, isBranchScoped, isInScope, isVisible } = usePagePermission('products');
+  // Sản phẩm không gắn chi nhánh là menu chung: role phạm vi chi nhánh chỉ được xem
+  const canEditProduct = (product: Product) => canUpdate && isInScope(product.branch_id);
+  const canDeleteProduct = (product: Product) => canDelete && isInScope(product.branch_id);
+  // API tạo sản phẩm/danh mục chưa gắn chi nhánh → chỉ role toàn hệ thống mới được tạo
+  const canCreateProduct = canCreate && !isBranchScoped;
+  const canManageCategories = !isBranchScoped && (canCreate || canUpdate || canDelete);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,6 +76,7 @@ export default function ProductsPage() {
   const submitting = isSubmitting || isMutatingProduct;
 
   const filteredProducts = products.filter(product => {
+    if (!isVisible(product.branch_id, true)) return false;
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -368,6 +378,8 @@ export default function ProductsPage() {
     onEditProduct: handleEditProduct,
     onPrefetchEditProduct: handlePrefetchEditProduct,
     onDeleteProduct: handleDeleteProduct,
+    canEditProduct,
+    canDeleteProduct,
   });
 
   const handleExportExcel = () => {
@@ -395,6 +407,7 @@ export default function ProductsPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {canManageCategories && (
           <button
             onClick={() => setIsCategoryModalOpen(true)}
             className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-white/80"
@@ -402,6 +415,7 @@ export default function ProductsPage() {
             <FolderEdit size={18} />
             Danh mục
           </button>
+          )}
           <button
             onClick={handleExportExcel}
             className="flex items-center gap-2 rounded-xl bg-white/60 border border-primary-soft/30 px-4 py-2.5 text-sm font-semibold text-text-secondary transition hover:bg-white/80 active:scale-[0.98]"
@@ -409,6 +423,7 @@ export default function ProductsPage() {
             <FileDown size={18} />
             Xuất Excel
           </button>
+          {canCreateProduct && (
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(139,94,60,0.28)] transition hover:bg-primary-deep active:scale-[0.98]"
@@ -416,6 +431,7 @@ export default function ProductsPage() {
             <Plus size={18} />
             Thêm sản phẩm
           </button>
+          )}
         </div>
       </header>
 

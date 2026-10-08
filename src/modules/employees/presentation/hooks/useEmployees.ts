@@ -3,9 +3,11 @@ import { employeeService, EmployeeUpdateInput } from '@/modules/employees/infras
 import { mapEmployeeToDisplay } from '@/modules/employees/application/interfaces/employee.interfaces';
 import { userService, UserItem } from '@/modules/users/infrastructure/services/user.service';
 import { branchService } from '@/modules/branches/infrastructure/services/branch.service';
+import { usePagePermission } from '@/modules/settings/presentation/providers/access-control.provider';
 
 export const useEmployees = (page = 1, limit = 10) => {
   const queryClient = useQueryClient();
+  const { isVisible, filterBranchOptions } = usePagePermission('employees');
 
   // Danh sách nhân viên từ API
   const { data: employeeResponse, isLoading, refetch } = useQuery({
@@ -28,7 +30,9 @@ export const useEmployees = (page = 1, limit = 10) => {
   });
 
   // Map server data → display format
-  const employees = (employeeResponse?.data ?? []).map(mapEmployeeToDisplay);
+  // Role phạm vi chi nhánh chỉ thấy nhân viên/tài khoản/chi nhánh mình đang quản lý
+  const rawEmployees = (employeeResponse?.data ?? []).filter((e) => isVisible(e.user?.branch_id ?? e.branch_id));
+  const employees = rawEmployees.map(mapEmployeeToDisplay);
   const total = employeeResponse?.total ?? 0;
 
   // Mutation tạo nhân viên
@@ -66,17 +70,17 @@ export const useEmployees = (page = 1, limit = 10) => {
 
   return {
     employees,
-    rawEmployees: employeeResponse?.data ?? [],
+    rawEmployees,
     total,
     isLoading,
     refetch,
 
     // Users for dropdown - đã là UserItem[]
-    users: (usersRaw ?? []) as UserItem[],
+    users: ((usersRaw ?? []) as UserItem[]).filter((u) => isVisible(u.branch_id)),
     isLoadingUsers,
 
     // Branches for dropdown
-    branches: branchesRaw ?? [],
+    branches: filterBranchOptions(branchesRaw ?? []),
     isLoadingBranches,
 
     // Mutations

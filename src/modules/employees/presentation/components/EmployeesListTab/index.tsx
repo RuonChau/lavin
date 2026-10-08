@@ -13,10 +13,13 @@ import { EmployeeAccountModal } from "../modal/employee-account.modal";
 import { canManageAccountOf } from "@/modules/employees/config/account-permission.config";
 import { useAuth } from "@/modules/auth";
 import { isManagerRole } from "@/modules/settings/utils/access-control";
+import { usePagePermission } from "@/modules/settings/presentation/providers/access-control.provider";
 
 export default function EmployeesListTab() {
   const { user } = useAuth();
+  // Lương chỉ owner/admin được xem; thêm/sửa/xóa theo ma trận phân quyền
   const canManage = isManagerRole(user?.role);
+  const { canUpdate, canDelete } = usePagePermission('employees');
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const {
@@ -57,7 +60,7 @@ export default function EmployeesListTab() {
   });
 
   const handleDelete = (employee: Employee) => {
-    if (!canManage) return;
+    if (!canDelete) return;
     setSelectedEmployee(employee);
     setIsDeleteModalOpen(true);
   };
@@ -107,7 +110,7 @@ export default function EmployeesListTab() {
   };
 
   const handleToggleStatus = async (employee: Employee) => {
-    if (!canManage) return;
+    if (!canUpdate) return;
     const nextStatus = employee.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
       await updateEmployee({ id: employee.id, data: { status: nextStatus } });
@@ -126,9 +129,9 @@ export default function EmployeesListTab() {
   };
 
   const columns = employeeTableColumns(
-    handleEdit,
-    handleDelete,
-    handleToggleStatus,
+    canUpdate ? handleEdit : undefined,
+    canDelete ? handleDelete : undefined,
+    canUpdate ? handleToggleStatus : undefined,
     canManage,
     setAccountEmployee,
     canResetPassword,

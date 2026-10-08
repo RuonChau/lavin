@@ -26,6 +26,8 @@ export interface OrderItem {
 export interface Order {
   id: string;
   orderNumber: string;
+  branchId?: string;
+  branchName?: string;
   customerId?: string;
   customerName?: string;
   items: OrderItem[];

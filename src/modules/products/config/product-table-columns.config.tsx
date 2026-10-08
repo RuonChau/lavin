@@ -18,6 +18,9 @@ type GetProductTableColumnsParams = {
   onEditProduct: (product: Product) => void;
   onPrefetchEditProduct?: (product: Product) => void;
   onDeleteProduct: (product: Product) => void;
+  /** Quyền theo từng dòng — mặc định cho phép */
+  canEditProduct?: (product: Product) => boolean;
+  canDeleteProduct?: (product: Product) => boolean;
 };
 
 export function getProductTableColumns({
@@ -28,6 +31,8 @@ export function getProductTableColumns({
   onEditProduct,
   onPrefetchEditProduct,
   onDeleteProduct,
+  canEditProduct = () => true,
+  canDeleteProduct = () => true,
 }: GetProductTableColumnsParams): ColumnsType<Product> {
   return [
     {
@@ -95,7 +100,7 @@ export function getProductTableColumns({
         return (
           <button
             type="button"
-            disabled={!onToggleProductStock || isUpdating}
+            disabled={!onToggleProductStock || !canEditProduct(product) || isUpdating}
             onClick={() => onToggleProductStock?.(product)}
             title={isOut ? 'Hết hàng — bấm để mở bán lại' : 'Đang bán — bấm để đánh dấu hết hàng'}
             className={cn(
@@ -140,6 +145,7 @@ export function getProductTableColumns({
           >
             <Eye size={18} />
           </button>
+          {canEditProduct(product) && (
           <button
             type="button"
             onFocus={() => onPrefetchEditProduct?.(product)}
@@ -150,6 +156,8 @@ export function getProductTableColumns({
           >
             <Edit2 size={18} />
           </button>
+          )}
+          {canDeleteProduct(product) && (
           <button
             type="button"
             onClick={() => onDeleteProduct(product)}
@@ -158,6 +166,7 @@ export function getProductTableColumns({
           >
             <Trash2 size={18} />
           </button>
+          )}
         </div>
       ),
     },

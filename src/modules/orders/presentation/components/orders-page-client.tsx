@@ -13,6 +13,7 @@ import {
   CreditCard,
   Calendar,
   MoreVertical,
+  Store,
   CheckCircle2
 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
@@ -29,9 +30,30 @@ import { getStatusConfig } from '../../config/order-status.config';
 import { getPaymentStatusConfig } from '../../config/payment-status.config';
 import { filterOrders } from '../../utils/filter-orders.util';
 import { OrderFilterStatus } from '../../types/order.type';
+import { usePagePermission } from '@/modules/settings/presentation/providers/access-control.provider';
+import { useBranches } from '@/modules/branches/presentation/hooks/useBranches';
 
 export default function OrdersPage() {
-  const { orders, isLoading, isMutating, refreshOrders, updateOrderStatus, cancelOrder } = useOrders();
+  const { orders: allOrders, isLoading, isMutating, refreshOrders, updateOrderStatus, cancelOrder } = useOrders();
+  const { canUpdate, isVisible, filterBranchOptions } = usePagePermission('orders');
+  const { branches } = useBranches();
+  // Role phạm vi chi nhánh chỉ được chọn các chi nhánh đang quản lý
+  const branchOptions = useMemo(() => filterBranchOptions(branches), [branches, filterBranchOptions]);
+  const branchNameById = useMemo(
+    () => new Map(branches.map((branch) => [branch.id, branch.name])),
+    [branches],
+  );
+  const [branchFilter, setBranchFilter] = useState<string>('all');
+  // Chỉ còn một chi nhánh để chọn thì lọc luôn theo chi nhánh đó
+  const activeBranchFilter = branchOptions.length === 1 ? branchOptions[0].id : branchFilter;
+  // Role phạm vi chi nhánh chỉ thấy đơn của chi nhánh đang quản lý
+  const orders = useMemo(
+    () => allOrders.filter((order) => (
+      isVisible(order.branchId)
+      && (activeBranchFilter === 'all' || order.branchId === activeBranchFilter)
+    )),
+    [activeBranchFilter, allOrders, isVisible],
+  );
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderFilterStatus>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -207,8 +229,8 @@ export default function OrdersPage() {
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         order={selectedOrder}
-        onCancel={() => { setIsDetailsModalOpen(false); setIsCancelModalOpen(true); }}
-        onComplete={() => { setIsDetailsModalOpen(false); setIsCompleteModalOpen(true); }}
+        onCancel={canUpdate ? () => { setIsDetailsModalOpen(false); setIsCancelModalOpen(true); } : undefined}
+        onComplete={canUpdate ? () => { setIsDetailsModalOpen(false); setIsCompleteModalOpen(true); } : undefined}
       />
 
       <StatusUpdateModal
@@ -284,6 +306,20 @@ export default function OrdersPage() {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-white border border-primary-soft/20 rounded-2xl px-4 py-2">
+              <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Chi nhánh:</span>
+              <select
+                value={activeBranchFilter}
+                onChange={(e) => setBranchFilter(e.target.value)}
+                disabled={branchOptions.length <= 1}
+                className="bg-transparent text-sm font-bold text-text-primary focus:outline-none cursor-pointer disabled:cursor-default"
+              >
+                {branchOptions.length !== 1 && <option value="all">Tất cả</option>}
+                {branchOptions.map((branch) => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2 bg-white border border-primary-soft/20 rounded-2xl px-4 py-2">
               <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Trạng thái:</span>
               <select
                 value={statusFilter}
@@ -310,6 +346,7 @@ export default function OrdersPage() {
             <thead>
               <tr className="bg-white/60 border-b border-primary-soft/10">
                 <th className="py-4 px-6 text-[11px] font-bold text-text-muted uppercase tracking-widest">Mã đơn hàng</th>
+                <th className="py-4 px-6 text-[11px] font-bold text-text-muted uppercase tracking-widest">Chi nhánh</th>
                 <th className="py-4 px-6 text-[11px] font-bold text-text-muted uppercase tracking-widest">Khách hàng</th>
                 <th className="py-4 px-6 text-[11px] font-bold text-text-muted uppercase tracking-widest">Thời gian</th>
                 <th className="py-4 px-6 text-[11px] font-bold text-text-muted uppercase tracking-widest">Tổng tiền</th>
@@ -322,7 +359,7 @@ export default function OrdersPage() {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={7} className="py-4 px-6"><div className="h-12 bg-primary-soft/10 rounded-xl" /></td>
+                    <td colSpan={8} className="py-4 px-6"><div className="h-12 bg-primary-soft/10 rounded-xl" /></td>
                   </tr>
                 ))
               ) : filteredOrders.map((order) => {
@@ -342,6 +379,12 @@ export default function OrdersPage() {
                           {order.type === 'dine-in' ? `Bàn: ${order.tableNumber}` : order.type === 'take-away' ? 'Mang về' : 'Giao hàng'}
                         </span>
                       </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="text-sm font-semibold text-text-secondary flex items-center gap-1.5 whitespace-nowrap">
+                        <Store size={14} className="text-primary-soft" />
+                        {order.branchName ?? (order.branchId && branchNameById.get(order.branchId)) ?? '—'}
+                      </span>
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
@@ -384,6 +427,7 @@ export default function OrdersPage() {
                         >
                           <Eye size={18} />
                         </button>
+                        {canUpdate && (
                         <button
                           onClick={(e) => handleToggleMenu(e, order.id)}
                           className={`p-2 rounded-full transition-all ${openMenuId === order.id ? 'bg-primary-soft/10 text-primary' : 'hover:bg-primary-soft/10'}`}
@@ -391,6 +435,7 @@ export default function OrdersPage() {
                         >
                           <MoreVertical size={20} className="text-text-secondary" />
                         </button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>
@@ -402,7 +447,7 @@ export default function OrdersPage() {
       </GlassCard>
 
       {/* Fixed-position Dropdown – renders outside all overflow containers */}
-      {openMenuId && (() => {
+      {canUpdate && openMenuId && (() => {
         const order = filteredOrders.find(o => o.id === openMenuId);
         if (!order) return null;
         return (

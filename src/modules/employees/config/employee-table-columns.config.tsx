@@ -4,6 +4,7 @@ import { CircleDot, Edit2, KeyRound, Trash2 } from "lucide-react";
 import { Button, Space, Tooltip } from "antd";
 import { cn } from "@/shared/utils/cn";
 
+/** Handler nào bỏ trống thì nút tương ứng bị ẩn (không có quyền); `canManage` chỉ quyết định việc xem lương */
 export const employeeTableColumns = (
   onEdit?: (record: Employee) => void,
   onDelete?: (record: Employee) => void,
@@ -92,7 +93,7 @@ export const employeeTableColumns = (
       align: 'right',
       render: (_, record) => (
         <div className="flex items-center justify-end gap-3">
-          {canManage ? (
+          {onToggleStatus ? (
             <Tooltip title={record.status === 'ACTIVE' ? 'Nhấn để chuyển sang Đã nghỉ' : 'Nhấn để chuyển sang Đang làm việc'}>
               <button
                 type="button"
@@ -131,15 +132,17 @@ export const employeeTableColumns = (
                 />
               </Tooltip>
             )}
-            <Tooltip title="Chỉnh sửa">
-              <Button
-                type="text"
-                icon={<Edit2 size={16} />}
-                className="text-text-muted hover:text-primary!"
-                onClick={() => onEdit?.(record)}
-              />
-            </Tooltip>
-            {canManage && (
+            {onEdit && (
+              <Tooltip title="Chỉnh sửa">
+                <Button
+                  type="text"
+                  icon={<Edit2 size={16} />}
+                  className="text-text-muted hover:text-primary!"
+                  onClick={() => onEdit(record)}
+                />
+              </Tooltip>
+            )}
+            {onDelete && (
               <Tooltip title="Xoá">
                 <Button
                   type="text"

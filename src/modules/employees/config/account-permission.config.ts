@@ -5,6 +5,7 @@ const ADMIN_SUBORDINATES = [...AREA_SUBORDINATES, 'AREA_MANAGER', 'ACCOUNTANT', 
 
 /** Chức vụ cấp dưới mà mỗi vai trò được tạo tài khoản / reset mật khẩu (khớp với server) */
 export const ACCOUNT_MANAGEABLE_ROLES: Record<string, string[]> = {
+  SHIFT_LEADER: STAFF_ROLES,
   STORE_MANAGER: STORE_SUBORDINATES,
   AREA_MANAGER: AREA_SUBORDINATES,
   ADMIN: ADMIN_SUBORDINATES,

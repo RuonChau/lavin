@@ -45,7 +45,7 @@ export const MENU_ITEMS: SidebarMenuItem[] = [
     icon: BookOpenText,
     href: '/formulas',
     description: 'Công thức, giá vốn thành phần và định mức mẻ',
-    permission: 'products',
+    permission: 'formulas',
   },
   {
     id: 'inventory',
@@ -53,7 +53,7 @@ export const MENU_ITEMS: SidebarMenuItem[] = [
     icon: Boxes,
     href: '/inventory',
     description: 'Kiểm soát kho, nguyên vật liệu và vị trí kho hàng',
-    permission: 'products',
+    permission: 'inventory',
   },
   {
     id: 'purchases',
@@ -61,7 +61,7 @@ export const MENU_ITEMS: SidebarMenuItem[] = [
     icon: ShoppingCart,
     href: '/purchases',
     description: 'Quản lý mua hàng, nhập kho và nhà cung cấp',
-    permission: 'products',
+    permission: 'purchases',
   },
   {
     id: 'branches',
@@ -69,7 +69,7 @@ export const MENU_ITEMS: SidebarMenuItem[] = [
     icon: Store,
     href: '/branches',
     description: 'Quản lý mạng lưới kho và các điểm bán hàng',
-    permission: 'reports',
+    permission: 'branches',
   },
   {
     id: 'tables',
@@ -77,7 +77,7 @@ export const MENU_ITEMS: SidebarMenuItem[] = [
     icon: Grid3X3,
     href: '/tables',
     description: 'Quản lý bàn, khu vực và trạng thái phục vụ theo thời gian thực',
-    permission: 'reports',
+    permission: 'tables',
   },
   {
     id: 'employees',
@@ -93,7 +93,7 @@ export const MENU_ITEMS: SidebarMenuItem[] = [
     icon: Users,
     href: '/customers',
     description: 'Thông tin khách hàng, điểm tích lũy, lịch sử mua hàng',
-    permission: 'orders',
+    permission: 'customers',
   },
   {
     id: 'promotions',

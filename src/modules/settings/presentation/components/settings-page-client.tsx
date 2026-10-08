@@ -29,7 +29,13 @@ import { PaymentSection } from './section/payment.section';
 import { NotificationsSection } from './section/notifications.section';
 import { sectionMeta } from '@/modules/settings/mocks/section-meta.mock';
 import type { TSectionValues as SectionKey } from '@/modules/settings/domain/enum/section-key.enum';
-import type { TPermissionValues as PermissionKey } from '@/modules/settings/domain/enum/permission-key.enum';
+import {
+  PermissionActions,
+  type TDataScope,
+  type TPermissionAction,
+  type TPermissionValues as PermissionKey,
+} from '@/modules/settings/domain/enum/permission-key.enum';
+import { cloneRole, normalizeRolePermissions } from '@/modules/settings/utils/access-control';
 import type {
   ISettingsData as SettingsData,
   ISettingsPayload as SettingsPayload,
@@ -107,8 +113,7 @@ const cloneSettings = (settings: SettingsData): SettingsData => {
   };
 };
 
-const cloneRoles = (roles: RolePermission[]) =>
-  roles.map((role) => ({ ...role, permissions: { ...role.permissions } }));
+const cloneRoles = (roles: RolePermission[]) => roles.map(cloneRole);
 
 const parseTime = (value: SettingsData['operations']['openTime'] | string | undefined, fallback: string) => {
   if (dayjs.isDayjs(value)) return value;
@@ -254,7 +259,7 @@ export default function SettingsPage() {
       try {
         const data = await settingsService.getSettings();
         const formattedSettings = normalizeSettingsForForm(data?.settings as SettingsServerData | undefined);
-        const nextRoles = data?.roles?.length ? cloneRoles(data.roles) : cloneRoles(defaultRolePermissions);
+        const nextRoles = normalizeRolePermissions(data?.roles);
 
         setSavedSettings(formattedSettings);
         setRoles(nextRoles);
@@ -361,7 +366,7 @@ export default function SettingsPage() {
       );
 
       const nextSettings = normalizeSettingsForForm((saved?.settings as SettingsServerData | undefined) ?? settingsPayload);
-      const nextRoles = saved?.roles?.length ? cloneRoles(saved.roles) : cloneRoles(roles);
+      const nextRoles = saved?.roles?.length ? normalizeRolePermissions(saved.roles) : cloneRoles(roles);
 
       setSavedSettings(nextSettings);
       setRoles(nextRoles);
@@ -444,7 +449,7 @@ export default function SettingsPage() {
     try {
       const saved = await settingsService.deleteSettingsImage(field, getUploadPublicId(file));
       const nextSettings = normalizeSettingsForForm((saved?.settings as SettingsServerData | undefined) ?? savedSettings);
-      const nextRoles = saved?.roles?.length ? cloneRoles(saved.roles) : cloneRoles(roles);
+      const nextRoles = saved?.roles?.length ? normalizeRolePermissions(saved.roles) : cloneRoles(roles);
 
       setSavedSettings(nextSettings);
       setRoles(nextRoles);
@@ -463,12 +468,34 @@ export default function SettingsPage() {
     }
   };
 
-  const togglePermission = (roleKey: string, permission: PermissionKey, checked: boolean) => {
+  const togglePermission = (
+    roleKey: string,
+    page: PermissionKey,
+    action: TPermissionAction | 'all',
+    checked: boolean,
+  ) => {
     setRoles((current) =>
-      current.map((role) =>
-        role.key === roleKey ? { ...role, permissions: { ...role.permissions, [permission]: checked } } : role,
-      ),
+      current.map((role) => {
+        if (role.key !== roleKey) return role;
+
+        const crud = { ...role.permissions[page] };
+        if (action === 'all') {
+          PermissionActions.forEach((key) => { crud[key] = checked; });
+        } else {
+          crud[action] = checked;
+          // Bỏ quyền xem → mất mọi thao tác; cấp thao tác bất kỳ → tự cấp quyền xem
+          if (action === 'view' && !checked) PermissionActions.forEach((key) => { crud[key] = false; });
+          if (action !== 'view' && checked) crud.view = true;
+        }
+
+        return { ...role, permissions: { ...role.permissions, [page]: crud } };
+      }),
     );
+    markDirty('permissions');
+  };
+
+  const changeDataScope = (roleKey: string, dataScope: TDataScope) => {
+    setRoles((current) => current.map((role) => (role.key === roleKey ? { ...role, dataScope } : role)));
     markDirty('permissions');
   };
 
@@ -489,6 +516,7 @@ export default function SettingsPage() {
         roles={roles}
         onReset={() => resetSection('permissions')}
         onToggle={togglePermission}
+        onScopeChange={changeDataScope}
       />
     ),
     payment: (

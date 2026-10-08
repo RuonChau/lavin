@@ -21,8 +21,9 @@ interface OrderDetailsModalProps {
    isOpen: boolean;
    onClose: () => void;
    order: Order | null;
-   onCancel: () => void;
-   onComplete: () => void;
+   /** Bỏ trống khi không có quyền cập nhật đơn */
+   onCancel?: () => void;
+   onComplete?: () => void;
 }
 
 export function OrderDetailsModal({ isOpen, onClose, order, onCancel, onComplete }: OrderDetailsModalProps) {
@@ -204,7 +205,7 @@ export function OrderDetailsModal({ isOpen, onClose, order, onCancel, onComplete
             {/* Footer Actions */}
             <div className="p-6 border-t border-primary-soft/20 bg-white/40 flex items-center justify-between gap-3">
                <div className="flex gap-2">
-                  {order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.COMPLETED && (
+                  {onCancel && order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.COMPLETED && (
                      <button
                         onClick={onCancel}
                         className="px-4 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50 transition-all border border-red-100"
@@ -220,7 +221,7 @@ export function OrderDetailsModal({ isOpen, onClose, order, onCancel, onComplete
                   >
                      Đóng
                   </button>
-                  {order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED && (
+                  {onComplete && order.status !== OrderStatus.COMPLETED && order.status !== OrderStatus.CANCELLED && (
                      <button
                         onClick={onComplete}
                         className="px-8 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary-deep transition-all flex items-center gap-2"

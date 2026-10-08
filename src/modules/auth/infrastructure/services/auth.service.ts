@@ -27,6 +27,12 @@ interface ServerUser {
   name?: string;
   email?: string;
   role?: string | { name?: string; key?: string; role?: string };
+  branch_id?: string | null;
+  branch?: { id?: string } | null;
+  branch_ids?: string[];
+  branches?: Array<{ id?: string } | string>;
+  managed_branch_ids?: string[];
+  employee?: { branch_id?: string | null } | null;
   created_at?: string;
   createdAt?: string;
   updated_at?: string;
@@ -76,6 +82,18 @@ async function getMeWithToken(accessToken: string): Promise<User> {
   return mapServerUser(payload ?? {});
 }
 
+const getServerBranchIds = (u: ServerUser): string[] => {
+  const ids = [
+    u.branch_id,
+    u.branch?.id,
+    u.employee?.branch_id,
+    ...(u.branch_ids ?? []),
+    ...(u.managed_branch_ids ?? []),
+    ...(u.branches ?? []).map((branch) => (typeof branch === 'string' ? branch : branch?.id)),
+  ];
+  return [...new Set(ids.filter((id): id is string => Boolean(id)))];
+};
+
 /** Map the server's user shape to our domain User */
 function mapServerUser(u: ServerUser): User {
   return {
@@ -83,6 +101,7 @@ function mapServerUser(u: ServerUser): User {
     name: u.name ?? u.username ?? '',
     email: u.email ?? '',
     role: getServerRole(u.role),
+    branchIds: getServerBranchIds(u),
     createdAt: u.createdAt ? new Date(u.createdAt) : u.created_at ? new Date(u.created_at) : new Date(),
     updatedAt: u.updatedAt ? new Date(u.updatedAt) : u.updated_at ? new Date(u.updated_at) : new Date(),
   };

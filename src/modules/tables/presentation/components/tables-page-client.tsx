@@ -31,6 +31,8 @@ import type {
   DiningTablePayload,
   DiningTableStatus,
 } from "@/modules/tables/domain/entities/dining-table.entity";
+import { useBranches } from "@/modules/branches/presentation/hooks/useBranches";
+import { usePagePermission } from "@/modules/settings/presentation/providers/access-control.provider";
 
 const statusOptions: Array<{
   value: DiningTableStatus;
@@ -88,7 +90,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 function TablesPageInner() {
   const {
-    tables,
+    tables: allTables,
     error,
     isLoading,
     isRefetching,
@@ -103,6 +105,25 @@ function TablesPageInner() {
   } = useDiningTables();
   const { message } = App.useApp();
   const [form] = Form.useForm<DiningTablePayload>();
+  const { branches } = useBranches();
+  const {
+    canCreate,
+    canUpdate,
+    canDelete,
+    isBranchScoped,
+    managedBranchIds,
+    isVisible,
+    filterBranchOptions,
+  } = usePagePermission("tables");
+  // Role phạm vi chi nhánh chỉ thấy bàn của chi nhánh đang quản lý
+  const tables = useMemo(
+    () => allTables.filter((table) => isVisible(table.branch_id)),
+    [allTables, isVisible],
+  );
+  const branchOptions = filterBranchOptions(branches).map((branch) => ({
+    value: branch.id,
+    label: branch.name,
+  }));
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<DiningTableStatus | "ALL">(
     "ALL",
@@ -144,6 +165,7 @@ function TablesPageInner() {
       capacity: 2,
       status: "AVAILABLE",
       display_order: tables.length + 1,
+      branch_id: isBranchScoped ? managedBranchIds[0] ?? null : null,
     });
     setIsFormOpen(true);
   };
@@ -246,6 +268,7 @@ function TablesPageInner() {
             />
             Làm mới
           </button>
+          {canCreate && (
           <button
             type="button"
             onClick={openCreateModal}
@@ -254,6 +277,7 @@ function TablesPageInner() {
             <Plus size={14} strokeWidth={3} />
             Thêm bàn
           </button>
+          )}
         </div>
       </div>
 
@@ -387,6 +411,7 @@ function TablesPageInner() {
                           </p>
                         </div>
                         <div className="flex items-center gap-1">
+                          {canUpdate && (
                           <button
                             type="button"
                             onClick={() => openEditModal(table)}
@@ -394,6 +419,8 @@ function TablesPageInner() {
                           >
                             <Edit size={14} />
                           </button>
+                          )}
+                          {canDelete && (
                           <button
                             type="button"
                             onClick={() => setDeletingTable(table)}
@@ -401,6 +428,7 @@ function TablesPageInner() {
                           >
                             <Trash2 size={14} />
                           </button>
+                          )}
                         </div>
                       </div>
 
@@ -430,7 +458,7 @@ function TablesPageInner() {
                       <Select
                         value={table.status}
                         onChange={(status) => handleStatusChange(table, status)}
-                        disabled={isUpdating}
+                        disabled={!canUpdate || isUpdating}
                         className="h-10! w-full"
                         options={statusOptions.map((status) => ({
                           value: status.value,
@@ -466,6 +494,24 @@ function TablesPageInner() {
           className="mt-6"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Form.Item
+              name="branch_id"
+              className="md:col-span-2"
+              label={
+                <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#968271]">
+                  Chi nhánh
+                </span>
+              }
+              rules={[{ required: isBranchScoped, message: "Chọn chi nhánh" }]}
+            >
+              <Select
+                allowClear={!isBranchScoped}
+                placeholder="Chọn chi nhánh"
+                className="h-12!"
+                options={branchOptions}
+              />
+            </Form.Item>
+
             <Form.Item
               name="code"
               label={

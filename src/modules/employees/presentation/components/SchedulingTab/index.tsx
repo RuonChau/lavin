@@ -11,6 +11,7 @@ import { useShifts } from "@/modules/employees/presentation/hooks/useShifts";
 import { useWorkSchedules } from "@/modules/employees/presentation/hooks/useWorkSchedules";
 import { useBranches } from "@/modules/branches/presentation/hooks/useBranches";
 import { ShiftItem } from "@/modules/employees/infrastructure/services/shift.service";
+import { usePagePermission } from "@/modules/settings/presentation/providers/access-control.provider";
 
 const shiftColor = (idx: number) => {
   const palette = [
@@ -27,6 +28,7 @@ export default function SchedulingTab() {
   const [assigningCell, setAssigningCell] = useState<{ employeeId: string; employeeName: string; date: string } | null>(null);
   const [selectedShiftId, setSelectedShiftId] = useState<string>('');
   const { message } = App.useApp();
+  const { canUpdate } = usePagePermission('employees');
 
   const { employees, isLoading: isLoadingEmployees } = useEmployees(1, 200);
   const { shifts, isLoading: isLoadingShifts } = useShifts();
@@ -55,6 +57,7 @@ export default function SchedulingTab() {
   }, [shifts]);
 
   const openAssignModal = (employeeId: string, employeeName: string, date: dayjs.Dayjs) => {
+    if (!canUpdate) return;
     const key = `${employeeId}_${date.format('YYYY-MM-DD')}`;
     const existing = scheduleMap.get(key);
     setSelectedShiftId(existing?.shift_id || '');
@@ -197,6 +200,7 @@ export default function SchedulingTab() {
                         <td key={dayIdx} className="py-2 px-2 text-center align-middle">
                           {assignment ? (
                             <button
+                              disabled={!canUpdate}
                               onClick={() => openAssignModal(emp.id, emp.name, date)}
                               className={cn(
                                 "w-full py-4 rounded-3xl border text-[10px] font-black uppercase tracking-wider transition-all hover:scale-[1.04] active:scale-95 shadow-sm flex flex-col items-center gap-1",
@@ -212,6 +216,7 @@ export default function SchedulingTab() {
                             </button>
                           ) : (
                             <button
+                              disabled={!canUpdate}
                               onClick={() => openAssignModal(emp.id, emp.name, date)}
                               className="w-full h-full min-h-15 flex items-center justify-center border-2 border-dashed border-primary-soft/30 hover:border-primary/40 rounded-3xl text-primary-soft/60 hover:text-primary hover:bg-primary/5 transition-all"
                             >

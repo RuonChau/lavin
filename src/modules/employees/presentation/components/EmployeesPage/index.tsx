@@ -21,6 +21,7 @@ import SchedulingTab from "../SchedulingTab";
 import AttendanceTab from "../AttendanceTab";
 import { TabType } from "@/modules/employees/types/tab.type";
 import { useAuth } from "@/modules/auth";
+import { usePagePermission } from "@/modules/settings/presentation/providers/access-control.provider";
 import { canManageAccountOf } from "@/modules/employees/config/account-permission.config";
 import { EmployeeAccountModal, EmployeeAccountTarget } from "../modal/employee-account.modal";
 import { EmployeeAccountCredentials } from "@/modules/employees/infrastructure/services/employee.service";
@@ -50,6 +51,7 @@ export default function EmployeesPageInner() {
   const { users, isLoadingUsers, branches, isLoadingBranches, createEmployee, isCreating } = useEmployees();
   const { message } = App.useApp();
   const { user } = useAuth();
+  const { canCreate } = usePagePermission('employees');
 
   // Chỉ được thêm nhân viên có chức vụ cấp dưới (server cũng kiểm tra lại)
   const positionOptions = POSITION_OPTIONS.filter(opt => canManageAccountOf(user?.role, opt.value));
@@ -128,6 +130,7 @@ export default function EmployeesPageInner() {
             <FileDown size={14} strokeWidth={3} />
             Xuất báo cáo
           </button>
+          {canCreate && (
           <button
             onClick={() => setIsAddModalOpen(true)}
             className="flex items-center gap-2 px-8 py-3.5 bg-primary text-white rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
@@ -135,6 +138,7 @@ export default function EmployeesPageInner() {
             <Plus size={14} strokeWidth={3} />
             Thêm nhân viên
           </button>
+          )}
         </div>
       </div>
 

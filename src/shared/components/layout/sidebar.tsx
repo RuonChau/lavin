@@ -13,6 +13,7 @@ import {
 import { usePublicSettings } from '@/modules/settings/presentation/providers/public-settings.provider';
 import { cn } from '@/shared/utils/cn';
 import { isActivePath } from '@/shared/utils/isActivePath';
+import { hasPermission } from '@/modules/settings/utils/access-control';
 import { MENU_ITEMS } from './config/sidebar-menu-items.config';
 import type { SidebarProps } from './types/sidebar-props.type';
 import { formatRoleLabel } from './utils/format-role-label.util';
@@ -22,7 +23,7 @@ export function Sidebar({ isOpen, onClose, onLogout, permissions, user }: Sideba
   const pathname = usePathname();
   const { settings } = usePublicSettings();
   const brandName = settings.brandName || 'LaVin ERP';
-  const menuItems = MENU_ITEMS.filter((item) => permissions[item.permission]);
+  const menuItems = MENU_ITEMS.filter((item) => hasPermission(permissions, item.permission));
   const displayName = user?.name || user?.email || 'Admin User';
   const displayInitial = displayName.charAt(0).toUpperCase();
   const displayRole = formatRoleLabel(user?.role);

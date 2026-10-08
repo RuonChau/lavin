@@ -74,6 +74,7 @@ function mapServerOrderItem(item: Record<string, unknown>, index: number): Order
 
 function mapServerOrder(order: Record<string, unknown>): Order {
   const customer = order.customer as Record<string, unknown> | undefined;
+  const branch = order.branch as Record<string, unknown> | undefined;
   const items = Array.isArray(order.items)
     ? (order.items as Record<string, unknown>[]).map(mapServerOrderItem)
     : Array.isArray(order.order_items)
@@ -83,6 +84,8 @@ function mapServerOrder(order: Record<string, unknown>): Order {
   return {
     id: String(order.id ?? order._id ?? ''),
     orderNumber: String(order.order_code ?? order.orderNumber ?? order.code ?? order.id ?? ''),
+    branchId: order.branch_id ? String(order.branch_id) : branch?.id ? String(branch.id) : undefined,
+    branchName: order.branch_name ? String(order.branch_name) : branch?.name ? String(branch.name) : undefined,
     customerId: order.customer_id ? String(order.customer_id) : undefined,
     customerName: String(order.customer_name ?? customer?.name ?? customer?.phone ?? 'Khach vang lai'),
     items,

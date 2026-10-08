@@ -14,6 +14,7 @@ import dayjs from 'dayjs';
 
 import { GlassCard } from '@/shared/components/GlassCard';
 import { useShifts } from '@/modules/employees/presentation/hooks/useShifts';
+import { usePagePermission } from '@/modules/settings/presentation/providers/access-control.provider';
 import { ShiftItem } from '@/modules/employees/infrastructure/services/shift.service';
 
 const formatHours = (start: string, end: string) => {
@@ -28,6 +29,11 @@ const formatHours = (start: string, end: string) => {
 export default function ShiftsTab() {
   const { shifts, isLoading, createShift, updateShift, deleteShift, isCreating, isUpdating } = useShifts();
   const { message, modal } = App.useApp();
+  const { canCreate, canUpdate, canDelete, isBranchScoped } = usePagePermission('employees');
+  // Danh mục ca làm việc dùng chung toàn hệ thống → role phạm vi chi nhánh chỉ được xem
+  const canCreateShift = canCreate && !isBranchScoped;
+  const canUpdateShift = canUpdate && !isBranchScoped;
+  const canDeleteShift = canDelete && !isBranchScoped;
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<ShiftItem | null>(null);
@@ -105,6 +111,7 @@ export default function ShiftsTab() {
             className="w-full bg-white/60 border border-primary-soft/20 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-medium focus:outline-none focus:border-primary/40 focus:bg-white transition-all shadow-sm"
           />
         </div>
+        {canCreateShift && (
         <button
           onClick={openCreateModal}
           className="flex items-center gap-2 px-6 py-3 bg-primary/10 text-primary border border-primary/20 rounded-2xl text-xs font-black uppercase tracking-wider hover:bg-primary hover:text-white transition-all transform active:scale-95 group"
@@ -112,6 +119,7 @@ export default function ShiftsTab() {
           <Plus size={16} strokeWidth={3} className="group-hover:rotate-90 transition-transform" />
           Thêm ca mới
         </button>
+        )}
       </div>
 
       {isLoading ? (
@@ -132,8 +140,8 @@ export default function ShiftsTab() {
                   <Clock size={24} />
                 </div>
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button onClick={() => openEditModal(shift)} className="p-2 text-text-secondary hover:text-primary transition-colors"><Edit2 size={16} /></button>
-                  <button onClick={() => handleDelete(shift)} className="p-2 text-text-secondary hover:text-red-500 transition-colors"><Trash2 size={16} /></button>
+                  {canUpdateShift && <button onClick={() => openEditModal(shift)} className="p-2 text-text-secondary hover:text-primary transition-colors"><Edit2 size={16} /></button>}
+                  {canDeleteShift && <button onClick={() => handleDelete(shift)} className="p-2 text-text-secondary hover:text-red-500 transition-colors"><Trash2 size={16} /></button>}
                 </div>
               </div>
 

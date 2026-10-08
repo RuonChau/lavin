@@ -50,6 +50,7 @@ import { getDiscountDisplay, getScopeLabel, getTypeLabel } from '../../utils/pro
 import { formatCurrency } from '@/shared/utils/format-currency';
 import { getPromotionTableColumns } from '../../configs/promotion-table-columns.config';
 import { getPromotionStats } from '../../utils/get-promotion-stats.util';
+import { usePagePermission } from '@/modules/settings/presentation/providers/access-control.provider';
 
 
 
@@ -74,7 +75,7 @@ type PromotionFormValues = {
 
 function PromotionsPageContent() {
   const {
-    promotions = [],
+    promotions: allPromotions = [],
     isLoading,
     createPromotion,
     updatePromotion,
@@ -83,6 +84,29 @@ function PromotionsPageContent() {
     isDeleting,
   } = usePromotions();
   const { branches } = useBranches();
+  const {
+    canCreate,
+    canUpdate,
+    canDelete,
+    isBranchScoped,
+    managedBranchIds,
+    isInScope,
+    isVisible,
+    filterBranchOptions,
+  } = usePagePermission('promotions');
+  // Role phạm vi chi nhánh: thấy khuyến mãi toàn hệ thống (chỉ xem) và khuyến mãi của chi nhánh mình;
+  // chỉ sửa/xóa được khuyến mãi áp dụng riêng cho các chi nhánh đang quản lý
+  const promotions = useMemo(
+    () => allPromotions.filter((promotion) => isVisible(promotion.branchIds ?? [], true)),
+    [allPromotions, isVisible],
+  );
+  const canEditPromotion = (promotion: IPromotion) => canUpdate && isInScope(promotion.branchIds ?? []);
+  const canDeletePromotion = (promotion: IPromotion) => canDelete && isInScope(promotion.branchIds ?? []);
+  const scopeOptions = ScopeOptions
+    .filter(({ value }) => !isBranchScoped || value === 'BRANCH')
+    .map(({ value, label }) => ({ value, label }));
+  const branchOptions = filterBranchOptions(branches as Array<{ id: string; name: string }>)
+    .map((b) => ({ value: b.id, label: b.name }));
 
   const { message } = App.useApp();
 
@@ -133,7 +157,8 @@ function PromotionsPageContent() {
     form.resetFields();
     form.setFieldsValue({
       type: 'PERCENTAGE',
-      scope: 'ALL_ORDER',
+      scope: isBranchScoped ? 'BRANCH' : 'ALL_ORDER',
+      branchIds: isBranchScoped ? managedBranchIds : undefined,
       isActive: true,
       status: 'ACTIVE',
       startDate: dayjs(),
@@ -157,34 +182,39 @@ function PromotionsPageContent() {
     setIsDrawerOpen(true);
   };
 
-  const actionItems = (promotion: IPromotion): MenuProps['items'] => [
+  const actionItems = (promotion: IPromotion): MenuProps['items'] => {
+    const canEdit = canEditPromotion(promotion);
+    const canRemove = canDeletePromotion(promotion);
+
+    return [
     {
       key: 'view',
       label: 'Xem chi tiết',
       icon: <Eye size={16} />,
       onClick: () => openDetailDrawer(promotion),
     },
-    {
+    canEdit && {
       key: 'edit',
       label: 'Chỉnh sửa',
       icon: <Edit2 size={16} />,
       onClick: () => openEditModal(promotion),
     },
-    {
+    canEdit && {
       key: 'toggle',
       label: promotion.status === 'PAUSED' ? 'Kích hoạt' : 'Tạm dừng',
       icon: promotion.status === 'PAUSED' ? <CirclePlay size={16} /> : <CirclePause size={16} />,
       onClick: () => handleToggleActive(promotion),
     },
-    { type: 'divider' },
-    {
+    canRemove && { type: 'divider' as const },
+    canRemove && {
       key: 'delete',
       label: 'Xóa',
       danger: true,
       icon: <Trash2 size={16} />,
       onClick: () => handleDelete(promotion),
     },
-  ];
+  ].filter(Boolean) as MenuProps['items'];
+  };
 
   const columns = getPromotionTableColumns({
     openDetailDrawer,
@@ -268,9 +298,9 @@ function PromotionsPageContent() {
             <Button icon={<Download size={17} />} className="h-11! border-primary-soft/40! bg-white/70! font-black! text-text-secondary!">
               Xuất báo cáo
             </Button>
-            <Button type="primary" icon={<Plus size={17} />} onClick={openCreateModal} className="h-11! font-black! shadow-lg! shadow-primary/20!">
+            {canCreate && <Button type="primary" icon={<Plus size={17} />} onClick={openCreateModal} className="h-11! font-black! shadow-lg! shadow-primary/20!">
               Tạo khuyến mãi
-            </Button>
+            </Button>}
           </div>
         </header>
 
@@ -575,7 +605,7 @@ function PromotionsPageContent() {
             <Row gutter={18}>
               <Col xs={24} md={12}>
                 <Form.Item name="scope" label="Phạm vi áp dụng" rules={[{ required: true, message: 'Vui lòng chọn phạm vi' }]}>
-                  <Select options={ScopeOptions.map(({ value, label }) => ({ value, label }))} />
+                  <Select options={scopeOptions} />
                 </Form.Item>
               </Col>
               <Col xs={24} md={12}>
@@ -597,7 +627,7 @@ function PromotionsPageContent() {
                     <Select
                       mode="multiple"
                       placeholder="Chọn chi nhánh áp dụng khuyến mãi"
-                      options={branches.map((b: any) => ({ value: b.id, label: b.name }))}
+                      options={branchOptions}
                     />
                   </Form.Item>
                 );

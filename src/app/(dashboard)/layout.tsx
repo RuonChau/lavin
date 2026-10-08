@@ -10,10 +10,13 @@ import { Topbar } from '@/shared/components/layout/topbar';
 import { settingsService } from '@/modules/settings/infrastructure/services/settings.service';
 import {
   canAccessPath,
+  getDataScopeForRole,
   getFirstAllowedPath,
   getPermissionsForRole,
+  normalizeRolePermissions,
 } from '@/modules/settings/utils/access-control';
-import { defaultRolePermissions } from '@/modules/settings/mocks/default-role-permissions.mock';
+import { AccessControlProvider } from '@/modules/settings/presentation/providers/access-control.provider';
+import { managedBranchService } from '@/modules/settings/infrastructure/services/managed-branch.service';
 
 const subscribeToHydration = () => () => undefined;
 const getClientSnapshot = () => true;
@@ -38,13 +41,29 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     retry: false,
   });
 
-  const permissions = useMemo(() => {
-    const roles = permissionsQuery.data?.roles?.length
-      ? permissionsQuery.data.roles
-      : defaultRolePermissions;
+  const roles = useMemo(
+    () => normalizeRolePermissions(permissionsQuery.data?.roles),
+    [permissionsQuery.data?.roles],
+  );
+  const permissions = useMemo(() => getPermissionsForRole(user?.role, roles), [roles, user?.role]);
+  const dataScope = getDataScopeForRole(user?.role, roles);
 
-    return getPermissionsForRole(user?.role, roles);
-  }, [permissionsQuery.data?.roles, user?.role]);
+  // `/me` có thể không trả về chi nhánh → tra từ tài khoản / hồ sơ nhân viên
+  const needsBranchLookup = isAuthenticated && dataScope === 'branch' && !user?.branchIds?.length;
+  const managedBranchQuery = useQuery({
+    queryKey: ['access-control', 'managed-branches', user?.id],
+    queryFn: () => managedBranchService.getManagedBranchIds(user!.id),
+    enabled: needsBranchLookup && Boolean(user?.id),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  });
+  const userBranchIds = user?.branchIds;
+  const lookedUpBranchIds = managedBranchQuery.data;
+  const managedBranchIds = useMemo(() => (
+    userBranchIds?.length ? userBranchIds : lookedUpBranchIds ?? []
+  ), [lookedUpBranchIds, userBranchIds]);
+  const isResolvingAccess = permissionsQuery.isLoading || (needsBranchLookup && managedBranchQuery.isLoading);
+  const isMissingBranch = dataScope === 'branch' && !isResolvingAccess && managedBranchIds.length === 0;
 
   useEffect(() => {
     if (!hasHydrated || isLoading || isAuthenticated) return;
@@ -64,7 +83,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
     }
   }, [hasHydrated, isAuthenticated, pathname, permissions, permissionsQuery.isLoading, router]);
 
-  if (!hasHydrated || isLoading || (isAuthenticated && permissionsQuery.isLoading)) {
+  if (!hasHydrated || isLoading || (isAuthenticated && isResolvingAccess)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-bg-base">
         <div className="flex flex-col items-center gap-4">
@@ -92,7 +111,18 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
         <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
 
         <main className="flex-1 p-4 mt-19 overflow-x-hidden">
-          {children}
+          <AccessControlProvider
+            permissions={permissions}
+            dataScope={dataScope}
+            managedBranchIds={managedBranchIds}
+          >
+            {isMissingBranch && (
+              <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                Tài khoản chưa được gán chi nhánh nên không hiển thị được dữ liệu. Vui lòng liên hệ quản trị viên để gán chi nhánh cho tài khoản hoặc hồ sơ nhân viên.
+              </div>
+            )}
+            {children}
+          </AccessControlProvider>
         </main>
       </div>
     </div>
